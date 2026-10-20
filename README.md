@@ -39,6 +39,7 @@ packages/
     package.json          version, triggers (patterns + one-line scripts), aliases
     src/<Package>.lua     all the logic, in one Lua table named after its command (bj, dl2, fq, ys)
 tests/                    Lua tests for the single-script packages + run.sh for everything
+docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
 tools/
   build.py                builds the single-script packages into dist/
   lint_manifests.py       checks every muddler trigger/alias actually has a script
