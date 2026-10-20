@@ -8,7 +8,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [Chores](packages/Chores) | `chores fish\|quest\|both\|off`, `CH` | Automates fishing, the royal cook delivery quest and the gravedigger excavation. |
 | [KaiokenTrain](packages/KaiokenTrain) | `kaioken train`, `KT` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
 | [Score](packages/Score) | `score`, `SC` | A richer `score`: real numbers, damage at every boost level, item tier progress, training hints. |
-| [DataLords](packages/DataLords) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain when *you* requested it, pausing for rivals (yours or your group's). |
+| [DataLords2](packages/DataLords2) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain (not Data Lords 1 or 3) when *you* requested it, pausing for rivals (yours or your group's). |
 | [Blackjack](packages/Blackjack) | `bj help` | Plays **blackjack** with basic strategy after you `cjoin`, and tracks wins, zenni, Lucky Tails and XP. |
 | [FriezaQuest](packages/FriezaQuest) | `fq help` | Automates the **Frieza's Spaceship** quest from Appule to the Bridge Access Card. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
@@ -35,7 +35,7 @@ packages/
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler JSON + .lua files
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  Blackjack/ DataLords/ FriezaQuest/ YamoshiSpawn/   single-script packages
+  Blackjack/ DataLords2/ FriezaQuest/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases
     src/<Package>.lua     all the logic, in one Lua table named after its command (bj, dl2, fq, ys)
 tests/                    Lua tests for the single-script packages + run.sh for everything
@@ -70,7 +70,7 @@ sh tests/run.sh
 
 Needs Lua 5.1+, Python 3 and Node (Node is only used for the muddler packages; their tests are skipped without it). What it covers:
 
-- **Blackjack, DataLords, FriezaQuest, YamoshiSpawn:** Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test.
+- **Blackjack, DataLords2, FriezaQuest, YamoshiSpawn:** Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test.
 - **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted, because muddler silently ships an empty script if a trigger's `.lua` file is missing. Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
 
 ## Versioning

@@ -1,5 +1,5 @@
 -- dl2: event gate, boss chain, rivals (including group rivals) and the dl2 command.
--- Run from the repo root: lua tests/DataLords_test.lua
+-- Run from the repo root: lua tests/DataLords2_test.lua
 local sent, enabled, timers, temps, id = {}, {}, {}, {}, 0
 msdp = { CHARACTER_NAME = "Technine" }
 function send(c) sent[#sent + 1] = c end
@@ -20,7 +20,7 @@ local function expect(want)
   print("OK  " .. (want == "" and "(nothing)" or want))
 end
 
-dofile("packages/DataLords/src/DataLords.lua")
+dofile("packages/DataLords2/src/DataLords2.lua")
 expect("MSDP REPORT CHARACTER_NAME COMBO_HISTORY")
 
 -- Only my own request turns the bosses on

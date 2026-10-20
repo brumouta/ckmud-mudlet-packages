@@ -8,7 +8,7 @@ on:
 
 jobs:
   simple:
-    name: Blackjack, DataLords, FriezaQuest, YamoshiSpawn
+    name: Blackjack, DataLords2, FriezaQuest, YamoshiSpawn
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

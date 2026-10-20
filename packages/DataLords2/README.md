@@ -1,4 +1,6 @@
-# DataLords — Data Lords v2.0 event automation
+# DataLords2 — Data Lords v2.0 event automation
+
+For the **Data Lords v2.0** event only, not Data Lords 1 or 3. It only switches on for `The Data Lords v2.0 event has been requested by <you>.`, so it stays off during the other two events.
 
 Command: `dl2`
 

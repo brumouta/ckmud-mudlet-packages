@@ -1,13 +1,13 @@
 {
-  "name": "DataLords",
-  "version": "1.2.0",
+  "name": "DataLords2",
+  "version": "2.0.0",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",
   "scripts": [
     {
-      "name": "DataLords",
-      "file": "src/DataLords.lua"
+      "name": "DataLords2",
+      "file": "src/DataLords2.lua"
     }
   ],
   "aliases": [
@@ -19,7 +19,7 @@
   ],
   "triggers": [
     {
-      "name": "DataLords",
+      "name": "DataLords2",
       "folder": true,
       "children": [
         {
