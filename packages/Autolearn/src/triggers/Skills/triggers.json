@@ -1,0 +1,114 @@
+[
+       {
+              "name": "Learn Scrape",
+              "multiline": "yes",
+              "multilineDelta": "1",
+              "fireLength": "99",
+              "patterns": [
+                     {
+                            "pattern": "o---------------------------------------------------------o",
+                            "type": "exactMatch"
+                     },
+                     {
+                            "pattern": "Technique           Req.       Technique           Req. ",
+                            "type": "exactMatch"
+                     }
+              ],
+              "script": "AL.API.Skills.clear()",
+              "children": [
+                     {
+                            "name": "scrape skill",
+                            "matchall": "yes",
+                            "patterns": [
+                                   {
+                                          "pattern": "([a-z][a-z -]+?)\\s*(Mastered|Supreme|Boosted|Ultimate|[0-9]+%)",
+                                          "type": "regex"
+                                   }
+                            ]
+                     },
+                     {
+                            "name": "Skill Sections",
+                            "patterns": [
+                                   {
+                                          "pattern": "^(Physical) Attacks:",
+                                          "type": "regex"
+                                   },
+                                   {
+                                          "pattern": "^(Ki) Attacks:",
+                                          "type": "regex"
+                                   },
+                                   {
+                                          "pattern": "^(AoE) Attacks:",
+                                          "type": "regex"
+                                   },
+                                   {
+                                          "pattern": "^(Other) Skills:",
+                                          "type": "regex"
+                                   },
+                                   {
+                                          "pattern": "^o---------------------\\[ (Focus) Skills ]--------------------o$",
+                                          "type": "regex"
+                                   }
+                            ]
+                     },
+                     {
+                            "name": "close Learn scrape",
+                            "patterns": [
+                                   {
+                                          "pattern": " Use 'slist' to show all skills available to your race",
+                                          "type": "exactMatch"
+                                   }
+                            ],
+                            "script": "setTriggerStayOpen(\"Learn Scrape\", 0) AL.Player.Skills.section = nil"
+                     }
+              ]
+       },
+       {
+              "name": "Learned Skill",
+              "multiline": "yes",
+              "multielineDelta": "0",
+              "patterns": [
+                     {
+                            "pattern": "You have learned",
+                            "type": "startOfLine"
+                     },
+                     {
+                            "pattern": "You have learned (.+)!",
+                            "type": "regex"
+                     }
+              ],
+              "script": "AL.Player.Skills.Learned[AL.API.Skills:translate(multimatches[2][2])] = true"
+       },
+       {
+              "name": "Learned Skill from",
+              "multiline": "yes",
+              "multielineDelta": "0",
+              "patterns": [
+                     {
+                            "pattern": "You've learned the skill",
+                            "type": "startOfLine"
+                     },
+                     {
+                            "pattern": "You've learned the skill '(.+)' from .+\\.",
+                            "type": "regex"
+                     }
+              ],
+              "script": "AL.Player.Skills.Learned[AL.API.Skills:translate(multimatches[2][2])] = true"
+       },
+       {
+              "name": "Mastered Skill",
+              "multiline": "yes",
+              "multielineDelta": "0",
+              "patterns": [
+                     {
+                            "pattern": "You have mastered the",
+                            "type": "startOfLine"
+                     },
+                     {
+                            "pattern": "You have mastered the (.+) technique!",
+                            "type": "regex"
+                     }
+              ],
+              "script": "AL.Player.Skills.Mastered[AL.API.Skills:translate(multimatches[2][2])] = true"
+       }
+]

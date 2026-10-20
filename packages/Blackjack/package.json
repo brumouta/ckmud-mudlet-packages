@@ -1,0 +1,161 @@
+{
+  "name": "Blackjack",
+  "version": "1.2.0",
+  "title": "Blackjack table bot",
+  "description": "Plays blackjack with basic strategy after you cjoin a table. Type `bj help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "Blackjack",
+      "file": "src/Blackjack.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "bj",
+      "regex": "^bj(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nbj.command(arg(matches[2]), arg(matches[3]))"
+    },
+    {
+      "name": "bj cjoin",
+      "regex": "^cjoin$",
+      "script": "bj.join()"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Blackjack",
+      "folder": true,
+      "children": [
+        {
+          "name": "bj Table open",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "A Blackjack Dealer says, 'Use 'cjoin' to join the table.'"
+            }
+          ],
+          "script": "bj.invite()"
+        },
+        {
+          "name": "bj Welcome",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "Welcome to the table, (\\w+)! Place your bet"
+            }
+          ],
+          "script": "bj.welcomed(matches[2])"
+        },
+        {
+          "name": "bj Bet prompt",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Place your bet when you're ready."
+            },
+            {
+              "type": "substring",
+              "pattern": "Round complete. Place your bets for the next game!"
+            }
+          ],
+          "script": "bj.placeBet()"
+        },
+        {
+          "name": "bj Round end",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Let's see who won this round."
+            }
+          ],
+          "script": "bj.roundEnd()"
+        },
+        {
+          "name": "bj Won",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You won ([\\d,]+) zenni"
+            }
+          ],
+          "script": "bj.won(matches[2])"
+        },
+        {
+          "name": "bj Lost",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You lost ([\\d,]+) zenni"
+            }
+          ],
+          "script": "bj.lost(matches[2])"
+        },
+        {
+          "name": "bj Lucky Tails",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You earn ([\\d,]+) Lucky Tails!"
+            }
+          ],
+          "script": "bj.luckyTails(matches[2])"
+        },
+        {
+          "name": "bj XP",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You have gained ([\\d,]+) intelligence XP\\."
+            }
+          ],
+          "script": "bj.xpGained(matches[2])"
+        },
+        {
+          "name": "bj Hand",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(\\w+)'s hand\\s*:\\s*(.+)$"
+            }
+          ],
+          "script": "bj.showHand(matches[2], matches[3])"
+        },
+        {
+          "name": "bj Turn",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "It's (\\w+)'s turn\\."
+            },
+            {
+              "type": "regex",
+              "pattern": "^Current player: (\\w+)"
+            }
+          ],
+          "script": "bj.turn(matches[2])"
+        },
+        {
+          "name": "bj Nudge",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "Well (\\w+), what would you like to do\\?"
+            }
+          ],
+          "script": "bj.nudge(matches[2])"
+        },
+        {
+          "name": "bj Options",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "BLACKJACK: Hit(chit)"
+            }
+          ],
+          "script": "bj.options(line)"
+        }
+      ]
+    }
+  ]
+}

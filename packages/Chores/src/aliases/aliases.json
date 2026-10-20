@@ -1,0 +1,32 @@
+[
+    {
+        "name": "CH Help",
+        "regex": "^CH$"
+    },
+    {
+        "name": "CH feature",
+        "regex": "^CH features?$"
+    },
+    {
+        "name": "CH feature toggle",
+        "regex": "^CH feature (.+) (on|off)$"
+    },
+    {
+        "name": "CH constant",
+        "regex": "^CH constants? ?(?: ([a-zA-Z_\\.-]+))?$"
+    },
+    {
+        "name": "CH constant set",
+        "regex": "^CH constants? ([a-zA-Z_\\.-]+)\\s*=\\s*(.+)$"
+    },
+    {
+        "name": "CH update",
+        "regex": "^CH update$",
+        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Chores.mpackage\")"
+    },
+    {
+        "name": "chores",
+        "regex": "^chores(?: (fish|quest|both|off))?$",
+        "script": "CH.API.Chores:toggle(matches[2])"
+    }
+]

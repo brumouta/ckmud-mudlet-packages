@@ -1,0 +1,8 @@
+{
+  "name": "score-tests",
+  "private": true,
+  "description": "Mudlet environment simulation tests for the Score package",
+  "dependencies": {
+    "fengari": "^0.1.4"
+  }
+}

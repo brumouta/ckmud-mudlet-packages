@@ -1,0 +1,8 @@
+{
+       "package": "Chores",
+       "title": "Standalone fishing and delivery-quest bot for CKMud",
+       "version": "26.07.27",
+       "author": "fried",
+       "icon": "shenron.png",
+       "outputFile": true
+}

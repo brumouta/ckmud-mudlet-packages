@@ -1,0 +1,39 @@
+-- Vendored (trimmed) from CK's Racials.lua
+local ck = require("__PKGNAME__")
+local API = ck:get_table("API")
+local Player = ck:get_table("Player")
+
+ck:define_constant("race", "???")
+
+-- Figure out something better
+function API:isAndroid(race)
+    return (race or self:getRace()) == "Android"
+end
+
+function API:isBioDroid(race)
+    return (race or self:getRace()) == "BioAndroid"
+end
+
+function API:setRace(race)
+  Player.race = race
+  local old_race = ck:constant("race")
+  if old_race == "???" then
+    ck:set_constant("race", race)
+  elseif old_race ~= race then
+    cecho(f " <Red>Error: Race Change from {old_race}, use `AL constant race=\"{race}\"`")
+  end
+end
+
+function API:has_fatigue(_race)
+  local race = _race or self:getRace()
+  return not (self:isAndroid(race) or self:isBioDroid(race))
+end
+
+function API:getRace()
+  return Player.race or ck:constant("race")
+end
+
+function API:isGodRace(_race)
+  local race = _race or self:getRace()
+  return table.contains({"Demon", "Kaio", "Sphinxian", "Angel"}, race)
+end

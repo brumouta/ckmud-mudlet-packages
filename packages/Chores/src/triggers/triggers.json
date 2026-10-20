@@ -1,0 +1,272 @@
+[
+    {
+        "name": "Prompt",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "[Pl: ",
+                "type": "substring"
+            },
+            {
+                "pattern": "^\\[Pl: (?<PL>[0-9,]+) \\| [^]]+]\\s?(?<Forms>.+)?$",
+                "type": "regex"
+            }
+        ]
+    },
+    {
+        "name": "Chores Fish Tug",
+        "patterns": [
+            {
+                "pattern": "You feel a tug on your line!",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:tug()"
+    },
+    {
+        "name": "Chores Fish Another Tug",
+        "patterns": [
+            {
+                "pattern": "You feel another tug on your line!",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:another_tug()"
+    },
+    {
+        "name": "Chores Bad Spot",
+        "patterns": [
+            {
+                "pattern": "This is not a good place to fish, find a better spot.",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:bad_spot()"
+    },
+    {
+        "name": "Chores Too Exhausted",
+        "patterns": [
+            {
+                "pattern": "You are too exhausted to fish right now.",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:too_exhausted()"
+    },
+    {
+        "name": "Chores Not Fishing",
+        "patterns": [
+            {
+                "pattern": "You aren't even fishing!",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:line_empty()"
+    },
+    {
+        "name": "Chores Caught Nothing",
+        "patterns": [
+            {
+                "pattern": "You reel in your line, but nothing was caught this time.",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:line_empty()"
+    },
+    {
+        "name": "Chores Fish Tangle",
+        "patterns": [
+            {
+                "pattern": "You pull your arm back and try to cast out your line, but it gets all tangled up.",
+                "type": "exactMatch"
+            },
+            {
+                "pattern": "Your line gets tangled",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:tangle()"
+    },
+    {
+        "name": "Chores Roshi Here",
+        "patterns": [
+            {
+                "pattern": "Master Roshi is sitting on the toilet here",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:roshi_seen()"
+    },
+    {
+        "name": "Chores Cook Question",
+        "patterns": [
+            {
+                "pattern": "would you be able to deliver some rations",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:cook_asked()"
+    },
+    {
+        "name": "Chores Cook Knight",
+        "patterns": [
+            {
+                "pattern": "This must go to Sir (\\w+)",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:knight_named(matches[2])"
+    },
+    {
+        "name": "Chores Cook Reminder",
+        "patterns": [
+            {
+                "pattern": "I asked you to deliver the jerky to \\w+ (\\w+)!",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:knight_reminded(matches[2])"
+    },
+    {
+        "name": "Chores Grave Plot",
+        "patterns": [
+            {
+                "pattern": "Yer in luck .+, plot (\\d+) is ready to be excavated",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:grave_plot(tonumber(matches[2]))"
+    },
+    {
+        "name": "Chores Grave Reminder",
+        "patterns": [
+            {
+                "pattern": "I need you to go dig up burial plot (\\d+)!",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:grave_reminded(tonumber(matches[2]))"
+    },
+    {
+        "name": "Chores Shovel Found",
+        "patterns": [
+            {
+                "pattern": "a wrought iron burial shovel",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:shovel_found()"
+    },
+    {
+        "name": "Chores Shovel Missing",
+        "patterns": [
+            {
+                "pattern": "No matching items found in your inventory",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:shovel_missing()"
+    },
+    {
+        "name": "Chores Grave Cooldown",
+        "patterns": [
+            {
+                "pattern": "no burial plots need excavating\\. Check back in (\\d+) (seconds?|minutes?)\\.",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:grave_cooldown(tonumber(matches[2]), matches[3])"
+    },
+    {
+        "name": "Chores Cook Cooldown",
+        "patterns": [
+            {
+                "pattern": "I just sent you on a delivery (\\d+) minutes? ago",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:quest_cooldown(tonumber(matches[2]))"
+    },
+    {
+        "name": "Chores Cook Cooldown Left",
+        "patterns": [
+            {
+                "pattern": "I just sent you on a delivery! Come back in (\\d+) (seconds?|minutes?)\\.",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:quest_cooldown_left(tonumber(matches[2]), matches[3])"
+    },
+    {
+        "name": "Chores Death",
+        "patterns": [
+            {
+                "pattern": "You are sent to the Next Dimension",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:died()"
+    },
+    {
+        "name": "Chores Dead Room",
+        "patterns": [
+            {
+                "pattern": "such a peaceful, easy feeling",
+                "type": "substring"
+            }
+        ],
+        "script": "CH.API.Chores:died()"
+    },
+    {
+        "name": "Chores Kill",
+        "patterns": [
+            {
+                "pattern": "is dead!\\s+R\\.I\\.P\\.",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:something_died()"
+    },
+    {
+        "name": "Chores Rival Attack",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "flies out of nowhere and attacks you!",
+                "type": "substring"
+            },
+            {
+                "pattern": "^(\\w+).* flies out of nowhere and attacks you!$",
+                "type": "regex"
+            }
+        ],
+        "script": "CH.API.Chores:rival_attacked(multimatches[2][2])"
+    },
+    {
+        "name": "Chores Boss Fish",
+        "patterns": [
+            {
+                "pattern": "A massive shadow emerges from the depths... Prepare for battle!",
+                "type": "exactMatch"
+            }
+        ],
+        "script": "CH.API.Chores:boss_appeared()"
+    },
+    {
+        "name": "Base PL",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "Base PL:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^Base PL:\\s*([0-9,]+)",
+                "type": "regex"
+            }
+        ]
+    }
+]

@@ -1,0 +1,32 @@
+[
+    {
+        "name": "SC Help",
+        "regex": "^SC$"
+    },
+    {
+        "name": "SC show",
+        "regex": "^SC show$",
+        "script": "SC.API.Sheet:show()"
+    },
+    {
+        "name": "SC feature",
+        "regex": "^SC features?$"
+    },
+    {
+        "name": "SC feature toggle",
+        "regex": "^SC feature (.+) (on|off)$"
+    },
+    {
+        "name": "SC constant",
+        "regex": "^SC constants? ?(?: ([a-zA-Z_\\.-]+))?$"
+    },
+    {
+        "name": "SC constant set",
+        "regex": "^SC constants? ([a-zA-Z_\\.-]+)\\s*=\\s*(.+)$"
+    },
+    {
+        "name": "SC update",
+        "regex": "^SC update$",
+        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Score.mpackage\")"
+    }
+]

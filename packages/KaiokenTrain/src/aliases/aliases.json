@@ -1,0 +1,32 @@
+[
+    {
+        "name": "KT Help",
+        "regex": "^KT$"
+    },
+    {
+        "name": "KT feature",
+        "regex": "^KT features?$"
+    },
+    {
+        "name": "KT feature toggle",
+        "regex": "^KT feature (.+) (on|off)$"
+    },
+    {
+        "name": "KT constant",
+        "regex": "^KT constants? ?(?: ([a-zA-Z_\\.-]+))?$"
+    },
+    {
+        "name": "KT constant set",
+        "regex": "^KT constants? ([a-zA-Z_\\.-]+)\\s*=\\s*(.+)$"
+    },
+    {
+        "name": "KT update",
+        "regex": "^KT update$",
+        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/KaiokenTrain.mpackage\")"
+    },
+    {
+        "name": "kaioken train",
+        "regex": "^kaioken train$",
+        "script": "KT.API.Kaioken:toggle()"
+    }
+]

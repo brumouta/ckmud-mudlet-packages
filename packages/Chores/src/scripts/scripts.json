@@ -1,0 +1,12 @@
+[
+    {
+        "name": "__PKGNAME__",
+        "script": "require(\"__PKGNAME__\"):register(\"__PKGNAME__\", \"__VERSION__\")"
+    },
+    {
+        "name": "Core"
+    },
+    {
+        "name": "Bot"
+    }
+]

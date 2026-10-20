@@ -1,0 +1,47 @@
+[
+      {
+            "name": "Score Inject",
+            "multiline": "yes",
+            "multilineDelta": "0",
+            "fireLength": "25",
+            "patterns": [
+                  {
+                        "pattern": "Score Information for:",
+                        "type": "startOfLine"
+                  },
+                  {
+                        "pattern": "^Score Information for:(.+)$",
+                        "type": "regex"
+                  }
+            ],
+            "children": [
+                  {
+                        "name": "Score Race",
+                        "multiline": "yes",
+                        "multilineDelta": "0",
+                        "patterns": [
+                              {
+                                    "pattern": "Race:",
+                                    "type": "startOfLine"
+                              },
+                              {
+                                    "pattern": "^Race:\\s*(.+?)\\s*$",
+                                    "type": "regex"
+                              }
+                        ],
+                        "script": "local race = string.trim(multimatches[2][2])\nAL.API:setRace(race)\n"
+                  },
+                  {
+                        "name": "close score",
+                        "patterns": [
+                              {
+                                    "pattern": "See 'Status', 'Train', and 'Traits' for more information.",
+                                    "type": "startOfLine"
+                              }
+                        ],
+                        "script": "setTriggerStayOpen(\"Score Inject\", 0)"
+                  }
+            ],
+            "script": "local name = string.trim(multimatches[2][2])\nAL.API:setName(name)\n"
+      }
+]

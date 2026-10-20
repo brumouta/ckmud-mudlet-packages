@@ -1,0 +1,338 @@
+{
+  "name": "FriezaQuest",
+  "version": "1.2.0",
+  "title": "Frieza's Spaceship quest helper",
+  "description": "Automates the Frieza's Spaceship quest from Appule to the Bridge Access Card. Type `fq help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "FriezaQuest",
+      "file": "src/FriezaQuest.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "fq",
+      "regex": "^fq(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nfq.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "FriezaQuest",
+      "folder": true,
+      "children": [
+        {
+          "name": "fq Room",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Frieza's Spaceship: (.+)$"
+            }
+          ],
+          "script": "fq.room(matches[2])"
+        },
+        {
+          "name": "fq Exit",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(North|East|South|West|Up|Down)\\s+-\\s+(.+)$"
+            }
+          ],
+          "script": "fq.exit(matches[2], matches[3])"
+        },
+        {
+          "name": "fq Tracked",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You have successfully tracked down (.+)!$"
+            }
+          ],
+          "script": "fq.arrived(matches[2])"
+        },
+        {
+          "name": "fq Same room",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You're already in the same room!!"
+            }
+          ],
+          "script": "fq.arrived(nil)"
+        },
+        {
+          "name": "fq No ki",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You sense no ki."
+            }
+          ],
+          "script": "fq.noKi()"
+        },
+        {
+          "name": "fq No access",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You don't have access to this section!"
+            }
+          ],
+          "script": "fq.noAccess()"
+        },
+        {
+          "name": "fq Appule here",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "[BOSS] Appule is here"
+            }
+          ],
+          "script": "fq.appuleHere()"
+        },
+        {
+          "name": "fq Appule dead",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Appule is dead!  R.I.P."
+            }
+          ],
+          "script": "fq.appuleDead()"
+        },
+        {
+          "name": "fq Hatch seal",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "The seals of the Hatch automatically release"
+            }
+          ],
+          "script": "fq.sealReleased()"
+        },
+        {
+          "name": "fq Cui Cui here",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "[BOSS] Cui Cui is standing here."
+            }
+          ],
+          "script": "fq.cuiHere()"
+        },
+        {
+          "name": "fq Door code",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "Cui Cui mutters, \"(\\d+)\""
+            }
+          ],
+          "script": "fq.gotPassword(matches[2])"
+        },
+        {
+          "name": "fq Cui Cui dead",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Cui Cui is dead!  R.I.P."
+            }
+          ],
+          "script": "fq.cuiDead()"
+        },
+        {
+          "name": "fq Engine hatch",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "An Engineer is rummaging around frantically in search of something."
+            }
+          ],
+          "script": "fq.engineHatch()"
+        },
+        {
+          "name": "fq Engineer card",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You found it! Quick, give it to me"
+            }
+          ],
+          "script": "fq.engineerWantsCard()"
+        },
+        {
+          "name": "fq Uniform",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "An Engineer gives you An Engineer's Uniform."
+            }
+          ],
+          "script": "fq.gotUniform()"
+        },
+        {
+          "name": "fq Technician",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "We have an emergency! Are you the engineer we called for?"
+            }
+          ],
+          "script": "fq.technicianAsks()"
+        },
+        {
+          "name": "fq Steering online",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Steering Module online. Resuming operations."
+            }
+          ],
+          "script": "fq.steeringOnline()"
+        },
+        {
+          "name": "fq Steering card",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "A Technician gives you Steering Module Access Card"
+            }
+          ],
+          "script": "fq.steeringDone()"
+        },
+        {
+          "name": "fq Dying man",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "A dying man says, 'I...don't recognize..you.'"
+            }
+          ],
+          "script": "fq.dyingMan()"
+        },
+        {
+          "name": "fq Dodoria named",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "A dying man says, 'Dodoria did this to me.'"
+            }
+          ],
+          "script": "fq.dodoriaNamed()"
+        },
+        {
+          "name": "fq Dodoria here",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "[BOSS] Dodoria is standing here."
+            }
+          ],
+          "script": "fq.dodoriaHere()"
+        },
+        {
+          "name": "fq Dodoria dead",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Dodoria is dead!  R.I.P."
+            }
+          ],
+          "script": "fq.dodoriaDead()"
+        },
+        {
+          "name": "fq Avenged",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "A dying man gives you a note from a dying man."
+            }
+          ],
+          "script": "fq.avenged()"
+        },
+        {
+          "name": "fq Officer",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Communications Officer says, 'If so, give it to me.'"
+            }
+          ],
+          "script": "fq.officerAsks()"
+        },
+        {
+          "name": "fq Need power",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Go to the power module and see what's wrong."
+            }
+          ],
+          "script": "fq.needPower()"
+        },
+        {
+          "name": "fq Engineer idle",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "An Electrical Engineer says in a demanding voice, \"Speak, imbecile!\""
+            }
+          ],
+          "script": "fq.engineerIdle()"
+        },
+        {
+          "name": "fq Power card",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "An Electrical Engineer gives you Power Module Access Card"
+            }
+          ],
+          "script": "fq.powerDone()"
+        },
+        {
+          "name": "fq Zarbon asks",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Zarbon says, '(Show me the card|Now the Engine Module|Hmm\\.\\.\\.okay, now the Power Module|and the Steering Module)"
+            }
+          ],
+          "script": "fq.zarbonAsks()"
+        },
+        {
+          "name": "fq Duplicates",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "These are duplicates...nice try!"
+            }
+          ],
+          "script": "fq.duplicates()"
+        },
+        {
+          "name": "fq Zarbon dead",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Zarbon is dead!  R.I.P."
+            }
+          ],
+          "script": "fq.zarbonDead()"
+        },
+        {
+          "name": "fq Bridge card",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Taiko gives you Bridge Access Card (Online)."
+            }
+          ],
+          "script": "fq.bridgeCard()"
+        }
+      ]
+    }
+  ]
+}

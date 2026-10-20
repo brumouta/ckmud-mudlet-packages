@@ -1,0 +1,150 @@
+{
+  "name": "DataLords",
+  "version": "1.2.0",
+  "title": "Data Lords v2.0 event automation",
+  "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "DataLords",
+      "file": "src/DataLords.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "dl2",
+      "regex": "^dl2(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\ndl2.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "DataLords",
+      "folder": true,
+      "children": [
+        {
+          "name": "dl2 Event requested",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "The Data Lords v2.0 event has been requested by (\\w+)\\.$"
+            }
+          ],
+          "script": "dl2.requested(matches[2])"
+        },
+        {
+          "name": "dl2 Event ended",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "[RAID: Zenzeyh v2.0] Power creep is real..."
+            }
+          ],
+          "script": "dl2.ended()"
+        },
+        {
+          "name": "dl2 Rival appears",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(\\w+).* flies out of nowhere and attacks (\\w+)!$"
+            },
+            {
+              "type": "regex",
+              "pattern": "^The sky splits open as (\\w+).* crashes down upon (\\w+), wreathed in a blazing aura!$"
+            }
+          ],
+          "script": "dl2.rivalAppears(matches[2], matches[3])"
+        },
+        {
+          "name": "dl2 Rival dies",
+          "active": false,
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(.+?) is dead!\\s+R\\.I\\.P\\."
+            }
+          ],
+          "script": "dl2.rivalDies(matches[2])"
+        },
+        {
+          "name": "dl2 Bosses",
+          "active": false,
+          "folder": true,
+          "children": [
+            {
+              "name": "dl2 Start Jhet",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "[EVENT: Macubyree] Long as none of these players is wielding a dagger...."
+                }
+              ],
+              "script": "dl2.findAndAttack(\"jhet\")"
+            },
+            {
+              "name": "dl2 Start Macubyree",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Jhet 2.0 is dead!  R.I.P."
+                }
+              ],
+              "script": "dl2.attackBoss(\"macub\")"
+            },
+            {
+              "name": "dl2 Start Weezpur",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "[EVENT: Weezpurr v2.0] Alright, dad mode activated! Time to teach you some discipline!"
+                }
+              ],
+              "script": "dl2.findAndAttack(\"weezp\")"
+            },
+            {
+              "name": "dl2 Start Phenix",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "[EVENT: Phenix v2.0] Yeah! Fuck it! Forget the no-stabbing policy for anniversaries!"
+                }
+              ],
+              "script": "dl2.findAndAttack(\"phenix\")"
+            },
+            {
+              "name": "dl2 Start Daiue",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Phenix v2.0 is dead!  R.I.P."
+                }
+              ],
+              "script": "dl2.bossDied(\"daiue\")"
+            },
+            {
+              "name": "dl2 Start Zenzeyh",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Daiue v2.0 is dead!  R.I.P."
+                }
+              ],
+              "script": "dl2.bossDied(\"zenzeyh\")"
+            },
+            {
+              "name": "dl2 Killed Zenzeyh",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Zenzeyh v2.0 is dead!  R.I.P."
+                }
+              ],
+              "script": "dl2.zenzeyhDied()"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

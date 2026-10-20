@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:        # reused by the release workflow
+
+jobs:
+  simple:
+    name: Blackjack, DataLords, FriezaQuest, YamoshiSpawn
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y lua5.3
+      - name: Test
+        run: for t in tests/*_test.lua; do echo "== $t"; lua5.3 "$t" || exit 1; done
+      - name: Build
+        run: python3 tools/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpackage-simple
+          path: dist/*.mpackage
+
+  muddler:
+    name: ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [Autolearn, Chores, KaiokenTrain, Score]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Lint manifests
+        run: python3 tools/lint_manifests.py packages/${{ matrix.package }}/src
+      - name: Simulation tests
+        working-directory: packages/${{ matrix.package }}/tests
+        run: npm install --no-audit --no-fund && node runner.js driver.lua
+      - name: Muddle
+        uses: demonnic/build-with-muddler@main
+        with:
+          workingDir: packages/${{ matrix.package }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpackage-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/build/${{ matrix.package }}.mpackage

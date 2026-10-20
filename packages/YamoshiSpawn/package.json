@@ -1,0 +1,108 @@
+{
+  "name": "YamoshiSpawn",
+  "version": "1.1.0",
+  "title": "Yamoshi spawn quest helper",
+  "description": "Runs the three Temple trials (Memory, Perception, Power) and the ritual that summons Yamoshi. Type `ys help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "YamoshiSpawn",
+      "file": "src/YamoshiSpawn.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "ys",
+      "regex": "^ys(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nys.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "YamoshiSpawn",
+      "folder": true,
+      "children": [
+        {
+          "name": "ys Memory guardian",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You must extinguish them in their proper sequence."
+            }
+          ],
+          "script": "ys.guardianReady(\"memory\")"
+        },
+        {
+          "name": "ys Flame name",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The Guardian of Memories says, '(?:The sequence begins with|Then comes|Followed by|And finally,) The Flame of (\\w+)\\.'"
+            }
+          ],
+          "script": "ys.flameNamed(matches[2])"
+        },
+        {
+          "name": "ys Flames done",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Remember them well, and seek them in the proper order."
+            }
+          ],
+          "script": "ys.memoryGo()"
+        },
+        {
+          "name": "ys Perception guardian",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You will have 5 minutes. Seek them wisely."
+            }
+          ],
+          "script": "ys.guardianReady(\"perception\")"
+        },
+        {
+          "name": "ys Perception start",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Very well. Test your perception wisely."
+            }
+          ],
+          "script": "ys.perceptionGo()"
+        },
+        {
+          "name": "ys Might guardian",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Greetings, seeker. I am the Guardian of Might."
+            }
+          ],
+          "script": "ys.guardianReady(\"power\")"
+        },
+        {
+          "name": "ys Power start",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Four warriors now descend to challenge you. Defeat them all!"
+            }
+          ],
+          "script": "ys.powerGo()"
+        },
+        {
+          "name": "ys Summoned",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "The relics resonate with divine power, summoning a legendary presence!"
+            }
+          ],
+          "script": "ys.summoned()"
+        }
+      ]
+    }
+  ]
+}

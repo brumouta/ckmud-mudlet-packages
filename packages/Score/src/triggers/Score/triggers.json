@@ -1,0 +1,129 @@
+[
+    {
+        "name": "Score Name",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "Score Information for:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^Score Information for:(.+)$",
+                "type": "regex"
+            }
+        ],
+        "script": "SC.Player.name = string.trim(multimatches[2][2])"
+    },
+    {
+        "name": "Score Race",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "Race:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^Race:\\s*(.+?)\\s*$",
+                "type": "regex"
+            }
+        ],
+        "script": "SC.Player.race = string.trim(multimatches[2][2])"
+    },
+    {
+        "name": "Base PL",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "Base PL:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^Base PL:\\s*([0-9,]+)",
+                "type": "regex"
+            }
+        ]
+    },
+    {
+        "name": "Ki and Regen",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "Ki:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^Ki:\\s*(\\d+)%\\s*KI REGEN: (\\d+)%\\s*$",
+                "type": "regex"
+            }
+        ]
+    },
+    {
+        "name": "GodKi and Regen",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "GodKi:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^GodKi:\\s*(\\d+)%\\s*GODKI REGEN: (\\d+)%\\s*$",
+                "type": "regex"
+            }
+        ]
+    },
+    {
+        "name": "Biomass and Regen",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "BioMass:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^BioMass:\\s*(\\d+)%\\s*BM REGEN: (\\d+)%\\s*$",
+                "type": "regex"
+            }
+        ]
+    },
+    {
+        "name": "Heat and Dissipation",
+        "multiline": "yes",
+        "multilineDelta": "0",
+        "patterns": [
+            {
+                "pattern": "Heat:",
+                "type": "startOfLine"
+            },
+            {
+                "pattern": "^Heat:\\s*(\\d+)%\\s*Dissipation: (\\d+)%\\s*$",
+                "type": "regex"
+            }
+        ]
+    },
+    {
+        "name": "Score Extras on Orbs",
+        "patterns": [
+            {
+                "pattern": "Green Orbs:",
+                "type": "startOfLine"
+            }
+        ],
+        "script": "SC.API.Sheet:show_once()"
+    },
+    {
+        "name": "Score Extras on Close",
+        "patterns": [
+            {
+                "pattern": "See 'Status', 'Train', and 'Traits' for more information.",
+                "type": "startOfLine"
+            }
+        ],
+        "script": "SC.API.Sheet:show_once()"
+    }
+]

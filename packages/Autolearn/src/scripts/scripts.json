@@ -1,0 +1,39 @@
+[
+    {
+        "name": "__PKGNAME__",
+        "script": "require(\"__PKGNAME__\"):register(\"__PKGNAME__\", \"__VERSION__\")"
+    },
+    {
+        "name": "Utils"
+    },
+    {
+        "name": "Core"
+    },
+    {
+        "name": "Attacks"
+    },
+    {
+        "name": "Damage"
+    },
+    {
+        "name": "Fight"
+    },
+    {
+        "name": "StateMachine"
+    },
+    {
+        "name": "SendQueue"
+    },
+    {
+        "name": "Skills"
+    },
+    {
+        "name": "Modes"
+    },
+    {
+        "name": "Racials"
+    },
+    {
+        "name": "Learning"
+    }
+]
