@@ -73,9 +73,19 @@ Needs Lua 5.1+, Python 3 and Node (Node is only used for the muddler packages; t
 - **Blackjack, DataLords, FriezaQuest, YamoshiSpawn:** Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test.
 - **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted, because muddler silently ships an empty script if a trigger's `.lua` file is missing. Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
 
+## Versioning
+
+Every package uses [semantic versioning](https://semver.org/), `MAJOR.MINOR.PATCH`, in its `package.json` or `mfile`:
+
+- **PATCH** (1.2.0 → 1.2.1): bug fixes, e.g. a trigger pattern that missed a line.
+- **MINOR** (1.2.0 → 1.3.0): new features or behaviour that existing users won't trip over, e.g. a new command or stage.
+- **MAJOR** (1.2.0 → 2.0.0): changes that need users to do something, e.g. a renamed package or command, or settings that no longer carry over.
+
+Autolearn, Chores, KaiokenTrain and Score used date versions (e.g. `26.07.27`) while they lived in the CK repo, and restarted at 1.0.0 here.
+
 ## Releasing
 
-Bump the version (`package.json` or `mfile`), commit, then tag:
+Bump the version of each package you changed, commit, then tag:
 
 ```bash
 git tag v2026.10.21 && git push --tags
