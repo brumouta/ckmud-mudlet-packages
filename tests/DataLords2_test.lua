@@ -18,7 +18,7 @@ function send(c) sent[#sent + 1] = c end
 function cecho(s) LOG = (LOG or "") .. s end
 function enableTrigger(n) enabled[n] = true end
 function disableTrigger(n) enabled[n] = false end
-function tempTimer(_, f) id = id + 1; timers[id] = f; return id end
+function tempTimer(d, f) id = id + 1; timers[id] = { d = d, f = f }; return id end
 function killTimer(i) timers[i] = nil end
 local lastRegex
 function tempRegexTrigger(_, f) id = id + 1; temps[id] = f; lastRegex = id; return id end
@@ -34,12 +34,14 @@ function raiseEvent(event, ...)
 end
 function getEpoch() return clock end
 local function typed(cmd) handlers["sysDataSendRequest:own request"]("sysDataSendRequest", cmd) end
-local function flush()                              -- run the timers that are due now (snapshot first:
-  local due = {}                                      -- a timer may start another one)
-  for i, f in pairs(timers) do due[#due + 1] = { i, f } end
+local function flush(upTo)                          -- run the timers that are due now (snapshot first:
+  upTo = upTo or 9                                    -- a timer may start another one); the 10-second
+  local due = {}                                      -- checks only run with later()
+  for i, tm in pairs(timers) do if tm.d <= upTo then due[#due + 1] = { i, tm.f } end end
   table.sort(due, function(a, b) return a[1] < b[1] end)
   for _, d in ipairs(due) do timers[d[1]] = nil; d[2]() end
 end
+local function later() flush(math.huge) end
 local function expect(want)
   local got = table.concat(sent, " | "); sent = {}
   assert(got == want, "\n got: " .. got .. "\nwant: " .. want)
@@ -117,7 +119,7 @@ assert(enabled["dl2 Bosses"]); expect("pursue macub | sense macub | ss macub")
 -- dl2 resume clears a rival that never died
 dl2.rivalAppears("Nappa", "you"); expect("ss Nappa | ss Nappa | ss Nappa | ss Nappa")
 dl2.command("resume"); assert(enabled["dl2 Bosses"] and not next(dl2.rivals))
-expect("pursue macub | sense macub | ss macub")
+expect("event")                                       -- looks the boss up again and travels
 
 -- Boss chain and the loop
 dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | sense zenzeyh | ss zenzeyh")
@@ -185,6 +187,50 @@ dl2.goTo("weezp"); MSDP.set("Target", "name", "Jhet 2.0"); dl2.goTo("weezp"); se
 MSDP.Target.name = ""                               -- cleared without an event
 namedTimers["pending check"](); flush(); expect("event")
 print("OK  the periodic check catches a missed signal")
+
+-- A missed Jhet/Macubyree death line doesn't block: Weezpurr's start line proves they're done
+local function arriveAt(planet)
+  matches = { "Location: " .. planet .. "   Time Rem: 60 mins", planet }
+  temps[lastRegex]()
+end
+timers = {}; MSDP.Target.name = ""
+dl2.startPair(); arriveAt("Earth"); sent = {}
+dl2.pairDied("jhet"); sent = {}                     -- Macubyree's death line never seen
+dl2.goTo("weezp"); expect("event")
+print("OK  Weezpurr goes even if a pair death line was missed")
+
+-- A target that never clears (a busy zone) delays the next boss at most MAX_WAIT seconds
+timers = {}
+MSDP.set("Target", "name", "Some mob"); dl2.goTo("phenix"); expect("")
+clock = clock + 10; namedTimers["pending check"](); flush(); expect("")
+clock = clock + 11; namedTimers["pending check"](); flush(); expect("event")
+print("OK  a target that never clears only delays it " .. dl2.MAX_WAIT .. "s")
+
+-- Did `focus 'instant'` work? After attacking, the boss must be my target; otherwise travel again
+timers = {}; MSDP.set("Target", "name", ""); LOG = ""
+dl2.goTo("weezp"); arriveAt("Namek"); expect("event | focus 'instant' dende | pursue weezp | sense weezp | ss weezp")
+later(); expect("event")                            -- not my target 10s later: look it up again
+assert(LOG:find("weezp isn't my target %- travelling again %(try 1/3%)"))
+arriveAt("Namek"); sent = {}
+MSDP.set("Target", "name", "Weezpurr v2.0")         -- this time it worked
+later(); expect("")
+print("OK  a failed instant is retried; a successful one isn't")
+
+timers = {}; MSDP.set("Target", "name", "")
+dl2.goTo("phenix"); arriveAt("Vegeta"); sent = {}
+for _ = 1, 3 do later(); arriveAt("Vegeta") end; sent = {}
+later(); expect("")                                 -- gives up after 3 tries, says how to retry
+assert(LOG:find("giving up"))
+dl2.command("resume"); expect("event")              -- dl2 resume travels again
+print("OK  gives up after " .. dl2.MAX_TRIES .. " tries; dl2 resume travels again")
+
+timers = {}
+dl2.goTo("weezp"); arriveAt("Namek"); sent = {}
+dl2.bossDead("Weezpurr")                            -- killed before the check
+later(); expect("")
+dl2.goTo("phenix"); sent = {}; later(); expect("event")   -- `event` never answered: asked again
+print("OK  no retry for a dead boss; an unanswered `event` is asked again")
+timers = {}; MSDP.set("Target", "name", "")
 
 -- Zenzeyh's last words ("[RAID: Zenzeyh v2.0] Power creep is real...") end the event and
 -- switch the boss folder off just BEFORE his "is dead!" line. The death trigger must

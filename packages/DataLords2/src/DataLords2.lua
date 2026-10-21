@@ -10,6 +10,9 @@ DL.loop        = DL.loop or false           -- re-request the event after Zenzey
 DL.requestCmd  = "request event 18"
 DL.loopDelay   = 7                          -- seconds before re-requesting
 DL.loot        = "get all.tab"
+DL.CHECK_AFTER = 10                         -- seconds after attacking a boss to check it became my target
+DL.MAX_TRIES   = 3                          -- travel attempts per boss before giving up
+DL.MAX_WAIT    = 20                         -- seconds a queued boss waits for my current target to clear
 
 -- How to reach each planet's event zone
 DL.travel = {
@@ -33,15 +36,61 @@ local function info(color, msg)
 end
 
 -- ---------------------------------------------------------------- bosses
+DL.dead = {}                      -- bosses seen dying this event: key -> true
+
 function DL.attackBoss(boss)
   DL.boss = boss
   send("pursue " .. boss)
   send("sense " .. boss)
   send(DL.attack .. " " .. boss)
+  DL.verify(boss)
+end
+
+-- Is the boss my MSDP target? ("weezp" matches "Weezpurr v2.0")
+function DL.targeting(boss)
+  local M = rawget(_G, "MSDP")
+  local target = M and M.Target and M.Target.name
+  return type(target) == "string" and target:lower():find(boss, 1, true) ~= nil
+end
+
+-- Still worth chasing? (not dead, not replaced by another boss, event running)
+local function stillAfter(boss)
+  return DL.active and DL.boss == boss and not DL.dead[boss]
+end
+
+-- `focus 'instant'` (or `pursue`) can fail - mid-fight, lag - and then the attack goes
+-- nowhere. Shortly after attacking, the boss should be my target; if not, travel again.
+function DL.verify(boss)
+  if DL.verifyTimer then killTimer(DL.verifyTimer) end
+  DL.verifyTimer = tempTimer(DL.CHECK_AFTER, function()
+    DL.verifyTimer = nil
+    if not stillAfter(boss) or next(DL.rivals) then return end   -- a rival: resume re-attacks
+    if DL.targeting(boss) then DL.tries = 0; return end
+    DL.retry(boss, boss .. " isn't my target")
+  end)
+end
+
+function DL.retry(boss, why)
+  if DL.triesFor ~= boss then DL.triesFor, DL.tries = boss, 0 end
+  DL.tries = DL.tries + 1
+  if DL.tries > DL.MAX_TRIES then
+    DL.tries = 0
+    return info("red", why .. " after " .. DL.MAX_TRIES .. " tries - giving up. `dl2 resume` tries again")
+  end
+  info("yellow", why .. " - travelling again (try " .. DL.tries .. "/" .. DL.MAX_TRIES .. ")")
+  DL.findAndAttack(boss)
+end
+
+-- "<Name> [v]2.0 is dead!" for any event boss
+DL.BOSS_KEYS = { jhet = "jhet", macubyree = "macub", weezpurr = "weezp", phenix = "phenix", daiue = "daiue", zenzeyh = "zenzeyh" }
+function DL.bossDead(name)
+  local key = DL.BOSS_KEYS[name:lower()]
+  if key then DL.dead[key] = true end
 end
 
 -- Ask `event` where the boss is, travel there, then attack
 function DL.findAndAttack(boss)
+  DL.boss = boss
   if boss == "jhet" then DL.pairEngaged = true end
   if DL.locTrigger then killTrigger(DL.locTrigger) end
   if DL.locTimer then killTimer(DL.locTimer) end
@@ -57,7 +106,10 @@ function DL.findAndAttack(boss)
     for _, cmd in ipairs(route) do send(cmd) end
     DL.attackBoss(boss)
   end, 1)
-  DL.locTimer = tempTimer(10, function() killTrigger(DL.locTrigger) end)
+  DL.locTimer = tempTimer(10, function()          -- `event` never answered (lag)
+    killTrigger(DL.locTrigger)
+    if stillAfter(boss) and not next(DL.rivals) then DL.retry(boss, "No answer to `event`") end
+  end)
 
   send("event")
 end
@@ -89,26 +141,25 @@ end
 
 -- ---------------------------------------------------------------- waiting until free
 -- A new boss's start line can arrive mid-fight (or during a rival). Travelling then
--- fails - `focus 'instant'` and `pursue` are refused in combat - and nothing would try
--- again. So travel waits, queued, until we're free: no rival, no MSDP target, and the
--- Jhet/Macubyree pair (once engaged) finished.
+-- fails - `focus 'instant'` and `pursue` are refused in combat. So travel waits, queued,
+-- until no rival is alive and MSDP shows no target - but for the target at most
+-- MAX_WAIT seconds (it may never clear in a busy zone); verify() retries if it fails.
 function DL.fighting()
   local M = rawget(_G, "MSDP")
   local target = M and M.Target and M.Target.name
   return type(target) == "string" and target ~= ""
 end
 
-function DL.pairInProgress()
-  return DL.pairEngaged and DL.pairDead ~= nil and not (DL.pairDead.jhet and DL.pairDead.macub)
-end
-
 function DL.busy()
-  return next(DL.rivals) ~= nil or DL.fighting() or DL.pairInProgress()
+  if next(DL.rivals) ~= nil then return true end
+  return DL.fighting() and os.time() - (DL.pendingSince or os.time()) < DL.MAX_WAIT
 end
 
 -- Travel to a boss now, or as soon as we're free
 function DL.goTo(boss)
   if not DL.active then return end
+  if boss ~= "jhet" then DL.pairEngaged = false end   -- a later boss's start line: the pair is over
+  DL.pendingSince = os.time()
   if DL.busy() then
     DL.pending = boss
     info("white", boss .. " is up - going after it once this fight is over")
@@ -122,7 +173,8 @@ function DL.flushPending()
   if not (DL.pending and DL.active) or DL.busy() then return end
   local boss = DL.pending
   DL.pending = nil
-  tempTimer(1, function() if DL.active then DL.findAndAttack(boss) end end)
+  DL.boss = boss
+  tempTimer(1, function() if DL.active and DL.boss == boss then DL.findAndAttack(boss) end end)
 end
 
 -- Attack a boss in the same area; during a rival just remember it (resume attacks it)
@@ -266,6 +318,7 @@ function DL.requested(requester)
   end
   if me and requester:lower() == me:lower() then
     DL.active, DL.zenzeyhDone, DL.endedAt, DL.pending = true, false, nil, nil
+    DL.dead, DL.tries = {}, 0
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
     DL.recordEvent()
@@ -368,9 +421,15 @@ end
 
 -- Escape hatch: a rival fled or died without the usual message
 function DL.forceResume()
-  DL.rivals = {}
+  DL.rivals, DL.tries = {}, 0
   disableTrigger(DL.RIVAL_DIES)
-  DL.resume()
+  if not DL.active then return end
+  local boss = DL.pending or DL.boss
+  DL.pending = nil
+  if boss then
+    info("green", "Resuming: travelling to " .. boss)
+    DL.findAndAttack(boss)
+  end
 end
 
 -- ---------------------------------------------------------------- MSDP
@@ -392,7 +451,7 @@ DL.HELP = {
   { "dl2 status",            "Show event state and current settings" },
   { "dl2 loop [on|off]",     "Re-request the event after Zenzeyh dies (no arg toggles)" },
   { "dl2 attack <command>",  "Attack used on bosses and rivals, e.g. dl2 attack ss" },
-  { "dl2 resume",            "Forget pending rivals and continue the pursuit" },
+  { "dl2 resume",            "Forget pending rivals and travel to the current boss again" },
   { "dl2 name [<you>]",       "Show or set your character name (used to spot your own requests)" },
   { "dl2 tokens",            "Tokens spent this session (10,000 per event) and in past sessions" },
   { "dl2 tokens reset",      "Start a new session count now" },
@@ -413,7 +472,7 @@ function DL.status()
   local name, source = DL.myName()
   cecho("  <white>Name:   " .. (name and (name .. " (" .. source .. ")") or "<yellow>unknown - dl2 name <you><white>") .. "\n")
   cecho("  <white>Event:  " .. onoff(DL.active) .. "\n")
-  cecho("  <white>Boss:   " .. (DL.boss or "-") .. "\n")
+  cecho("  <white>Boss:   " .. (DL.boss or "-") .. (DL.pending and (" (queued: " .. DL.pending .. ")") or "") .. "\n")
   local rivals = rivalList()
   cecho("  <white>Rivals: " .. (#rivals > 0 and table.concat(rivals, ", ") or "-") .. "\n")
   cecho("  <white>Attack: " .. DL.attack .. "\n")
