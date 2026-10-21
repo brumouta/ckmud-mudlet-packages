@@ -14,6 +14,8 @@ function killTrigger(i) temps[i] = nil end
 function registerNamedEventHandler(_, name, event, fn) handlers[event] = fn end
 local named = {}
 function registerNamedTimer(_, name, _, fn) named[name] = fn end
+local isConnected = true
+function getConnectionInfo() return "ckmud", 4000, isConnected end
 function deleteNamedTimer(_, name) named[name] = nil end
 -- Geyser stand-ins for the window
 local labelText
@@ -66,6 +68,13 @@ ok(BossTimer.parse("16 min 35 sec") == 995 and BossTimer.parse("1 hour 2 min 3 s
    and BossTimer.parse("45 sec") == 45 and BossTimer.parse("2 hours") == 7200 and BossTimer.parse("soon") == nil,
    "reads hours, minutes and seconds")
 
+-- Just installed mid-session: it doesn't know the respawn time, so it asks by itself
+wait(5)
+ok(sent[1] == "uptime", "installed mid-session: asks uptime 5 seconds after loading")
+feed(UPTIME:format("20 min 0 sec"))
+ok(deleted == 12 and math.abs(BossTimer.remaining() - 1200) < 0.01, "that check is hidden and the countdown starts")
+sent, deleted = {}, 0
+
 -- You type uptime: shown as normal, countdown starts
 feed(UPTIME:format("16 min 35 sec"))
 ok(deleted == 0, "an uptime you typed yourself stays on screen")
@@ -110,10 +119,28 @@ feed(UPTIME:format("40 min 0 sec"))
 LOG, sent, deleted = "", {}, 0
 feed("Copyover recovery complete.")
 ok(BossTimer.remaining() == nil and LOG:find("Server restarted %(copyover%)"), "copyover drops the old countdown")
-wait(40 * 60); ok(not LOG:find("Bosses respawn in") and not LOG:find("have respawned"), "and its warnings never fire")
-ok(sent[1] == "uptime", "it asks uptime after the copyover")
+wait(5); ok(sent[1] == "uptime", "it asks uptime 5 seconds after the copyover")
 feed(UPTIME:format("59 min 50 sec"))
 ok(deleted == 12 and math.abs(BossTimer.remaining() - 3590) < 0.01, "the new countdown starts, check hidden")
+wait(40 * 60)                                  -- past when the old 40-minute countdown would have ended
+ok(not LOG:find("Bosses respawn in") and not LOG:find("have respawned"), "the old countdown's warnings never fire")
+
+-- While the respawn time is unknown it keeps asking (every 5 minutes), but only when it makes sense
+BossTimer.respawnAt = nil
+sent = {}
+isConnected = false
+named.unknown(); ok(#sent == 0, "unknown but disconnected: doesn't ask")
+isConnected = true
+named.unknown(); ok(sent[1] == "uptime", "unknown and connected: asks")
+named.unknown(); ok(#sent == 1, "doesn't ask again while that check is still pending")
+-- That check is never answered (lag): after 15 seconds it gives up...
+wait(15)
+deleted = 0
+feed(UPTIME:format("10 min 0 sec"))
+ok(deleted == 0, "...so an uptime you then type yourself is still shown")
+ok(math.abs(BossTimer.remaining() - 600) < 0.01, "and it's used for the countdown")
+sent = {}
+named.unknown(); ok(#sent == 0, "once it's known, the 5-minute check does nothing")
 
 BossTimer.command("flash", "off"); BossTimer.command("help"); BossTimer.command("bogus")
 print("\nBossTimer: ALL PASSED")

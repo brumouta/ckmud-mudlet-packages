@@ -11,6 +11,8 @@ BT.warnings   = BT.warnings or { 300, 60 }  -- seconds before the respawn to war
 BT.recheck    = 60                          -- seconds after a respawn to ask `uptime` again
 BT.afterLogin = 10                          -- seconds after connecting to ask `uptime`
 BT.afterCopyover = 5                        -- seconds after a copyover to ask `uptime`
+BT.unknownRetry = 300                       -- while the respawn time is unknown, ask `uptime` this often
+BT.answerWait = 15                          -- an automatic check not answered by then is given up
 BT.flash      = (BT.flash == nil) and true or BT.flash   -- flash Mudlet's taskbar icon at respawn
 
 -- ---------------------------------------------------------------- state
@@ -56,6 +58,7 @@ end
 function BT.onRespawnLine(text)
   local secs = BT.parse(text)
   if not secs then return end
+  BT.checkingAt = nil
   BT.respawnAt = getEpoch() + secs
   clearTimers()
   for _, w in ipairs(BT.warnings) do
@@ -79,13 +82,36 @@ end
 -- quiet = hide the uptime block on screen (automatic checks)
 function BT.check(quiet)
   BT.quiet = quiet or false
+  BT.checkingAt = getEpoch()
   send("uptime", false)
+  -- If it's never answered (lag, a disconnect), stop waiting: otherwise the next
+  -- uptime you type yourself would be hidden
+  if BT._answerTimer then killTimer(BT._answerTimer) end
+  BT._answerTimer = tempTimer(BT.answerWait, function()
+    BT._answerTimer = nil
+    if not BT._gag then BT.quiet = false end
+    BT.checkingAt = nil
+  end)
+end
+
+local function connected()
+  local ok, _, _, isConnected = pcall(getConnectionInfo)
+  if ok and isConnected ~= nil then return isConnected end
+  return true                                -- older Mudlet without getConnectionInfo
+end
+
+-- Ask quietly whenever the respawn time is unknown: after installing or reloading
+-- the package, after a check that went unanswered, ... (not while one is pending)
+function BT.ensureKnown()
+  if BT.respawnAt or BT.checkingAt or not connected() then return end
+  BT.check(true)
 end
 
 -- The uptime block runs from "CKMud System Information:" to its second border line.
 -- When the check was automatic, hide every line of it (the triggers still read them).
 function BT.blockStart()
   if not BT.quiet then return end
+  if BT._answerTimer then killTimer(BT._answerTimer); BT._answerTimer = nil end
   deleteLine()
   local borders = 0
   if BT._gag then killTrigger(BT._gag) end
@@ -114,6 +140,9 @@ end
 registerNamedEventHandler("BossTimer", "login", "sysConnectionEvent", function()
   at(BT.afterLogin, function() BT.check(true) end)
 end)
+
+registerNamedTimer("BossTimer", "unknown", BT.unknownRetry, BT.ensureKnown, true)
+tempTimer(5, BT.ensureKnown)                -- just installed or reloaded mid-session
 
 -- ---------------------------------------------------------------- window
 function BT.showWindow(show)

@@ -1,6 +1,6 @@
 {
   "name": "BossTimer",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "title": "Boss respawn timer",
   "description": "Counts down to CKMud's boss respawn (from `uptime`), warns before it, and re-checks after each respawn. Type `boss help` for commands.",
   "author": "Bruno Mouta",
