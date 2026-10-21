@@ -185,10 +185,28 @@ BT.HELP = {
   { "boss",                 "Time left until the bosses respawn" },
   { "boss check",           "Ask `uptime` now (shown on screen)" },
   { "boss window on|off",   "A small window with a live countdown" },
-  { "boss warn <min,...>",  "When to warn, in minutes before the respawn (default 5,1)" },
+  { "boss warn <min,...>",  "When to warn before the respawn, in minutes (5,1,0.5) or seconds (30s); default 5,1" },
   { "boss flash on|off",    "Flash Mudlet's taskbar icon at the respawn" },
   { "boss help",            "Show this list" },
 }
+
+-- "5,1,0.5" or "10 2 30s" -> seconds, largest first, without duplicates or zero.
+-- Plain numbers are minutes (decimals use a dot); a trailing s means seconds.
+-- Returns nil plus the offending piece if something isn't a number.
+function BT.parseWarnings(text)
+  local list, seen = {}, {}
+  for piece in text:gmatch("[^,%s]+") do
+    local num, unit = piece:lower():match("^(%d*%.?%d+)([ms]?)$")
+    if not num then return nil, piece end
+    local secs = math.floor(tonumber(num) * (unit == "s" and 1 or 60) + 0.5)
+    if secs > 0 and not seen[secs] then
+      seen[secs] = true
+      list[#list + 1] = secs
+    end
+  end
+  table.sort(list, function(a, b) return a > b end)
+  return list
+end
 
 function BT.command(cmd, arg)
   if cmd == nil then
@@ -209,11 +227,13 @@ function BT.command(cmd, arg)
     BT.flash = arg == "on"
     info("white", "Flash " .. arg)
   elseif cmd == "warn" and arg then
-    local list = {}
-    for n in arg:gmatch("%d+") do list[#list + 1] = tonumber(n) * 60 end
-    table.sort(list, function(a, b) return a > b end)
+    local list, bad = BT.parseWarnings(arg)
+    if bad then return info("yellow", "Didn't understand '" .. bad .. "'. Use minutes like 5,1,0.5 or seconds like 30s") end
     BT.warnings = list
-    info("white", "Warning at " .. (#list > 0 and arg or "nothing") .. " minute(s) before")
+    local shown = {}
+    for _, w in ipairs(list) do shown[#shown + 1] = BT.fmt(w) end
+    info("white", #list > 0 and ("Warning at " .. table.concat(shown, ", ") .. " before the respawn")
+                             or "No warnings (the respawn itself is still announced)")
     local left = BT.remaining()
     if left then BT.onRespawnLine(math.floor(left) .. " sec") end   -- re-arm with the new warnings
   else

@@ -21,7 +21,7 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 | `boss` | Time left until the respawn |
 | `boss check` | Ask `uptime` now (shown on screen) |
 | `boss window on\|off` | A small movable window with a live countdown |
-| `boss warn <min,...>` | Minutes before the respawn to warn at, e.g. `boss warn 10,5,1` (default 5,1) |
+| `boss warn <times>` | When to warn before the respawn: minutes (`boss warn 10,5,1`), decimals (`boss warn 1,0.5`) or seconds (`boss warn 2,30s`). Default 5,1 |
 | `boss flash on\|off` | Flash Mudlet's taskbar icon at the respawn |
 | `boss help` | List the commands |
 

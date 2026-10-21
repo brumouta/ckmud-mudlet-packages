@@ -107,6 +107,20 @@ wait(1800 - 600); ok(LOG:find("Bosses respawn in 10m 00s!"), "boss warn 10,2: wa
 wait(480);        ok(LOG:find("Bosses respawn in 2m 00s!"), "and at 2 minutes")
 ok(not LOG:find("in 5m 00s!"), "old warnings are gone")
 
+-- Warning times: decimals, seconds, duplicates and zero
+local function warns(text) local l = BossTimer.parseWarnings(text); return l and table.concat(l, ",") end
+ok(warns("0.5") == "30", "boss warn 0.5 is 30 seconds")
+ok(warns("5,0.5") == "300,30" and warns("1.5") == "90", "decimals mixed with whole minutes")
+ok(warns("2,30s") == "120,30" and warns("10 2 30s") == "600,120,30", "seconds with s, spaces as separators")
+ok(warns("5,5,1,0") == "300,60", "duplicates and zero are dropped")
+ok(select(2, BossTimer.parseWarnings("5,abc")) == "abc", "anything else is rejected, with the bad piece named")
+LOG = ""
+BossTimer.command("warn", "5,abc"); ok(LOG:find("Didn't understand 'abc'"), "and nothing changes")
+BossTimer.command("warn", "1,0.5"); ok(LOG:find("Warning at 1m 00s, 0m 30s before the respawn"), "the confirmation shows what was set")
+feed(UPTIME:format("2 min 0 sec")); LOG = ""
+wait(90); ok(LOG:find("Bosses respawn in 0m 30s!"), "a 0.5-minute warning fires 30 seconds before")
+feed(UPTIME:format("2 min 0 sec"))              -- a fresh countdown for the window checks below
+
 -- Window
 BossTimer.command("window", "on")
 ok(labelText and labelText:find("2m 00s"), "window shows the live countdown")
