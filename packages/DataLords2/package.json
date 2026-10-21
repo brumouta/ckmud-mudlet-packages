@@ -1,6 +1,6 @@
 {
   "name": "DataLords2",
-  "version": "3.1.2",
+  "version": "3.2.0",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",
@@ -90,17 +90,27 @@
                   "pattern": "[EVENT: Macubyree] Long as none of these players is wielding a dagger...."
                 }
               ],
-              "script": "dl2.findAndAttack(\"jhet\")"
+              "script": "dl2.startPair()"
             },
             {
-              "name": "dl2 Start Macubyree",
+              "name": "dl2 Jhet dead",
               "patterns": [
                 {
                   "type": "substring",
                   "pattern": "Jhet 2.0 is dead!  R.I.P."
                 }
               ],
-              "script": "dl2.attackBoss(\"macub\")"
+              "script": "dl2.pairDied(\"jhet\")"
+            },
+            {
+              "name": "dl2 Macubyree dead",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^Macubyree(?: v?2\\.0)? is dead!\\s+R\\.I\\.P\\."
+                }
+              ],
+              "script": "dl2.pairDied(\"macub\")"
             },
             {
               "name": "dl2 Start Weezpur",

@@ -121,6 +121,30 @@ dl2.command("loop", "on"); dl2.zenzeyhDied(); flush(); expect("get all.tab | req
 -- After the event ends, rivals are ignored
 dl2.ended(); dl2.rivalAppears("Capella", "you"); expect("")
 dl2.command("attack", "kame"); dl2.attackBoss("x"); expect("pursue x | sense x | kame x")
+-- Jhet and Macubyree fight together and die in either order
+local function arrive()                              -- the `event` reply: travel and attack Jhet
+  matches = { "Location: Earth   Time Rem: 60 mins", "Earth" }
+  temps[lastRegex]()
+end
+dl2.command("attack", "ss"); sent = {}
+dl2.startPair(); arrive()
+expect("event | focus 'instant' malak | pursue jhet | sense jhet | ss jhet")
+dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")      -- usual order: then Macubyree
+dl2.pairDied("macub"); expect("")                                          -- both down: wait for the next boss
+assert(dl2.boss == nil and LOG:find("both down"))
+print("OK  Jhet first, then Macubyree")
+
+dl2.startPair(); arrive(); sent = {}
+dl2.pairDied("macub"); expect("")                    -- someone kills Macubyree first: keep on Jhet
+dl2.pairDied("jhet"); expect("")                     -- no chasing a dead Macubyree
+assert(dl2.boss == nil)
+print("OK  Macubyree first, then Jhet: never chases a dead boss")
+
+dl2.startPair(); arrive(); sent = {}
+dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")
+dl2.pairDied("jhet"); expect("")                     -- a repeated line doesn't restart the chase
+print("OK  a new pair starts fresh; repeats are ignored")
+
 -- Zenzeyh's last words ("[RAID: Zenzeyh v2.0] Power creep is real...") end the event and
 -- switch the boss folder off just BEFORE his "is dead!" line. The death trigger must
 -- therefore live outside that folder, and still act for an event that just ended.

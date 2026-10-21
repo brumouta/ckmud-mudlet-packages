@@ -61,6 +61,30 @@ function DL.findAndAttack(boss)
   send("event")
 end
 
+-- Jhet and Macubyree always fight together, and people kill them in either order.
+-- Track both: when one dies go after the other only if it's still alive; when both
+-- are down, wait for the next boss's start line.
+DL.PAIR = { jhet = "macub", macub = "jhet" }
+DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
+
+function DL.startPair()
+  DL.pairDead = { jhet = false, macub = false }
+  DL.findAndAttack("jhet")
+end
+
+function DL.pairDied(who)
+  DL.pairDead = DL.pairDead or { jhet = false, macub = false }
+  DL.pairDead[who] = true
+  local other = DL.PAIR[who]
+  if DL.pairDead[other] then
+    DL.boss = nil
+    info("green", "Jhet and Macubyree are both down - waiting for the next boss")
+  elseif DL.boss ~= other then
+    info("white", DL.PAIR_NAMES[who] .. " is down - going after " .. DL.PAIR_NAMES[other])
+    DL.attackBoss(other)
+  end
+end
+
 -- Loot the dead boss, then go after the next one (if any)
 function DL.bossDied(nextBoss)
   send(DL.loot)
