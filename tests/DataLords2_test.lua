@@ -115,11 +115,42 @@ expect("pursue macub | sense macub | ss macub")
 -- Boss chain and the loop
 dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | sense zenzeyh | ss zenzeyh")
 dl2.command("loop", "off"); dl2.zenzeyhDied(); flush(); expect("get all.tab")          -- loop off: just the tab
+dl2.requested("technine"); sent = {}                                                  -- the next event
 dl2.command("loop", "on"); dl2.zenzeyhDied(); flush(); expect("get all.tab | request event 18")
 
 -- After the event ends, rivals are ignored
 dl2.ended(); dl2.rivalAppears("Capella", "you"); expect("")
 dl2.command("attack", "kame"); dl2.attackBoss("x"); expect("pursue x | sense x | kame x")
+-- Zenzeyh's last words ("[RAID: Zenzeyh v2.0] Power creep is real...") end the event and
+-- switch the boss folder off just BEFORE his "is dead!" line. The death trigger must
+-- therefore live outside that folder, and still act for an event that just ended.
+do
+  local f = io.open("packages/DataLords2/package.json"); local pj = f:read("a"); f:close()
+  local killedAt = pj:find('"name": "dl2 Killed Zenzeyh"', 1, true)
+  local bossesAt = pj:find('"name": "dl2 Bosses"', 1, true)
+  assert(killedAt and bossesAt and killedAt < bossesAt, "Killed Zenzeyh must not be inside the dl2 Bosses folder")
+end
+dl2.command("tokens", "reset"); dl2.command("limit", "off"); dl2.command("loop", "on"); sent = {}
+dl2.requested("technine"); sent = {}
+dl2.ended()                                         -- last words first...
+assert(enabled["dl2 Bosses"] == false)
+dl2.zenzeyhDied(); flush()                          -- ...then the death line
+expect("get all.tab | request event 18")
+print("OK  last words before the death line: tab grabbed, next event requested")
+
+dl2.requested("technine"); sent = {}
+dl2.zenzeyhDied(); flush()                          -- death line first...
+dl2.ended(); dl2.zenzeyhDied(); flush()             -- ...then last words (and a stray repeat)
+expect("get all.tab | request event 18")
+print("OK  death line before the last words: still exactly one request")
+
+dl2.requested("Bob"); sent = {}                     -- someone else's event
+dl2.ended(); dl2.zenzeyhDied(); flush(); expect("")
+dl2.requested("technine"); dl2.ended(); clock = clock + 61; sent = {}
+dl2.zenzeyhDied(); flush(); expect("")              -- too long after our event ended
+print("OK  ignored for other players' events, and long after ours ended")
+dl2.command("limit", "100000"); dl2.command("loop", "off")   -- back to the defaults for the next section
+
 -- Token spending: 10,000 per event you request, one session per connection
 LOG, sent = "", {}
 dl2.command("tokens", "reset")

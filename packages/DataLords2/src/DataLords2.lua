@@ -189,7 +189,7 @@ function DL.requested(requester)
     info("white", "Learned your name: " .. requester .. " (change it with `dl2 name <you>`)")
   end
   if me and requester:lower() == me:lower() then
-    DL.active = true
+    DL.active, DL.zenzeyhDone, DL.endedAt = true, false, nil
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
     DL.recordEvent()
@@ -209,14 +209,23 @@ function DL.stop()
   disableTrigger(DL.RIVAL_DIES)
 end
 
+DL.END_GRACE = 60            -- seconds after your event ends that Zenzeyh's death still counts
+
+-- Zenzeyh's last words end the event. They come just BEFORE his "is dead!" line, so
+-- remember that it was our event: the death trigger (outside the boss folder) needs it.
 function DL.ended()
+  if DL.active and not DL.zenzeyhDone then DL.endedAt = os.time() end
   DL.stop()
   info("yellow", "Event ended, triggers OFF")
 end
 
 -- Zenzeyh is the last boss: always grab the tab; with the loop on (and tokens to
--- spare) also request the next event
+-- spare) also request the next event. Only for our own event - still running, or
+-- ended moments ago by his last words.
 function DL.zenzeyhDied()
+  local recentlyEnded = DL.endedAt and os.time() - DL.endedAt <= DL.END_GRACE
+  if DL.zenzeyhDone or not (DL.active or recentlyEnded) then return end
+  DL.zenzeyhDone, DL.endedAt = true, nil         -- once per event
   DL.bossDied(nil)                               -- get all.tab
   if DL.loop then
     local ok, why = DL.canAfford()

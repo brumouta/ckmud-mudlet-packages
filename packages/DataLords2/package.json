@@ -1,6 +1,6 @@
 {
   "name": "DataLords2",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",
@@ -41,6 +41,16 @@
             }
           ],
           "script": "dl2.ended()"
+        },
+        {
+          "name": "dl2 Killed Zenzeyh",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Zenzeyh v2.0 is dead!  R.I.P."
+            }
+          ],
+          "script": "dl2.zenzeyhDied()"
         },
         {
           "name": "dl2 Rival appears",
@@ -131,16 +141,6 @@
                 }
               ],
               "script": "dl2.bossDied(\"zenzeyh\")"
-            },
-            {
-              "name": "dl2 Killed Zenzeyh",
-              "patterns": [
-                {
-                  "type": "substring",
-                  "pattern": "Zenzeyh v2.0 is dead!  R.I.P."
-                }
-              ],
-              "script": "dl2.zenzeyhDied()"
             }
           ]
         }
