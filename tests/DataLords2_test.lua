@@ -230,6 +230,22 @@ dl2.bossDead("Weezpurr")                            -- killed before the check
 later(); expect("")
 dl2.goTo("phenix"); sent = {}; later(); expect("event")   -- `event` never answered: asked again
 print("OK  no retry for a dead boss; an unanswered `event` is asked again")
+
+-- Jhet dies, Macubyree's death is seen: nothing ever pursues Macubyree again
+timers = {}; MSDP.set("Target", "name", ""); dl2.requested("technine")
+dl2.startPair(); arriveAt("Earth"); sent = {}
+dl2.bossDead("Jhet"); dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")
+dl2.bossDead("Macubyree"); dl2.pairDied("macub")
+later(); expect("")                                 -- no retry: he's dead
+dl2.attackBoss("macub"); dl2.engage("macub"); dl2.findAndAttack("macub"); dl2.command("resume"); later()
+expect("")
+print("OK  a dead Macubyree is never pursued again")
+
+-- He dies between asking `event` and its answer: no travel
+dl2.requested("technine"); timers = {}; sent = {}
+dl2.startPair(); dl2.bossDead("Jhet"); arriveAt("Earth"); expect("event")
+print("OK  a boss that dies during the lookup isn't travelled to")
+timers = {}; MSDP.set("Target", "name", "")
 timers = {}; MSDP.set("Target", "name", "")
 
 -- Zenzeyh's last words ("[RAID: Zenzeyh v2.0] Power creep is real...") end the event and

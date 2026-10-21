@@ -39,6 +39,7 @@ end
 DL.dead = {}                      -- bosses seen dying this event: key -> true
 
 function DL.attackBoss(boss)
+  if DL.dead[boss] then return end              -- never chase a boss we saw die
   DL.boss = boss
   send("pursue " .. boss)
   send("sense " .. boss)
@@ -90,6 +91,7 @@ end
 
 -- Ask `event` where the boss is, travel there, then attack
 function DL.findAndAttack(boss)
+  if DL.dead[boss] then return end
   DL.boss = boss
   if boss == "jhet" then DL.pairEngaged = true end
   if DL.locTrigger then killTrigger(DL.locTrigger) end
@@ -97,6 +99,7 @@ function DL.findAndAttack(boss)
 
   DL.locTrigger = tempRegexTrigger([[^Location:\s*(.+?)\s+Time Rem:]], function()
     killTimer(DL.locTimer)
+    if DL.dead[boss] then return end            -- died while we were looking it up
     local location = matches[2]
     local route = DL.travel[location]
     if not route then
@@ -122,14 +125,15 @@ DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
 
 function DL.startPair()
   DL.pairDead, DL.pairEngaged = { jhet = false, macub = false }, false
+  DL.dead.jhet, DL.dead.macub = nil, nil
   DL.goTo("jhet")
 end
 
 function DL.pairDied(who)
   DL.pairDead = DL.pairDead or { jhet = false, macub = false }
-  DL.pairDead[who] = true
+  DL.pairDead[who], DL.dead[who] = true, true
   local other = DL.PAIR[who]
-  if DL.pairDead[other] then
+  if DL.pairDead[other] or DL.dead[other] then
     DL.boss = nil
     info("green", "Jhet and Macubyree are both down - " .. (DL.pending and "going after the next boss" or "waiting for the next boss"))
     DL.flushPending()
@@ -179,6 +183,7 @@ end
 
 -- Attack a boss in the same area; during a rival just remember it (resume attacks it)
 function DL.engage(boss)
+  if DL.dead[boss] then return end
   DL.boss = boss
   if next(DL.rivals) then return end
   DL.attackBoss(boss)
