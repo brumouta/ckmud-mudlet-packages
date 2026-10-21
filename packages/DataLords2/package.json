@@ -1,6 +1,6 @@
 {
   "name": "DataLords2",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",
@@ -87,7 +87,7 @@
               "patterns": [
                 {
                   "type": "regex",
-                  "pattern": "^(\\w+)\\b.*? is dead!\\s+R\\.I\\.P\\."
+                  "pattern": "^(\\w+)(?: v?2\\.0)? is dead!\\s+R\\.I\\.P\\."
                 }
               ],
               "script": "dl2.bossDead(matches[2])"
@@ -107,7 +107,7 @@
               "patterns": [
                 {
                   "type": "regex",
-                  "pattern": "^Jhet\\b.*? is dead!\\s+R\\.I\\.P\\."
+                  "pattern": "^Jhet(?: v?2\\.0)? is dead!\\s+R\\.I\\.P\\."
                 }
               ],
               "script": "dl2.pairDied(\"jhet\")"
@@ -117,7 +117,7 @@
               "patterns": [
                 {
                   "type": "regex",
-                  "pattern": "^Macubyree\\b.*? is dead!\\s+R\\.I\\.P\\."
+                  "pattern": "^Macubyree(?: v?2\\.0)? is dead!\\s+R\\.I\\.P\\."
                 }
               ],
               "script": "dl2.pairDied(\"macub\")"

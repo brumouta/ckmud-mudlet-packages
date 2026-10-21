@@ -143,20 +143,20 @@ dl2.pairDied("macub"); expect("")                                          -- bo
 assert(dl2.boss == nil and LOG:find("both down"))
 print("OK  Jhet first, then Macubyree")
 
-dl2.startPair(); arrive(); sent = {}
+dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
 dl2.pairDied("macub"); expect("")                    -- someone kills Macubyree first: keep on Jhet
 dl2.pairDied("jhet"); expect("")                     -- no chasing a dead Macubyree
 assert(dl2.boss == nil)
 print("OK  Macubyree first, then Jhet: never chases a dead boss")
 
-dl2.startPair(); arrive(); sent = {}
+dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
 dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")
 dl2.pairDied("jhet"); expect("")                     -- a repeated line doesn't restart the chase
 print("OK  a new pair starts fresh; repeats are ignored")
 
 -- Weezpurr's start line can arrive mid-fight: travelling then is refused, so it waits
 sent, LOG = {}, ""
-dl2.startPair(); arrive()
+dl2.requested("technine"); dl2.startPair(); arrive()
 expect("event | focus 'instant' malak | pursue jhet | sense jhet | ss jhet")
 MSDP.set("Target", "name", "Jhet 2.0")              -- fighting (MSDP has a target)
 dl2.goTo("weezp"); expect("")                        -- queued, not sent mid-fight
@@ -194,7 +194,7 @@ local function arriveAt(planet)
   temps[lastRegex]()
 end
 timers = {}; MSDP.Target.name = ""
-dl2.startPair(); arriveAt("Earth"); sent = {}
+dl2.requested("technine"); dl2.startPair(); arriveAt("Earth"); sent = {}
 dl2.pairDied("jhet"); sent = {}                     -- Macubyree's death line never seen
 dl2.goTo("weezp"); expect("event")
 print("OK  Weezpurr goes even if a pair death line was missed")
@@ -240,6 +240,14 @@ later(); expect("")                                 -- no retry: he's dead
 dl2.attackBoss("macub"); dl2.engage("macub"); dl2.findAndAttack("macub"); dl2.command("resume"); later()
 expect("")
 print("OK  a dead Macubyree is never pursued again")
+dl2.startPair(); expect("")                          -- the start shout again: the pair stays dead
+assert(dl2.targeting("weezp") == false)
+MSDP.set("Target", "name", "Macubyree demonspawn"); assert(not dl2.targeting("macub"))
+MSDP.set("Target", "name", "Macubyree"); assert(dl2.targeting("macub"))
+MSDP.set("Target", "name", "Weezpurr v2.0"); assert(dl2.targeting("weezp"))
+MSDP.set("Target", "name", "Jhet 2.0"); assert(dl2.targeting("jhet"))
+MSDP.set("Target", "name", "")
+print("OK  Macubyree demonspawn is not Macubyree; a repeated start shout is ignored")
 
 -- He dies between asking `event` and its answer: no travel
 dl2.requested("technine"); timers = {}; sent = {}

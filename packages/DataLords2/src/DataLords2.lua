@@ -47,11 +47,18 @@ function DL.attackBoss(boss)
   DL.verify(boss)
 end
 
--- Is the boss my MSDP target? ("weezp" matches "Weezpurr v2.0")
+-- "Weezpurr v2.0" -> "weezp"; nil for anything else (e.g. "Macubyree demonspawn",
+-- a different mob that `pursue macub` can also find)
+function DL.bossKey(name)
+  local first, rest = name:match("^(%S+)%s*(.-)%s*$")
+  if first and (rest == "" or rest:lower():match("^v?2%.0$")) then return DL.BOSS_KEYS[first:lower()] end
+end
+
+-- Is the boss my MSDP target?
 function DL.targeting(boss)
   local M = rawget(_G, "MSDP")
   local target = M and M.Target and M.Target.name
-  return type(target) == "string" and target:lower():find(boss, 1, true) ~= nil
+  return type(target) == "string" and DL.bossKey(target) == boss
 end
 
 -- Still worth chasing? (not dead, not replaced by another boss, event running)
@@ -124,6 +131,8 @@ DL.PAIR = { jhet = "macub", macub = "jhet" }
 DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
 
 function DL.startPair()
+  if DL.pairStarted then return end             -- once per event: a repeated shout mustn't revive the dead
+  DL.pairStarted = true
   DL.pairDead, DL.pairEngaged = { jhet = false, macub = false }, false
   DL.dead.jhet, DL.dead.macub = nil, nil
   DL.goTo("jhet")
@@ -323,7 +332,7 @@ function DL.requested(requester)
   end
   if me and requester:lower() == me:lower() then
     DL.active, DL.zenzeyhDone, DL.endedAt, DL.pending = true, false, nil, nil
-    DL.dead, DL.tries = {}, 0
+    DL.dead, DL.tries, DL.pairStarted = {}, 0, false
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
     DL.recordEvent()
