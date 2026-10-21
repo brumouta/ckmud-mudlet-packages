@@ -163,6 +163,10 @@ add_energy("doublesunday", 30, 0.6, 1, 1, { Extras.daze })
 -- Human Racial
 add_energy("neotri", 250, 3, 2, 1, {Extras.burn})
 
+-- Tuffle Racial
+add_energy("distort", 100, 0.75, 1, 1, { Extras.daze })
+add_energy("quantum", 300, 3.5, 2, 1)
+
 add_energy("finger", 75, 0.75, 1, 1)
 add_energy("grievous", 100, 0.85, 1, 1, {Extras.poison})
 add_energy("dread", 500, 2.85, 2, 1)

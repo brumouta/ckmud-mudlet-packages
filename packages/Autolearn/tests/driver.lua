@@ -710,6 +710,38 @@ ok, err = pcall(alias_fn); check(ok, "toggle off after recall rest phase" .. (ok
 ---------------------------------------------------------------------------
 -- 14. Config aliases
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Tuffle racial skills: Distortion Ray and Quantum Cannon
+---------------------------------------------------------------------------
+realprint("=== PHASE: tuffle racials ===")
+do
+  local AT = AL.Player.Attacks
+  check(AT["distort"] ~= nil and AT["distort"][6][AL.API.Attacks.Extras.daze] == true, "Distortion Ray attack exists and dazes")
+  check(AT["quantum"] ~= nil and AT["quantum"][2] == 3.5, "Quantum Cannon attack exists")
+  local Sk = AL.API.Skills
+  check(Sk:translate("distortion ray") == "distort", "'distortion ray' translates to distort")
+  check(Sk:translate("quantum cannon") == "quantum", "'quantum cannon' translates to quantum")
+  check(Sk:translate("bulletstorm") == "bullet", "'bulletstorm' translates to bullet")
+
+  -- Save what the earlier phases set, then try both races
+  local race, M, L = AL.API:getRace(), AL.Player.Skills.Mastered, AL.Player.Skills.Learned
+  local function offers(cmd)
+    for _, c in ipairs(Sk:learnable()) do if c == cmd then return true end end
+    return false
+  end
+  AL.Player.Skills.Mastered = { distort = true, bullet = true }
+  AL.Player.Skills.Learned = { scatter = true }
+  AL.API:setRace("Tuffle")
+  check(offers("distort"), "a Tuffle with Distortion Ray and Bulletstorm mastered is offered Quantum Cannon")
+  AL.API:setRace("Human")
+  check(not offers("distort"), "other races aren't")
+  AL.API:setRace("Tuffle")
+  AL.Player.Skills.Learned["quantum"] = true
+  check(not offers("distort"), "not once Quantum Cannon is learned")
+  AL.Player.Skills.Mastered, AL.Player.Skills.Learned = M, L
+  AL.API:setRace(race)
+end
+
 realprint("=== PHASE: config aliases ===")
 matches = { "AL features" }
 ok, err = pcall(load_pkg_file("aliases/AL_feature.lua")); check(ok, "AL features alias" .. (ok and "" or (" -- " .. tostring(err))))

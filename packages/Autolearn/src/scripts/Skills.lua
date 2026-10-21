@@ -112,6 +112,9 @@ local fullname_to_cmd = {
     ["battle respite"] = "battlerespite",
     ["critical tap"] = "critical",
     ["chaos sphere"] = "chaos",
+    ["distortion ray"] = "distort",
+    ["bulletstorm"] = "bullet",
+    ["quantum cannon"] = "quantum",
     ["purification"] = "purification",
     ["iron will"] = "iron will",
 }
@@ -200,6 +203,11 @@ function Skills:learnable()
     if race == "Human" then
         adict["shockwave"] = { "justice", "roundhouse" }
         adict["neotri"] = { 'finalk', 'kikoho' }
+    end
+
+    if race == "Tuffle" then
+        adict["distort"] = { "finalk", "scatter" }
+        adict["quantum"] = { "distort", "bullet" }
     end
 
     if API:isGodRace(race) then

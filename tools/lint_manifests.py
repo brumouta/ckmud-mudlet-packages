@@ -28,7 +28,8 @@ def check_entry(entry, directory, manifest, seen):
     name = entry.get("name", "<unnamed>")
     has_inline = isinstance(entry.get("script"), str)
     lua_file = directory / (name.replace(" ", "_") + ".lua")
-    if not has_inline and not lua_file.exists():
+    is_folder = entry.get("isFolder") == "yes"     # folders only group their children
+    if not is_folder and not has_inline and not lua_file.exists():
         problems.append(f"{manifest}: entry {name!r} has no inline script and no {lua_file.name}")
     resolved = name.replace("__PKGNAME__", pkgname)
     if resolved in seen:
