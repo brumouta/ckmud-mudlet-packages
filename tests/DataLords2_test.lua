@@ -19,6 +19,12 @@ function tempRegexTrigger(_, f) id = id + 1; temps[id] = f; lastRegex = id; retu
 function killTrigger(i) temps[i] = nil end
 function sendMSDP(...) sent[#sent + 1] = "MSDP " .. table.concat({ ... }, " ") end
 function registerNamedEventHandler(_, name, event, fn) handlers[event .. ":" .. name] = fn end
+function raiseEvent(event, ...)
+  for key, fn in pairs(handlers) do
+    if key:sub(1, #event + 1) == event .. ":" then fn(event, ...) end
+  end
+end
+function getEpoch() return clock end
 local function typed(cmd) handlers["sysDataSendRequest:own request"]("sysDataSendRequest", cmd) end
 local function flush() for i, f in pairs(timers) do timers[i] = nil; f() end end
 local function expect(want)
@@ -27,8 +33,10 @@ local function expect(want)
   print("OK  " .. (want == "" and "(nothing)" or want))
 end
 
+-- The shared MSDP package is installed alongside, as it must be
+dofile("packages/MSDP/src/MSDP.lua")
 dofile("packages/DataLords2/src/DataLords2.lua")
-expect("MSDP REPORT COMBO_HISTORY")                      -- no longer asks for CHARACTER_NAME
+expect("")                                               -- subscribing is the MSDP package's job now
 
 -- Name unknown: someone else's request stays off and says how to fix it
 dl2.requested("Bob"); assert(not dl2.active and enabled["dl2 Bosses"] == false)
@@ -45,14 +53,22 @@ dl2.name = nil; saved = {}
 typed("req event 18"); clock = clock + 60
 dl2.requested("Bob"); assert(not dl2.active and dl2.name == nil)
 
--- CK's score-parsed name is used when nothing is saved
-CK = { API = { getName = function() return "Technine" end } }
+-- The MSDP package's name (from score, or from the server) is used, and beats a saved one
+MSDP.fromScore("name", "Technine")
+assert(select(2, dl2.myName()) == "MSDP")
 dl2.requested("Bob"); assert(not dl2.active)
 dl2.requested("technine"); assert(dl2.active)
-CK = { API = { getName = function() return "???" end } }   -- CK's "unknown" placeholder is ignored
-assert(dl2.myName() == nil)
-CK = nil
-print("OK  CK name used; CK placeholder ignored")
+dl2.setName("Oldalt")
+assert(dl2.myName() == "Technine")
+MSDP.Player.name = nil
+assert(dl2.myName() == "Oldalt")                         -- saved name only until MSDP knows yours
+print("OK  name comes from the MSDP package first")
+
+-- Without the MSDP package installed it says so instead of failing quietly
+local shared = MSDP; MSDP = nil
+dl2.checkMSDP(); assert(LOG:find("DataLords2 needs the MSDP package"))
+MSDP = shared
+print("OK  missing MSDP package is reported")
 
 -- dl2 name sets it, and it survives a reload of the script
 dl2.command("name", "Technine"); dl2.name = nil

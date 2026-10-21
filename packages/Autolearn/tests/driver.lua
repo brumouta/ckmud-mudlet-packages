@@ -314,6 +314,15 @@ realprint("=== PHASE: script load ===")
 local ok, err = pcall(function() require(PKG):register(PKG, "26.07.26") end)
 check(ok, "registration script" .. (ok and "" or (" -- " .. tostring(err))))
 
+-- The shared MSDP package is installed alongside this one (packages/MSDP); load it first
+do
+  local src = readfile(ROOT .. "/../../MSDP/src/MSDP.lua")
+  assert(src, "cannot read packages/MSDP/src/MSDP.lua")
+  local fn, err = load(src, "@MSDP.lua")
+  local ok = fn and pcall(fn)
+  check(ok == true, "load the shared MSDP package" .. (fn and "" or (" -- " .. tostring(err))))
+end
+
 for _, s in ipairs({
   "scripts/Utils.lua", "scripts/Core.lua", "scripts/Attacks.lua", "scripts/Damage.lua",
   "scripts/Fight.lua", "scripts/StateMachine.lua", "scripts/SendQueue.lua",

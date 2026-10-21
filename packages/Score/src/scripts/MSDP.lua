@@ -1,8 +1,12 @@
+-- MSDP comes from the shared MSDP package (it subscribes, converts and shares the
+-- values for every CKMud package). This bridge copies those values into this
+-- package's own Player/Room/Target tables, so the rest of the package keeps reading
+-- Player.MaxPl, Room.Gravity, SC.cmd_stack, ... exactly as before.
 local ck = require("__PKGNAME__")
+local ROOT = ck:get_table()
 local Player = ck:get_table("Player")
 local Room = ck:get_table("Room")
 local Target = ck:get_table("Target")
-local API = ck:get_table("API")
 local MSDP = ck:get_table("API.MSDP")
 local Toggles = ck:get_table("Toggles")
 
@@ -13,24 +17,75 @@ ck:define_feature("MSDP.debug", false)
 ck:define_constant("MSDP.timeout", 10)
 ck:define_constant("MSDP.reconnect_timeout", 120)
 
+local function shared()
+    return rawget(_G, "MSDP")
+end
 
-local names = {"LEVEL", "POWERLEVEL", "POWERLEVEL_MAX", "KI", "KI_MAX", "FATIGUE", "FATIGUE_MAX", "GODKI",
-               "GODKI_MAX", "DARK_ENERGY", "AFFECTS", "ZENNI", "TOKENS", "EPOINTS", "MAX_GRAVITY", "HITROLL", "DAMROLL",
-               "ARMOR", "STR", "INT", "WIS", "SPD", "CON", "STR_BASE", "INT_BASE", "WIS_BASE", "SPD_BASE", "CON_BASE",
-               "OPPONENT_HEALTH", "OPPONENT_HEALTH_MAX", "OPPONENT_LEVEL", "OPPONENT_NAME",
-               "ROOM_VNUM", "THIRST", "HUNGER", "ROOM_GRAVITY", "BASE_PL", "UBS", "LBS",
-               "UPDATE_EPOCH", "MAX_DENERGY", "CMD_STACK", "RAGE"}
+local warned = false
+local function needShared()
+    if shared() or warned then
+        return
+    end
+    warned = true
+    cecho("\n<red>[ __PKGNAME__ ] needs the MSDP package for your stats. Install MSDP.mpackage from the " ..
+              "ckmud-mudlet-packages release, then reconnect.\n")
+end
+
+local DEST = {
+    Player = function() return Player end,
+    Stats = function() return Player.Stats end,
+    BaseStats = function() return Player.BaseStats end,
+    Room = function() return Room end,
+    Target = function() return Target end,
+}
+
+local function copy(kind, field, value)
+    if kind == "MSDP" and field == "cmd_stack" then
+        ROOT.cmd_stack = value
+    elseif DEST[kind] then
+        DEST[kind]()[field] = value
+    end
+end
+
+local function copyAll()
+    local M = shared()
+    if not M then
+        return
+    end
+    for field, value in pairs(M.Player) do
+        if type(value) ~= "table" then copy("Player", field, value) end
+    end
+    for field, value in pairs(M.Player.Stats) do copy("Stats", field, value) end
+    for field, value in pairs(M.Player.BaseStats) do copy("BaseStats", field, value) end
+    for field, value in pairs(M.Room) do copy("Room", field, value) end
+    for field, value in pairs(M.Target) do copy("Target", field, value) end
+    if M.cmd_stack ~= nil then copy("MSDP", "cmd_stack", M.cmd_stack) end
+    if M.ticked then Toggles.ticked_once = true end
+end
 
 function MSDP:last_update()
-    return getEpoch() - ((msdp or {}).UPDATE_EPOCH or 0)
+    local M = shared()
+    if M then
+        return M:last_update()
+    end
+    return getEpoch() - tonumber((msdp and msdp.UPDATE_EPOCH) or 0)
 end
 
 function MSDP:report_names()
-    sendMSDP("REPORT", unpack(names))
+    local M = shared()
+    if M then
+        M:report()
+    else
+        needShared()
+    end
 end
 
--- Track Updates, fire off a SC.tick event for hud to hook into. 
-registerNamedEventHandler("__PKGNAME__", "MSDP UPDATE_EPOCH", "msdp.UPDATE_EPOCH", function()
+registerNamedEventHandler("__PKGNAME__", "MSDP changed", "MSDP.changed", function(_, kind, field, value)
+    copy(kind, field, value)
+end)
+
+-- Track Updates, fire off a SC.tick event for hud to hook into.
+registerNamedEventHandler("__PKGNAME__", "MSDP tick", "MSDP.tick", function()
     if not Toggles.ticked_once and ck:feature("MSDP.debug") then
         cecho(f "<yellow>Received MSDP Update Epoch...\n")
     end
@@ -38,14 +93,12 @@ registerNamedEventHandler("__PKGNAME__", "MSDP UPDATE_EPOCH", "msdp.UPDATE_EPOCH
     raiseEvent("SC.tick")
 end)
 
-registerNamedEventHandler("__PKGNAME__", "MSDP CMD_STACK", "msdp.CMD_STACK", function()
-    SC.cmd_stack = tonumber(msdp.CMD_STACK)
-end)
+registerNamedEventHandler("__PKGNAME__", "MSDP loaded", "MSDP.loaded", copyAll)
 
--- Report all the names to the server to request updates on them
+-- The MSDP package subscribes on connect; we only reset our tick flag
 registerNamedEventHandler("__PKGNAME__", "MSDP REPORT", "sysConnectionEvent", function()
     Toggles.ticked_once = false
-    MSDP:report_names()
+    tempTimer(2, needShared)
 end)
 
 registerNamedEventHandler("__PKGNAME__", "MSDP Player Reload", "SC.onPlayerReload", function()
@@ -53,159 +106,6 @@ registerNamedEventHandler("__PKGNAME__", "MSDP Player Reload", "SC.onPlayerReloa
     MSDP:report_names()
 end)
 
--- Name and Race are now parsed from Score output (no longer sent via MSDP)
-
--- BASE_PL
-registerNamedEventHandler("__PKGNAME__", "MSDP BasePL", "msdp.BASE_PL", function()
-    Player.BasePl = tonumber(msdp.BASE_PL)
-end)
-
--- PL and MaxPl
-registerNamedEventHandler("__PKGNAME__", "MSDP MAX_PL", "msdp.POWERLEVEL_MAX", function()
-    Player.MaxPl = tonumber(msdp.POWERLEVEL_MAX)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP PL", "msdp.POWERLEVEL", function()
-    Player.Pl = tonumber(msdp.POWERLEVEL)
-end)
-
--- FATIGUE API:has_fatigue()
-registerNamedEventHandler("__PKGNAME__", "MSDP FATIGUE", "msdp.FATIGUE", function()
-    Player.Fatigue = tonumber(msdp.FATIGUE)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP MAX FATIGUE", "msdp.FATIGUE_MAX", function()
-    Player.MaxFatigue = tonumber(msdp.FATIGUE_MAX)
-end)
-
--- KI/Max KI
-registerNamedEventHandler("__PKGNAME__", "MSDP KI", "msdp.KI", function()
-    Player.Ki = tonumber(msdp.KI)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP MAX KI", "msdp.KI_MAX", function()
-    Player.MaxKi = tonumber(msdp.KI_MAX)
-end)
-
--- God Ki
-registerNamedEventHandler("__PKGNAME__", "MSDP GK", "msdp.GODKI", function()
-    Player.GK = tonumber(msdp.GODKI)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP MAX GK", "msdp.GODKI_MAX", function()
-    Player.MaxGK = tonumber(msdp.GODKI_MAX)
-end)
-
--- Hitroll and Damroll
-registerNamedEventHandler("__PKGNAME__", "MSDP Damroll", "msdp.DAMROLL", function()
-    Player.Damroll = tonumber(msdp.DAMROLL)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP Hitroll", "msdp.HITROLL", function()
-    Player.Hitroll = tonumber(msdp.HITROLL)
-end)
-
--- Gravity
-registerNamedEventHandler("__PKGNAME__", "MSDP Gravity", "msdp.MAX_GRAVITY", function()
-    Player.MaxGravity = tonumber(msdp.MAX_GRAVITY)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP Room Gravity", "msdp.ROOM_GRAVITY", function()
-    Room.Gravity = tonumber(msdp.ROOM_GRAVITY)
-end)
-
--- Zenni
-registerNamedEventHandler("__PKGNAME__", "MSDP Zenni", "msdp.ZENNI", function()
-    Player.Zenni = tonumber(msdp.ZENNI)
-end)
-
--- Stats
----@diagnostic disable-next-line: undefined-field
-for _, stat in ipairs(("INT WIS STR SPD CON"):split(" ")) do
-    registerNamedEventHandler("__PKGNAME__", f "MSDP {stat}", f "msdp.{stat}", function(event)
-        local stat = event:sub(6):sub(0, 3)
-        Player.Stats[stat] = tonumber(msdp[stat])
-    end)
-    registerNamedEventHandler("__PKGNAME__", f "MSDP {stat}_BASE", f "msdp.{stat}_BASE", function(event)
-        local stat = event:sub(6):sub(0, 3)
-        Player.BaseStats[stat] = tonumber(msdp[f "{stat}_BASE"])
-    end)
-end
-
-registerNamedEventHandler("__PKGNAME__", "MSDP UBS", "msdp.UBS", function()
-    Player.UBS = tonumber(msdp.UBS)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP LBS", "msdp.LBS", function()
-    Player.LBS = tonumber(msdp.LBS)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Dark Energy", "msdp.DARK_ENERGY", function()
-    Player.DarkEnergy = tonumber(msdp.DARK_ENERGY)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Max Dark Energy", "msdp.MAX_DENERGY", function()
-    Player.MaxDarkEnergy = tonumber(msdp.MAX_DENERGY)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Armor", "msdp.ARMOR", function()
-    Player.Armor = tonumber(msdp.ARMOR)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Tokens", "msdp.TOKENS", function()
-    Player.Tokens = tonumber(msdp.TOKENS)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP E-Points", "msdp.EPOINTS", function()
-    Player.EPoints = tonumber(msdp.EPOINTS)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Hunger", "msdp.HUNGER", function()
-    Player.Hunger = tonumber(msdp.HUNGER)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Thirst", "msdp.THIRST", function()
-    Player.Thirst = tonumber(msdp.THIRST)
-end)
-
-registerNamedEventHandler("__PKGNAME__", "MSDP Rage", "msdp.RAGE", function()
-    Player.Rage = tonumber(msdp.RAGE)
-end)
-
--- Room Stuff (AREA_NAME, ROOM_NAME, ROOM_EXITS no longer sent via MSDP)
-registerNamedEventHandler("__PKGNAME__", "MSDP Room VNUM", "msdp.ROOM_VNUM", function()
-    Room.vnum = tonumber(msdp.ROOM_VNUM)
-end)
-
--- OPPONENT STUFF
-registerNamedEventHandler("__PKGNAME__", "MSDP Target Health", "msdp.OPPONENT_HEALTH", function()
-    Target.Health = tonumber(msdp.OPPONENT_HEALTH)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP Target Max Health", "msdp.OPPONENT_HEALTH_MAX", function()
-    Target.MaxHealth = tonumber(msdp.OPPONENT_HEALTH_MAX)
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP Target Name", "msdp.OPPONENT_NAME", function()
-    local name = msdp.OPPONENT_NAME
-    Target.name = name
-end)
-registerNamedEventHandler("__PKGNAME__", "MSDP Target Level", "msdp.OPPONENT_LEVEL", function()
-    Target.level = tonumber(msdp.OPPONENT_LEVEL)
-end)
-
---[[
-{
-  AFFECTS = "",
-  SERVER_ID = "CKMud 1.2",
-
-}
-]]
-
--- MSDP only reports a variable when it CHANGES. A package loaded or installed
--- mid-session therefore never sees values that are already sitting in the
--- table and rarely move - BASE_PL, MAX_GRAVITY and friends - so its handlers
--- stay unfired until the next reconnect. Replay what is already there once.
-local function seed_from_msdp()
-    if type(msdp) ~= "table" then
-        return
-    end
-    for _, name in ipairs(names) do
-        if msdp[name] ~= nil then
-            raiseEvent("msdp." .. name)
-        end
-    end
-end
-
-tempTimer(1, seed_from_msdp)
+-- Pick up whatever the MSDP package already has (it may have loaded first)
+copyAll()
+tempTimer(5, needShared)

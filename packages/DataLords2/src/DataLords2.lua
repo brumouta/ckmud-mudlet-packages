@@ -73,9 +73,10 @@ end
 
 -- ---------------------------------------------------------------- event on/off
 -- ---------------------------------------------------------------- who am I
--- The MUD stopped sending MSDP CHARACTER_NAME (July 2026), so the name comes from,
--- in order: the saved name (`dl2 name`, or learned from your own request), CK's
--- score parsing, the Score package, and MSDP in case it ever comes back.
+-- Your name comes from the shared MSDP package (MSDP.Player.name: from the server
+-- if it sends CHARACTER_NAME, otherwise from your score sheet). Until that is known
+-- (no `score` yet), it falls back to a saved name: set with `dl2 name`, or learned
+-- from the request line that follows your own `req event`.
 DL.SAVE_FILE = getMudletHomeDir() .. "/DataLords2.lua"
 DL.REQUEST_WINDOW = 20      -- seconds after you send `req event` that a request line counts as yours
 
@@ -93,13 +94,13 @@ function DL.setName(name)
   pcall(table.save, DL.SAVE_FILE, { name = name })
 end
 
+local function shared() return rawget(_G, "MSDP") end
+
 function DL.myName()
+  local M = shared()
+  local name = M and nonEmpty(M.Player.name)
+  if name then return name, "MSDP" end
   if DL.name then return DL.name, "saved" end
-  local ok, ckName = pcall(function() return CK.API:getName() end)
-  if ok and nonEmpty(ckName) then return ckName, "CK score" end
-  local ok2, scName = pcall(function() return SC.Player.name end)
-  if ok2 and nonEmpty(scName) then return scName, "Score package" end
-  if msdp and nonEmpty(msdp.CHARACTER_NAME) then return msdp.CHARACTER_NAME, "MSDP" end
 end
 
 -- Remember when you (or the loop) ask for an event: the next request line is yours
@@ -210,12 +211,15 @@ function DL.forceResume()
 end
 
 -- ---------------------------------------------------------------- MSDP
--- COMBO_HISTORY is used by the daze triggers. (CHARACTER_NAME is no longer sent.)
-function DL.subscribe()
-  sendMSDP("REPORT", "COMBO_HISTORY")
+-- The shared MSDP package subscribes to everything (COMBO_HISTORY included, for
+-- the daze triggers). Say so clearly if it isn't installed.
+function DL.checkMSDP()
+  if shared() or DL.warnedMSDP then return end
+  DL.warnedMSDP = true
+  info("red", "DataLords2 needs the MSDP package. Install MSDP.mpackage from the ckmud-mudlet-packages release, then reconnect.")
 end
-registerNamedEventHandler("dl2", "subscribe", "sysConnectionEvent", DL.subscribe)
-DL.subscribe()
+registerNamedEventHandler("dl2", "need MSDP", "sysConnectionEvent", function() tempTimer(2, DL.checkMSDP) end)
+tempTimer(5, DL.checkMSDP)
 DL.loadName()
 
 -- ---------------------------------------------------------------- `dl2` alias

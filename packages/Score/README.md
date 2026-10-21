@@ -11,6 +11,8 @@ self-contained — it does NOT require CK to be installed.
 
 `lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Score.mpackage")`
 
+**Requires the [MSDP](../MSDP) package**, which supplies the stats this package reads. Install it first.
+
 After installation the `SC update` alias keeps it current.
 
 You must turn on `msdp` in settings (the package enforces the correct protocol

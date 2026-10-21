@@ -256,8 +256,27 @@ msdp.MAX_GRAVITY = "20"
 local ok, err = pcall(function() require(PKG):register(PKG, "26.08.09") end)
 check(ok, "registration script" .. (ok and "" or (" -- " .. tostring(err))))
 
+-- The shared MSDP package is installed alongside this one (packages/MSDP); load it first
+do
+  local src = readfile(ROOT .. "/../../MSDP/src/MSDP.lua")
+  assert(src, "cannot read packages/MSDP/src/MSDP.lua")
+  local fn, err = load(src, "@MSDP.lua")
+  local ok = fn and pcall(fn)
+  check(ok == true, "load the shared MSDP package" .. (fn and "" or (" -- " .. tostring(err))))
+end
+
 for _, s in ipairs({ "scripts/Utils.lua", "scripts/Core.lua", "scripts/Damage.lua",
   "scripts/Sheet.lua", "scripts/MSDP.lua" }) do run_script(s) end
+
+-- Without the shared MSDP package, asking for MSDP says what's missing instead of failing quietly
+do
+  local shared = MSDP
+  MSDP = nil
+  OUT = {}
+  SC.API.MSDP:report_names()
+  check(table.concat(OUT):find("needs the MSDP package") ~= nil, "missing MSDP package is reported")
+  MSDP = shared
+end
 
 check(SC ~= nil, "SC global namespace exists")
 check(SC.API.Sheet and SC.API.Sheet.show, "SC.API.Sheet:show exists")

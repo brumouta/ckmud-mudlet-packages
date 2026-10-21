@@ -12,6 +12,8 @@ self-contained — it does NOT require CK to be installed.
 
 `lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/KaiokenTrain.mpackage")`
 
+**Requires the [MSDP](../MSDP) package**, which supplies the stats this package reads. Install it first.
+
 After installation the `KT update` alias will take care of updating the script.
 
 You must turn on `msdp` in settings to use this script (the package enforces

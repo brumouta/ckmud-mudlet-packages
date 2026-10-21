@@ -1,0 +1,58 @@
+{
+  "name": "MSDP",
+  "version": "1.0.0",
+  "title": "MSDP data for CKMud packages",
+  "description": "Subscribes to every MSDP variable CKMud offers and shares the values with the other packages, plus name, race and base PL from your score sheet. Type `msdp` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "MSDP core",
+      "file": "src/MSDP.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "msdp",
+      "regex": "^msdp(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nMSDP.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "MSDP",
+      "folder": true,
+      "children": [
+        {
+          "name": "MSDP score name",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Score Information for:\\s*(.+?)\\s*$"
+            }
+          ],
+          "script": "MSDP.fromScore(\"name\", matches[2])"
+        },
+        {
+          "name": "MSDP score race",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Race:\\s*(.+?)\\s*$"
+            }
+          ],
+          "script": "MSDP.fromScore(\"race\", matches[2])"
+        },
+        {
+          "name": "MSDP score base PL",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Base PL:\\s*([0-9,]+)"
+            }
+          ],
+          "script": "MSDP.fromScore(\"BasePl\", matches[2])"
+        }
+      ]
+    }
+  ]
+}

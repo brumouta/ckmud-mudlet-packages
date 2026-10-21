@@ -4,6 +4,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 
 | Package | Command | What it does |
 |---|---|---|
+| [MSDP](packages/MSDP) | `msdp` | **Install this first.** Subscribes to every MSDP variable CKMud offers and shares the values (plus your name, race and base PL from `score`) with the packages below. |
 | [Autolearn](packages/Autolearn) | `autolearn`, `AL` | Masters all your skills and learns new ones once their prerequisites are mastered. |
 | [Chores](packages/Chores) | `chores fish\|quest\|both\|off`, `CH` | Automates fishing, the royal cook delivery quest and the gravedigger excavation. |
 | [KaiokenTrain](packages/KaiokenTrain) | `kaioken train`, `KT` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
@@ -13,7 +14,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [FriezaQuest](packages/FriezaQuest) | `fq help` | Automates the **Frieza's Spaceship** quest from Appule to the Bridge Access Card. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 
-Install only the ones you want.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Blackjack uses it when it's there. FriezaQuest and YamoshiSpawn work without it.
 
 ## Installing
 

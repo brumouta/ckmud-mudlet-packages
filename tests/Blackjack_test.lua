@@ -49,6 +49,9 @@ expect("cjoin")
 bj.invite(); bj.join(); bj.welcomed("Vorricer"); assert(bj.active and bj.me == "Vorricer")
 expect("cjoin")
 bj.welcomed("Bob"); assert(bj.me == "Vorricer")               -- someone else joining doesn't take over
+MSDP = { Player = { name = "Vorricer" } }                       -- with the MSDP package's name...
+bj.joining = true; bj.welcomed("Bob"); assert(bj.me == "Vorricer") -- ...even a pending join ignores others
+bj.joining = false; MSDP = nil
 
 -- A round with a long name (padded table) and repeated option lines ---------------------------
 local OPTIONS = "BLACKJACK: Hit(chit), Double Down(cdouble) or Stand(cstand)?"

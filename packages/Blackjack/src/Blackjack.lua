@@ -101,7 +101,7 @@ end
 
 function BJ.welcomed(name)
   if not BJ.joining then return end
-  local me = msdp and msdp.CHARACTER_NAME
+  local me = rawget(_G, "MSDP") and MSDP.Player.name   -- from the shared MSDP package
   if me and me ~= "" and name:lower() ~= me:lower() then return end  -- someone else joined
   BJ.me, BJ.active, BJ.joining, BJ.invited = name, true, false, false
   info("green", "Joined as " .. name .. ", bot ON (bj stop to quit)")
@@ -249,7 +249,7 @@ function BJ.command(cmd, arg)
   elseif cmd == "status" then
     BJ.status()
   elseif cmd == "start" then
-    BJ.me = BJ.me or (msdp and msdp.CHARACTER_NAME)
+    BJ.me = BJ.me or (rawget(_G, "MSDP") and MSDP.Player.name)
     if not BJ.me then return info("yellow", "Don't know your name yet - join with cjoin instead") end
     BJ.active = true
     info("green", "Bot ON as " .. BJ.me)
