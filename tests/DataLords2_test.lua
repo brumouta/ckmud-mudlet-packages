@@ -144,10 +144,18 @@ assert(dl2.boss == nil and LOG:find("both down"))
 print("OK  Macubyree first, then Jhet (same room, no pursue)")
 
 dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
-dl2.pairDied("jhet"); expect("")                     -- someone kills Jhet first: stay on Macubyree
-dl2.pairDied("macub"); expect("")                    -- then nothing left to chase
-assert(dl2.boss == nil)
-print("OK  Jhet killed first: stays on Macubyree, never chases a dead boss")
+dl2.pairDied("jhet"); expect("")                     -- someone kills Jhet first: leave Macubyree
+assert(dl2.boss == nil and LOG:find("leaving Macubyree, waiting for Weezpurr"))
+dl2.goTo("weezp"); expect("event")                   -- Weezpurr's start line: off we go
+dl2.pairDied("macub"); expect("")
+print("OK  Jhet killed first: leaves Macubyree and goes to Weezpurr on her start line")
+
+dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
+MSDP.set("Target", "name", "Macubyree")
+dl2.goTo("weezp"); expect("")                        -- Weezpurr announced while on Macubyree: queued
+dl2.pairDied("jhet"); expect("")                     -- Jhet dies: the pair is done for us...
+MSDP.set("Target", "name", ""); flush(); expect("event")   -- ...off to Weezpurr once free
+print("OK  Weezpurr already announced when Jhet dies: goes there")
 
 dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
 dl2.pairDied("macub"); expect("ss jhet")
@@ -234,8 +242,8 @@ print("OK  no retry for a dead boss; an unanswered `event` is asked again")
 -- Jhet dies, Macubyree's death is seen: nothing ever pursues Macubyree again
 timers = {}; MSDP.set("Target", "name", ""); dl2.requested("technine")
 dl2.startPair(); arriveAt("Earth"); sent = {}
-dl2.bossDead("Jhet"); expect("")                                  -- the generic death trigger handles the pair
-dl2.bossDead("Macubyree"); assert(dl2.boss == nil)
+dl2.bossDead("Macubyree"); expect("ss jhet")                     -- the generic death trigger handles the pair
+dl2.bossDead("Jhet"); assert(dl2.boss == nil)
 later(); expect("")                                 -- no retry: he's dead
 dl2.attackBoss("macub"); dl2.engage("macub"); dl2.findAndAttack("macub"); dl2.command("resume"); later()
 expect("")
@@ -251,10 +259,7 @@ print("OK  Macubyree demonspawn is not Macubyree; a repeated start shout is igno
 
 -- He dies between asking `event` and its answer: no travel
 dl2.requested("technine"); timers = {}; sent = {}
-dl2.startPair(); dl2.bossDead("Jhet"); arriveAt("Earth")
-expect("event | focus 'instant' malak | pursue macub | sense macub | ss macub")   -- no Jhet to pursue
-dl2.bossDead("Macubyree"); dl2.requested("technine"); timers = {}; sent = {}
-dl2.startPair(); dl2.bossDead("Jhet"); dl2.bossDead("Macubyree"); arriveAt("Earth"); expect("event")
+dl2.startPair(); dl2.bossDead("Jhet"); arriveAt("Earth"); expect("event")   -- Jhet dead: pair done, no travel
 dl2.goTo("weezp"); sent = {}; dl2.bossDead("Weezpurr"); arriveAt("Namek"); expect("")
 print("OK  bosses that die during the lookup aren't travelled to")
 timers = {}; MSDP.set("Target", "name", "")

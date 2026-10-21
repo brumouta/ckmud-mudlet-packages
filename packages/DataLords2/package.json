@@ -1,6 +1,6 @@
 {
   "name": "DataLords2",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",

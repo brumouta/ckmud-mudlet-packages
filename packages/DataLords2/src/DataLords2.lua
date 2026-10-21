@@ -129,7 +129,8 @@ end
 
 -- Jhet and Macubyree always stand together. Pursue Jhet (`pursue macub` can find
 -- Macubyree demonspawn, a different mob), kill Macubyree first, then Jhet - no
--- pursuing in between. People kill them in either order: only attack the living one.
+-- pursuing in between. If someone kills Jhet first, leave Macubyree: the pair is
+-- done for us, and we go to Weezpurr when her start line comes (or now if it came).
 DL.PAIR = { jhet = "macub", macub = "jhet" }
 DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
 
@@ -140,10 +141,10 @@ function DL.startPair()
   DL.goTo("jhet")
 end
 
--- Macubyree first, then Jhet; nil when both are dead
+-- Macubyree first, then Jhet; nil once Jhet is dead
 function DL.pairTarget()
-  if not DL.dead.macub then return "macub" end
-  if not DL.dead.jhet then return "jhet" end
+  if DL.dead.jhet then return nil end
+  return DL.dead.macub and "jhet" or "macub"
 end
 
 -- After travelling (or a rival): find them through Jhet, attack whichever is next
@@ -151,9 +152,8 @@ function DL.attackPair()
   local target = DL.pairTarget()
   if not target then return end
   DL.boss, DL.pairArrived = target, true
-  local guide = DL.dead.jhet and "macub" or "jhet"   -- only if Jhet died before we got there
-  send("pursue " .. guide)
-  send("sense " .. guide)
+  send("pursue jhet")
+  send("sense jhet")
   send(DL.attack .. " " .. target)
   DL.verify(target)
 end
@@ -164,7 +164,8 @@ function DL.pairDied(who)
   local target = DL.pairTarget()
   if not target then
     DL.boss = nil
-    info("green", "Jhet and Macubyree are both down - " .. (DL.pending and "going after the next boss" or "waiting for the next boss"))
+    info("green", (who == "jhet" and not DL.dead.macub and "Jhet is down - leaving Macubyree, " or "Jhet and Macubyree are both down - ") ..
+                  (DL.pending and "going after " .. DL.pending or "waiting for Weezpurr"))
     DL.flushPending()
   elseif DL.boss ~= target then
     info("white", DL.PAIR_NAMES[who] .. " is down - attacking " .. DL.PAIR_NAMES[target])
