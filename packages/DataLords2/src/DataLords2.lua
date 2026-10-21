@@ -42,6 +42,7 @@ end
 
 -- Ask `event` where the boss is, travel there, then attack
 function DL.findAndAttack(boss)
+  if boss == "jhet" then DL.pairEngaged = true end
   if DL.locTrigger then killTrigger(DL.locTrigger) end
   if DL.locTimer then killTimer(DL.locTimer) end
 
@@ -68,8 +69,8 @@ DL.PAIR = { jhet = "macub", macub = "jhet" }
 DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
 
 function DL.startPair()
-  DL.pairDead = { jhet = false, macub = false }
-  DL.findAndAttack("jhet")
+  DL.pairDead, DL.pairEngaged = { jhet = false, macub = false }, false
+  DL.goTo("jhet")
 end
 
 function DL.pairDied(who)
@@ -78,18 +79,69 @@ function DL.pairDied(who)
   local other = DL.PAIR[who]
   if DL.pairDead[other] then
     DL.boss = nil
-    info("green", "Jhet and Macubyree are both down - waiting for the next boss")
+    info("green", "Jhet and Macubyree are both down - " .. (DL.pending and "going after the next boss" or "waiting for the next boss"))
+    DL.flushPending()
   elseif DL.boss ~= other then
     info("white", DL.PAIR_NAMES[who] .. " is down - going after " .. DL.PAIR_NAMES[other])
-    DL.attackBoss(other)
+    DL.engage(other)
   end
 end
+
+-- ---------------------------------------------------------------- waiting until free
+-- A new boss's start line can arrive mid-fight (or during a rival). Travelling then
+-- fails - `focus 'instant'` and `pursue` are refused in combat - and nothing would try
+-- again. So travel waits, queued, until we're free: no rival, no MSDP target, and the
+-- Jhet/Macubyree pair (once engaged) finished.
+function DL.fighting()
+  local M = rawget(_G, "MSDP")
+  local target = M and M.Target and M.Target.name
+  return type(target) == "string" and target ~= ""
+end
+
+function DL.pairInProgress()
+  return DL.pairEngaged and DL.pairDead ~= nil and not (DL.pairDead.jhet and DL.pairDead.macub)
+end
+
+function DL.busy()
+  return next(DL.rivals) ~= nil or DL.fighting() or DL.pairInProgress()
+end
+
+-- Travel to a boss now, or as soon as we're free
+function DL.goTo(boss)
+  if not DL.active then return end
+  if DL.busy() then
+    DL.pending = boss
+    info("white", boss .. " is up - going after it once this fight is over")
+    return
+  end
+  DL.pending = nil
+  DL.findAndAttack(boss)
+end
+
+function DL.flushPending()
+  if not (DL.pending and DL.active) or DL.busy() then return end
+  local boss = DL.pending
+  DL.pending = nil
+  tempTimer(1, function() if DL.active then DL.findAndAttack(boss) end end)
+end
+
+-- Attack a boss in the same area; during a rival just remember it (resume attacks it)
+function DL.engage(boss)
+  DL.boss = boss
+  if next(DL.rivals) then return end
+  DL.attackBoss(boss)
+end
+
+registerNamedEventHandler("dl2", "free after fight", "MSDP.changed", function(_, kind, field, value)
+  if kind == "Target" and field == "name" and value == "" then DL.flushPending() end
+end)
+registerNamedTimer("dl2", "pending check", 5, function() DL.flushPending() end, true)   -- safety net
 
 -- Loot the dead boss, then go after the next one (if any)
 function DL.bossDied(nextBoss)
   send(DL.loot)
   if nextBoss then
-    DL.attackBoss(nextBoss)
+    DL.engage(nextBoss)
   else
     DL.boss = nil
   end
@@ -213,7 +265,7 @@ function DL.requested(requester)
     info("white", "Learned your name: " .. requester .. " (change it with `dl2 name <you>`)")
   end
   if me and requester:lower() == me:lower() then
-    DL.active, DL.zenzeyhDone, DL.endedAt = true, false, nil
+    DL.active, DL.zenzeyhDone, DL.endedAt, DL.pending = true, false, nil, nil
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
     DL.recordEvent()
@@ -228,7 +280,7 @@ function DL.requested(requester)
 end
 
 function DL.stop()
-  DL.active, DL.boss, DL.rivals = false, nil, {}
+  DL.active, DL.boss, DL.rivals, DL.pending = false, nil, {}, nil
   disableTrigger(DL.BOSSES)
   disableTrigger(DL.RIVAL_DIES)
 end
@@ -277,8 +329,7 @@ function DL.rivalAppears(name, victim)
   local key = name:lower()
   local isNew = DL.rivals[key] == nil
   DL.rivals[key] = name
-  disableTrigger(DL.BOSSES)
-  enableTrigger(DL.RIVAL_DIES)
+  enableTrigger(DL.RIVAL_DIES)              -- boss lines keep being recorded; attacking waits
 
   local who = (victim and victim:lower() ~= "you") and (" attacked " .. victim) or " attacked you"
   info("red", "Rival " .. name .. who .. ", pausing event (" .. #rivalList() .. " alive)")
@@ -307,9 +358,12 @@ end
 function DL.resume()
   if not DL.active then return end
   if next(DL.rivals) then return end  -- another rival showed up during the delay
-  enableTrigger(DL.BOSSES)
   info("green", "Rivals cleared, resuming")
-  if DL.boss then DL.attackBoss(DL.boss) end
+  if DL.pending then
+    DL.flushPending()
+  elseif DL.boss then
+    DL.attackBoss(DL.boss)
+  end
 end
 
 -- Escape hatch: a rival fled or died without the usual message

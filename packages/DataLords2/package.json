@@ -1,6 +1,6 @@
 {
   "name": "DataLords2",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",
@@ -120,7 +120,7 @@
                   "pattern": "[EVENT: Weezpurr v2.0] Alright, dad mode activated! Time to teach you some discipline!"
                 }
               ],
-              "script": "dl2.findAndAttack(\"weezp\")"
+              "script": "dl2.goTo(\"weezp\")"
             },
             {
               "name": "dl2 Start Phenix",
@@ -130,7 +130,7 @@
                   "pattern": "[EVENT: Phenix v2.0] Yeah! Fuck it! Forget the no-stabbing policy for anniversaries!"
                 }
               ],
-              "script": "dl2.findAndAttack(\"phenix\")"
+              "script": "dl2.goTo(\"phenix\")"
             },
             {
               "name": "dl2 Start Daiue",

@@ -25,6 +25,8 @@ function tempRegexTrigger(_, f) id = id + 1; temps[id] = f; lastRegex = id; retu
 function killTrigger(i) temps[i] = nil end
 function sendMSDP(...) sent[#sent + 1] = "MSDP " .. table.concat({ ... }, " ") end
 function registerNamedEventHandler(_, name, event, fn) handlers[event .. ":" .. name] = fn end
+local namedTimers = {}
+function registerNamedTimer(_, name, _, fn) namedTimers[name] = fn end
 function raiseEvent(event, ...)
   for key, fn in pairs(handlers) do
     if key:sub(1, #event + 1) == event .. ":" then fn(event, ...) end
@@ -32,7 +34,12 @@ function raiseEvent(event, ...)
 end
 function getEpoch() return clock end
 local function typed(cmd) handlers["sysDataSendRequest:own request"]("sysDataSendRequest", cmd) end
-local function flush() for i, f in pairs(timers) do timers[i] = nil; f() end end
+local function flush()                              -- run the timers that are due now (snapshot first:
+  local due = {}                                      -- a timer may start another one)
+  for i, f in pairs(timers) do due[#due + 1] = { i, f } end
+  table.sort(due, function(a, b) return a[1] < b[1] end)
+  for _, d in ipairs(due) do timers[d[1]] = nil; d[2]() end
+end
 local function expect(want)
   local got = table.concat(sent, " | "); sent = {}
   assert(got == want, "\n got: " .. got .. "\nwant: " .. want)
@@ -91,7 +98,7 @@ expect("focus 'instant' joe | fly | fly | pursue jhet | sense jhet | ss jhet")
 dl2.attackBoss("macub"); expect("pursue macub | sense macub | ss macub")
 
 -- A rival pauses the event; another mob dying doesn't resume it; the rival dying does
-dl2.rivalAppears("Capella", "you"); assert(enabled["dl2 Bosses"] == false and enabled["dl2 Rival dies"])
+dl2.rivalAppears("Capella", "you"); assert(enabled["dl2 Bosses"] and enabled["dl2 Rival dies"])   -- boss lines still recorded
 expect("ss Capella | ss Capella | ss Capella | ss Capella")
 dl2.rivalDies("Jhet 2.0"); expect("")
 dl2.rivalDies("Capella the Saiba"); expect("get all"); flush()
@@ -103,7 +110,7 @@ dl2.rivalAppears("Capella", "Bob"); expect("ss Capella | ss Capella | ss Capella
 dl2.rivalAppears("Laser", "you"); expect("ss Laser | ss Laser | ss Laser | ss Laser")
 dl2.rivalAppears("Laser", "you"); expect("")                    -- same rival again: no extra volley
 dl2.rivalDies("Capella the Saiba"); expect("get all | ss Laser")
-flush(); assert(enabled["dl2 Bosses"] == false); expect("")
+flush(); assert(next(dl2.rivals)); expect("")          -- still paused: no boss attack yet
 dl2.rivalDies("Laser the Android"); expect("get all"); flush()
 assert(enabled["dl2 Bosses"]); expect("pursue macub | sense macub | ss macub")
 
@@ -126,7 +133,7 @@ local function arrive()                              -- the `event` reply: trave
   matches = { "Location: Earth   Time Rem: 60 mins", "Earth" }
   temps[lastRegex]()
 end
-dl2.command("attack", "ss"); sent = {}
+dl2.command("attack", "ss"); dl2.requested("technine"); sent = {}     -- our event is running
 dl2.startPair(); arrive()
 expect("event | focus 'instant' malak | pursue jhet | sense jhet | ss jhet")
 dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")      -- usual order: then Macubyree
@@ -144,6 +151,40 @@ dl2.startPair(); arrive(); sent = {}
 dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")
 dl2.pairDied("jhet"); expect("")                     -- a repeated line doesn't restart the chase
 print("OK  a new pair starts fresh; repeats are ignored")
+
+-- Weezpurr's start line can arrive mid-fight: travelling then is refused, so it waits
+sent, LOG = {}, ""
+dl2.startPair(); arrive()
+expect("event | focus 'instant' malak | pursue jhet | sense jhet | ss jhet")
+MSDP.set("Target", "name", "Jhet 2.0")              -- fighting (MSDP has a target)
+dl2.goTo("weezp"); expect("")                        -- queued, not sent mid-fight
+assert(dl2.pending == "weezp" and LOG:find("weezp is up %- going after it once this fight is over"))
+dl2.pairDied("jhet"); expect("pursue macub | sense macub | ss macub")
+dl2.pairDied("macub"); flush(); expect("")          -- pair done, but MSDP still shows a target
+MSDP.set("Target", "name", "")                      -- the fight is over
+flush(); expect("event")                            -- now it travels to Weezpurr
+assert(dl2.pending == nil)
+print("OK  Weezpurr announced mid-fight: goes once the fight and the pair are over")
+
+dl2.goTo("phenix"); expect("event")                 -- not busy: straight away
+print("OK  announced while free: straight away")
+
+-- Rivals no longer hide boss lines: whatever happened meanwhile is picked up after
+dl2.rivalAppears("Capella", "you"); sent = {}
+dl2.goTo("weezp"); expect("")                       -- start line during a rival: queued
+dl2.rivalDies("Capella the Saiba"); expect("get all"); flush(); flush()
+expect("event")                                     -- the rival's gone: off to Weezpurr
+dl2.rivalAppears("Capella", "you"); sent = {}
+dl2.bossDied("daiue"); expect("get all.tab")        -- Phenix died during the rival: loot, but don't chase yet
+dl2.rivalDies("Capella the Saiba"); flush()
+expect("get all | pursue daiue | sense daiue | ss daiue")
+print("OK  boss lines during a rival are kept and acted on afterwards")
+
+-- Safety net: if the 'fight over' signal is missed, the 5-second check still goes
+dl2.goTo("weezp"); MSDP.set("Target", "name", "Jhet 2.0"); dl2.goTo("weezp"); sent = {}
+MSDP.Target.name = ""                               -- cleared without an event
+namedTimers["pending check"](); flush(); expect("event")
+print("OK  the periodic check catches a missed signal")
 
 -- Zenzeyh's last words ("[RAID: Zenzeyh v2.0] Power creep is real...") end the event and
 -- switch the boss folder off just BEFORE his "is dead!" line. The death trigger must
