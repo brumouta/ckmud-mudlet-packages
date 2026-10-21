@@ -86,13 +86,14 @@ LOG = ""
 wait(995 - 300); ok(LOG:find("Bosses respawn in 5m 00s!"), "warns 5 minutes before")
 wait(240);       ok(LOG:find("Bosses respawn in 1m 00s!"), "warns 1 minute before")
 wait(60);        ok(LOG:find("Bosses have respawned!") and alerts == 1, "announces the respawn and flashes")
-ok(BossTimer.remaining() == nil, "respawn time unknown until the next uptime")
+ok(math.abs(BossTimer.remaining() - 1200) < 0.01 and BossTimer.estimated, "the next respawn is assumed 20 minutes away")
+LOG = ""; BossTimer.command(nil); ok(LOG:find("~20m 00s %(estimated"), "shown with a ~ until uptime confirms it")
 sent = {}
 wait(60);        ok(sent[1] == "uptime", "asks uptime a minute after the respawn")
 deleted = 0
 feed(UPTIME:format("59 min 0 sec") .. "\n[Pl: 1,000 | ...] next line after the block")
 ok(deleted == 12, "that automatic uptime block (12 lines) is hidden, nothing after it")
-ok(math.abs(BossTimer.remaining() - 3540) < 0.01, "and the next countdown starts by itself")
+ok(math.abs(BossTimer.remaining() - 3540) < 0.01 and not BossTimer.estimated, "uptime corrects the estimate to the exact time")
 
 -- After logging in it checks by itself
 sent = {}
@@ -132,7 +133,8 @@ ok(named.window == nil, "window off stops its refresh timer")
 feed(UPTIME:format("40 min 0 sec"))
 LOG, sent, deleted = "", {}, 0
 feed("Copyover recovery complete.")
-ok(BossTimer.remaining() == nil and LOG:find("Server restarted %(copyover%)"), "copyover drops the old countdown")
+ok(math.abs(BossTimer.remaining() - 1200) < 0.01 and BossTimer.estimated and LOG:find("Server restarted %(copyover%)"),
+   "copyover replaces the old countdown with an estimated 20 minutes")
 wait(5); ok(sent[1] == "uptime", "it asks uptime 5 seconds after the copyover")
 feed(UPTIME:format("59 min 50 sec"))
 ok(deleted == 12 and math.abs(BossTimer.remaining() - 3590) < 0.01, "the new countdown starts, check hidden")
@@ -155,6 +157,16 @@ ok(deleted == 0, "...so an uptime you then type yourself is still shown")
 ok(math.abs(BossTimer.remaining() - 600) < 0.01, "and it's used for the countdown")
 sent = {}
 named.unknown(); ok(#sent == 0, "once it's known, the 5-minute check does nothing")
+
+-- If uptime can't be checked after a respawn, the 20-minute estimate still warns
+LOG, sent = "", {}
+wait(600)                                      -- the 10-minute countdown above runs out: respawn
+ok(LOG:find("Bosses have respawned!"), "respawned")
+wait(BossTimer.answerWait + 60)                -- its uptime check goes unanswered (lag)
+ok(BossTimer.estimated, "still on the estimate")
+named.unknown(); ok(#sent == 2, "while it's only an estimate, the 5-minute check keeps asking")
+wait(1200); ok(LOG:find("Bosses respawn in 1m 00s!") and LOG:find("Bosses respawn in 0m 30s!"),   -- set by boss warn 1,0.5 above
+               "the estimate's warnings fire anyway (being a little off is fine)")
 
 BossTimer.command("flash", "off"); BossTimer.command("help"); BossTimer.command("bogus")
 print("\nBossTimer: ALL PASSED")

@@ -8,6 +8,7 @@ local BT = BossTimer
 
 -- ---------------------------------------------------------------- settings
 BT.warnings   = BT.warnings or { 300, 60 }  -- seconds before the respawn to warn at
+BT.cycle      = 1200                        -- bosses respawn about every 20 minutes (assumed until uptime says)
 BT.recheck    = 60                          -- seconds after a respawn to ask `uptime` again
 BT.afterLogin = 10                          -- seconds after connecting to ask `uptime`
 BT.afterCopyover = 5                        -- seconds after a copyover to ask `uptime`
@@ -54,12 +55,11 @@ local function at(secsFromNow, fn)
 end
 
 -- ---------------------------------------------------------------- the countdown
--- Called by the trigger on "Boss Respawn: <time> remaining"
-function BT.onRespawnLine(text)
-  local secs = BT.parse(text)
-  if not secs then return end
-  BT.checkingAt = nil
+-- Count down `secs` to the next respawn, with warnings. estimated = assumed (20 minutes
+-- after a respawn or copyover) rather than read from `uptime`; it's shown with a "~".
+function BT.startCountdown(secs, estimated)
   BT.respawnAt = getEpoch() + secs
+  BT.estimated = estimated or false
   clearTimers()
   for _, w in ipairs(BT.warnings) do
     if secs > w then
@@ -70,12 +70,19 @@ function BT.onRespawnLine(text)
   BT.refresh()
 end
 
+-- Called by the trigger on "Boss Respawn: <time> remaining": the exact time
+function BT.onRespawnLine(text)
+  local secs = BT.parse(text)
+  if not secs then return end
+  BT.checkingAt = nil
+  BT.startCountdown(secs, false)
+end
+
 function BT.respawned()
   info("green", "Bosses have respawned!")
   if BT.flash then alert(10) end
-  BT.respawnAt = nil
-  BT.refresh()
-  at(BT.recheck, function() BT.check(true) end)   -- learn when the next one is
+  BT.startCountdown(BT.cycle, true)              -- the next one is about 20 minutes away...
+  at(BT.recheck, function() BT.check(true) end)  -- ...uptime will say exactly
 end
 
 -- ---------------------------------------------------------------- asking `uptime`
@@ -100,10 +107,10 @@ local function connected()
   return true                                -- older Mudlet without getConnectionInfo
 end
 
--- Ask quietly whenever the respawn time is unknown: after installing or reloading
--- the package, after a check that went unanswered, ... (not while one is pending)
+-- Ask quietly whenever the respawn time is unknown or only estimated: after installing
+-- or reloading the package, after a check that went unanswered, ... (not while one is pending)
 function BT.ensureKnown()
-  if BT.respawnAt or BT.checkingAt or not connected() then return end
+  if (BT.respawnAt and not BT.estimated) or BT.checkingAt or not connected() then return end
   BT.check(true)
 end
 
@@ -130,10 +137,8 @@ end
 -- "Copyover recovery complete.": the server restarted, so uptime and the respawn timer
 -- started over. Drop the old countdown and read the new one.
 function BT.onCopyover()
-  clearTimers()
-  BT.respawnAt = nil
-  BT.refresh()
-  info("white", "Server restarted (copyover) - checking the new boss respawn time")
+  info("white", "Server restarted (copyover) - boss respawn in about 20 minutes, checking uptime")
+  BT.startCountdown(BT.cycle, true)
   at(BT.afterCopyover, function() BT.check(true) end)
 end
 
@@ -174,7 +179,7 @@ function BT.refresh()
   if not left then
     text, color = "unknown - type uptime", "grey"
   else
-    text = BT.fmt(left)
+    text = (BT.estimated and "~" or "") .. BT.fmt(left)
     color = left <= 60 and "red" or left <= 300 and "orange" or "lime"
   end
   BT.label:echo("<center><font size=5 color='" .. color .. "'>" .. text .. "</font></center>")
@@ -212,7 +217,7 @@ function BT.command(cmd, arg)
   if cmd == nil then
     local left = BT.remaining()
     if left then
-      info("white", "Bosses respawn in " .. BT.fmt(left))
+      info("white", "Bosses respawn in " .. (BT.estimated and ("~" .. BT.fmt(left) .. " (estimated, uptime not checked yet)") or BT.fmt(left)))
     else
       info("white", "Respawn time unknown - type uptime (or boss check)")
     end

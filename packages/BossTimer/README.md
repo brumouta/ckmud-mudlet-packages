@@ -11,6 +11,7 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 ## How it works
 
 - **Whenever `uptime` is shown**, by you or by the package, it reads the Boss Respawn line and starts a countdown to that exact moment. Server time zones don't matter.
+- **After a respawn or a copyover it assumes the next respawn is 20 minutes away** and starts counting down straight away, warnings included, then checks `uptime` and switches to the exact time. Until then the time shows with a `~` (e.g. `~19m 30s`).
 - **It warns you** 5 minutes and 1 minute before (`boss warn` changes this), says when the bosses have respawned, and flashes Mudlet's taskbar icon.
 - **It keeps itself in sync.** It quietly asks `uptime` 10 seconds after you log in, 1 minute after each respawn, and 5 seconds after a **copyover** (`Copyover recovery complete.`), which restarts the server and its uptime, to learn when the next one is. Whenever it doesn't know the respawn time (just installed, or a check went unanswered) it also asks 5 seconds after loading and then every 5 minutes until it knows, but not while you're disconnected. Those automatic checks are hidden from your screen; an `uptime` you type yourself is always shown.
 
