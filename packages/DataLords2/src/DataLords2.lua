@@ -8,11 +8,16 @@ DL.attack      = DL.attack or "ss"          -- attack used on bosses and rivals
 DL.rivalVolley = DL.rivalVolley or 4        -- attacks queued when a rival appears
 DL.loop        = DL.loop or false           -- re-request the event after Zenzeyh dies
 DL.requestCmd  = "request event 18"
-DL.loopDelay   = 7                          -- seconds before re-requesting
+DL.loopDelay   = 5                          -- seconds after Zenzeyh dies before re-requesting
+DL.busyRetry   = 1                          -- "There is already an event running": try again after this
+DL.BUSY_TRIES  = 60                         -- ...at most this many times
 DL.loot        = "get all.tab"
 DL.CHECK_AFTER = 10                         -- seconds after attacking a boss to check it became my target
 DL.MAX_TRIES   = 3                          -- travel attempts per boss before giving up
 DL.MAX_WAIT    = 20                         -- seconds a queued boss waits for my current target to clear
+DL.LOOK_WAIT   = 2                          -- seconds to wait for a "not here" answer to `look <npc>`
+-- The answer to `look <npc>` when it isn't in the room
+DL.NOT_HERE    = [[^(?:You do not see that here|You don't see that here|You don't see anything like that|There is no one by that name)]]
 
 -- How to reach each planet's event zone
 DL.travel = {
@@ -92,13 +97,32 @@ end
 
 -- "<Name> [v]2.0 is dead!" for any event boss
 DL.BOSS_KEYS = { jhet = "jhet", macubyree = "macub", weezpurr = "weezp", phenix = "phenix", daiue = "daiue", zenzeyh = "zenzeyh" }
+DL.LOOT_HERE = { jhet = true, macub = true, weezp = true }   -- the others loot in bossDied
 function DL.bossDead(name)
   local key = DL.BOSS_KEYS[name:lower()]
+  if not key or DL.dead[key] then return end
+  if DL.LOOT_HERE[key] then send(DL.loot) end    -- before going anywhere
   if DL.PAIR[key] then return DL.pairDied(key) end
-  if key then DL.dead[key] = true end
+  DL.dead[key] = true
 end
 
 -- Ask `event` where the boss is, travel there, then attack
+-- `look <npc>`: onHere if no "not here" answer arrives, onMissing if it does
+function DL.checkHere(npc, onHere, onMissing)
+  if DL.lookTrigger then killTrigger(DL.lookTrigger) end
+  if DL.lookTimer then killTimer(DL.lookTimer) end
+  DL.lookTrigger = tempRegexTrigger(DL.NOT_HERE, function()
+    killTimer(DL.lookTimer); DL.lookTimer = nil
+    killTrigger(DL.lookTrigger); DL.lookTrigger = nil
+    onMissing()
+  end)
+  DL.lookTimer = tempTimer(DL.LOOK_WAIT, function()
+    killTrigger(DL.lookTrigger); DL.lookTrigger, DL.lookTimer = nil, nil
+    onHere()
+  end)
+  send("look " .. npc)
+end
+
 function DL.findAndAttack(boss)
   if DL.dead[boss] then return end
   DL.boss = boss
@@ -116,8 +140,18 @@ function DL.findAndAttack(boss)
       info("yellow", "Unknown location: " .. location)
       return
     end
-    for _, cmd in ipairs(route) do send(cmd) end
-    DL.attackBoss(boss)
+    -- The instant comes first; check it worked (its npc is here) before the rest of the route
+    send(route[1])
+    local npc = route[1]:match("^focus 'instant' (%S+)")
+    local function onward()
+      if not stillAfter(boss) and not (DL.PAIR[boss] and DL.pairTarget()) then return end
+      for i = 2, #route do send(route[i]) end
+      DL.attackBoss(boss)
+    end
+    if not npc then return onward() end
+    DL.checkHere(npc, onward, function()
+      if DL.active and not next(DL.rivals) then DL.retry(boss, "The instant to " .. npc .. " failed") end
+    end)
   end, 1)
   DL.locTimer = tempTimer(10, function()          -- `event` never answered (lag)
     killTrigger(DL.locTrigger)
@@ -171,8 +205,12 @@ function DL.pairDied(who)
     info("white", DL.PAIR_NAMES[who] .. " is down - attacking " .. DL.PAIR_NAMES[target])
     DL.boss = target
     if next(DL.rivals) or not DL.pairArrived then return end   -- resume / the travel attacks it
-    send(DL.attack .. " " .. target)             -- same room: no pursue
-    DL.verify(target)
+    local function hit() if DL.boss == target and not DL.dead[target] then send(DL.attack .. " " .. target); DL.verify(target) end end
+    DL.checkHere(target, hit, function()         -- he should be right here; if not, find him
+      if DL.boss ~= target then return end
+      send("pursue " .. target)
+      hit()
+    end)
   end
 end
 
@@ -355,7 +393,7 @@ function DL.requested(requester)
   end
   if me and requester:lower() == me:lower() then
     DL.active, DL.zenzeyhDone, DL.endedAt, DL.pending = true, false, nil, nil
-    DL.dead, DL.tries, DL.pairStarted = {}, 0, false
+    DL.dead, DL.tries, DL.pairStarted, DL.loopRequesting = {}, 0, false, false
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
     DL.recordEvent()
@@ -399,9 +437,25 @@ function DL.zenzeyhDied()
       DL.loop = false
       return info("yellow", why .. ". Loop OFF.")
     end
-    tempTimer(DL.loopDelay, function() send(DL.requestCmd) end)
+    tempTimer(DL.loopDelay, DL.loopRequest)
     info("green", "Re-requesting the event in " .. DL.loopDelay .. "s")
   end
+end
+
+function DL.loopRequest()
+  DL.loopRequesting, DL.busyTries = true, 0
+  send(DL.requestCmd)
+end
+
+-- "There is already an event running, Try again later...": wait a second, try again
+function DL.eventBusy()
+  if not (DL.loopRequesting and DL.loop) then return end
+  DL.busyTries = DL.busyTries + 1
+  if DL.busyTries > DL.BUSY_TRIES then
+    DL.loopRequesting = false
+    return info("red", "Another event kept running - gave up re-requesting. `" .. DL.requestCmd .. "` to try yourself")
+  end
+  tempTimer(DL.busyRetry, function() if DL.loopRequesting and DL.loop then send(DL.requestCmd) end end)
 end
 
 -- ---------------------------------------------------------------- rivals
