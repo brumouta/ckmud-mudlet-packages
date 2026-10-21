@@ -12,9 +12,10 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [DataLords2](packages/DataLords2) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain (not Data Lords 1 or 3) when *you* requested it, pausing for rivals (yours or your group's). |
 | [Blackjack](packages/Blackjack) | `bj help` | Plays **blackjack** with basic strategy after you `cjoin`, and tracks wins, zenni, Lucky Tails and XP. |
 | [FriezaQuest](packages/FriezaQuest) | `fq help` | Automates the **Frieza's Spaceship** quest from Appule to the Bridge Access Card. |
+| [BossTimer](packages/BossTimer) | `boss help` | Counts down to the **boss respawn** (from `uptime`), warns 5 and 1 minutes before, and re-checks by itself after each respawn. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Blackjack uses it when it's there. FriezaQuest and YamoshiSpawn work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Blackjack uses it when it's there. FriezaQuest, YamoshiSpawn and BossTimer work without it.
 
 ## Installing
 

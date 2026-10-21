@@ -1,0 +1,48 @@
+{
+  "name": "BossTimer",
+  "version": "1.0.0",
+  "title": "Boss respawn timer",
+  "description": "Counts down to CKMud's boss respawn (from `uptime`), warns before it, and re-checks after each respawn. Type `boss help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "BossTimer core",
+      "file": "src/BossTimer.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "boss",
+      "regex": "^boss(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nBossTimer.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "BossTimer",
+      "folder": true,
+      "children": [
+        {
+          "name": "BossTimer uptime block",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^CKMud System Information:"
+            }
+          ],
+          "script": "BossTimer.blockStart()"
+        },
+        {
+          "name": "BossTimer respawn line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*Boss Respawn:\\s*(.+?)\\s*remaining"
+            }
+          ],
+          "script": "BossTimer.onRespawnLine(matches[2])"
+        }
+      ]
+    }
+  ]
+}
