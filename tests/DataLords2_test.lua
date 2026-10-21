@@ -140,15 +140,15 @@ dl2.startPair(); arrive()
 expect("event | focus 'instant' malak | pursue jhet | sense jhet | ss macub")
 dl2.pairDied("macub"); expect("ss jhet")                                  -- usual order: then Jhet, no pursue
 dl2.pairDied("jhet"); expect("")                                           -- both down: wait for the next boss
-assert(dl2.boss == nil and LOG:find("both down"))
+assert(dl2.boss == nil and LOG:find("are down"))
 print("OK  Macubyree first, then Jhet (same room, no pursue)")
 
 dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
-dl2.pairDied("jhet"); expect("")                     -- someone kills Jhet first: leave Macubyree
-assert(dl2.boss == nil and LOG:find("leaving Macubyree, waiting for Weezpurr"))
+dl2.pairDied("jhet"); expect("")                     -- someone kills Jhet first: Macubyree dies with him
+assert(dl2.boss == nil and dl2.dead.macub and LOG:find("Jhet and Macubyree are down %- waiting for Weezpurr"))
 dl2.goTo("weezp"); expect("event")                   -- Weezpurr's start line: off we go
 dl2.pairDied("macub"); expect("")
-print("OK  Jhet killed first: leaves Macubyree and goes to Weezpurr on her start line")
+print("OK  Jhet killed first: the pair is done, goes to Weezpurr on her start line")
 
 dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
 MSDP.set("Target", "name", "Macubyree")

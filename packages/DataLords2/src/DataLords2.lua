@@ -129,8 +129,8 @@ end
 
 -- Jhet and Macubyree always stand together. Pursue Jhet (`pursue macub` can find
 -- Macubyree demonspawn, a different mob), kill Macubyree first, then Jhet - no
--- pursuing in between. If someone kills Jhet first, leave Macubyree: the pair is
--- done for us, and we go to Weezpurr when her start line comes (or now if it came).
+-- pursuing in between. Jhet's death takes Macubyree with him, so once Jhet is dead
+-- the pair is done: go to Weezpurr when her start line comes (or now if it came).
 DL.PAIR = { jhet = "macub", macub = "jhet" }
 DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
 
@@ -161,11 +161,11 @@ end
 function DL.pairDied(who)
   if DL.dead[who] then return end                -- a repeated line
   DL.dead[who] = true
+  if who == "jhet" then DL.dead.macub = true end   -- Macubyree dies with him
   local target = DL.pairTarget()
   if not target then
     DL.boss = nil
-    info("green", (who == "jhet" and not DL.dead.macub and "Jhet is down - leaving Macubyree, " or "Jhet and Macubyree are both down - ") ..
-                  (DL.pending and "going after " .. DL.pending or "waiting for Weezpurr"))
+    info("green", "Jhet and Macubyree are down - " .. (DL.pending and "going after " .. DL.pending or "waiting for Weezpurr"))
     DL.flushPending()
   elseif DL.boss ~= target then
     info("white", DL.PAIR_NAMES[who] .. " is down - attacking " .. DL.PAIR_NAMES[target])
