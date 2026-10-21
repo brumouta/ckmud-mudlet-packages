@@ -1,6 +1,6 @@
 {
   "name": "MSDP",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "MSDP data for CKMud packages",
   "description": "Subscribes to every MSDP variable CKMud offers and shares the values with the other packages, plus name, race and base PL from your score sheet. Type `msdp` for commands.",
   "author": "Bruno Mouta",
@@ -51,6 +51,16 @@
             }
           ],
           "script": "MSDP.fromScore(\"BasePl\", matches[2])"
+        },
+        {
+          "name": "MSDP copyover",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Copyover recovery complete."
+            }
+          ],
+          "script": "MSDP.onCopyover()"
         }
       ]
     }

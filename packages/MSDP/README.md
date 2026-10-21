@@ -9,6 +9,7 @@ The one package that talks MSDP to CKMud. Install it **before** Autolearn, Chore
 - **Subscribes to everything.** On connect it asks the server which variables it can report (`LIST REPORTABLE_VARIABLES`) and subscribes to all of them, plus the 46 it knows. New variables the MUD adds are picked up automatically.
 - **Converts and shares.** Values are converted to numbers and kept in `MSDP.Player`, `MSDP.Room` and `MSDP.Target`, using the field names the CK packages always used (`Pl`, `MaxPl`, `Ki`, `Stats.STR`, `Room.Gravity`, `Target.Health`…). Variables it doesn't know are kept as sent in `MSDP.raw`.
 - **Fills in what MSDP no longer sends.** Your **name**, **race** and **base PL** come from your `score` sheet. If the server ever sends `CHARACTER_NAME`, `RACE` or `BASE_PL` again, those win.
+- **Survives copyovers.** A copyover (`Copyover recovery complete.`) restarts the server and drops MSDP subscriptions, so it subscribes to everything again.
 - **Survives reloads.** MSDP only reports a variable when it changes, so after a reload it replays what Mudlet already has.
 
 ## Commands

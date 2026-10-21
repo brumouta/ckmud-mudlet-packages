@@ -10,6 +10,7 @@ local BT = BossTimer
 BT.warnings   = BT.warnings or { 300, 60 }  -- seconds before the respawn to warn at
 BT.recheck    = 60                          -- seconds after a respawn to ask `uptime` again
 BT.afterLogin = 10                          -- seconds after connecting to ask `uptime`
+BT.afterCopyover = 5                        -- seconds after a copyover to ask `uptime`
 BT.flash      = (BT.flash == nil) and true or BT.flash   -- flash Mudlet's taskbar icon at respawn
 
 -- ---------------------------------------------------------------- state
@@ -98,6 +99,16 @@ function BT.blockStart()
       end
     end
   end)
+end
+
+-- "Copyover recovery complete.": the server restarted, so uptime and the respawn timer
+-- started over. Drop the old countdown and read the new one.
+function BT.onCopyover()
+  clearTimers()
+  BT.respawnAt = nil
+  BT.refresh()
+  info("white", "Server restarted (copyover) - checking the new boss respawn time")
+  at(BT.afterCopyover, function() BT.check(true) end)
 end
 
 registerNamedEventHandler("BossTimer", "login", "sysConnectionEvent", function()

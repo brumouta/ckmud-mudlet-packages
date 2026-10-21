@@ -81,6 +81,14 @@ events = {}
 dofile("packages/MSDP/src/MSDP.lua")
 ok(MSDP.Player.MaxPl == 1234567 and lastEvent("MSDP.loaded"), "reload keeps values and tells the packages")
 
+-- A copyover drops the server's subscriptions: subscribe to everything again
+sent = {}
+MSDP.onCopyover()
+ok(sent[1] == "LIST REPORTABLE_VARIABLES" and sent[2]:find("^REPORT ") and sent[2]:find(" SHINY_NEW_THING"),
+   "a copyover subscribes to everything again")
+ok(not MSDP.ticked, "and waits for the server's next update")
+server("UPDATE_EPOCH", "4998")                     -- the restarted server ticks again
+
 MSDP.command("help"); MSDP.command("status"); MSDP.command("show"); MSDP.command("bogus")
 ok(LOG:find("Last update: 2s ago") and LOG:find("Name: Vorrac"), "msdp status")
 print("\nMSDP: ALL PASSED")

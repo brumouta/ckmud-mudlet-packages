@@ -167,6 +167,11 @@ end
 -- ---------------------------------------------------------------- start up
 registerNamedEventHandler("MSDP", "connect", "sysConnectionEvent", function() M:report() end)
 
+-- "Copyover recovery complete.": the server restarted and forgot our subscriptions
+function M.onCopyover()
+  M:report()
+end
+
 -- MSDP only reports a variable when it changes, so after a reload replay what is
 -- already in Mudlet's msdp table, then let the other packages copy it all.
 function M.seed()

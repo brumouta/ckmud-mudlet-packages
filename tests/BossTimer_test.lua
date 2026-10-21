@@ -32,6 +32,7 @@ local function feed(text)
     local started = l:match("^CKMud System Information:")
     for _, i in ipairs(ids) do if temps[i] then temps[i].f() end end   -- the gag matches every line ("^")
     if started then BossTimer.blockStart() end
+    if l:find("Copyover recovery complete.", 1, true) then BossTimer.onCopyover() end
     local t = l:match("^%s*Boss Respawn:%s*(.-)%s*remaining")
     if t then BossTimer.onRespawnLine(t) end
   end
@@ -103,6 +104,16 @@ ok(labelText and labelText:find("2m 00s"), "window shows the live countdown")
 named.window = nil
 BossTimer.command("window", "off")
 ok(named.window == nil, "window off stops its refresh timer")
+
+-- A copyover restarts the server: the old countdown is dropped and a fresh uptime is read
+feed(UPTIME:format("40 min 0 sec"))
+LOG, sent, deleted = "", {}, 0
+feed("Copyover recovery complete.")
+ok(BossTimer.remaining() == nil and LOG:find("Server restarted %(copyover%)"), "copyover drops the old countdown")
+wait(40 * 60); ok(not LOG:find("Bosses respawn in") and not LOG:find("have respawned"), "and its warnings never fire")
+ok(sent[1] == "uptime", "it asks uptime after the copyover")
+feed(UPTIME:format("59 min 50 sec"))
+ok(deleted == 12 and math.abs(BossTimer.remaining() - 3590) < 0.01, "the new countdown starts, check hidden")
 
 BossTimer.command("flash", "off"); BossTimer.command("help"); BossTimer.command("bogus")
 print("\nBossTimer: ALL PASSED")
