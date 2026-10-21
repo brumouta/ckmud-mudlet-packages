@@ -39,6 +39,7 @@ end
 DL.dead = {}                      -- bosses seen dying this event: key -> true
 
 function DL.attackBoss(boss)
+  if DL.PAIR[boss] then return DL.attackPair() end
   if DL.dead[boss] then return end              -- never chase a boss we saw die
   DL.boss = boss
   send("pursue " .. boss)
@@ -73,7 +74,7 @@ function DL.verify(boss)
   DL.verifyTimer = tempTimer(DL.CHECK_AFTER, function()
     DL.verifyTimer = nil
     if not stillAfter(boss) or next(DL.rivals) then return end   -- a rival: resume re-attacks
-    if DL.targeting(boss) then DL.tries = 0; return end
+    if DL.targeting(boss) or (DL.PAIR[boss] and DL.targeting(DL.PAIR[boss])) then DL.tries = 0; return end
     DL.retry(boss, boss .. " isn't my target")
   end)
 end
@@ -93,6 +94,7 @@ end
 DL.BOSS_KEYS = { jhet = "jhet", macubyree = "macub", weezpurr = "weezp", phenix = "phenix", daiue = "daiue", zenzeyh = "zenzeyh" }
 function DL.bossDead(name)
   local key = DL.BOSS_KEYS[name:lower()]
+  if DL.PAIR[key] then return DL.pairDied(key) end
   if key then DL.dead[key] = true end
 end
 
@@ -100,13 +102,14 @@ end
 function DL.findAndAttack(boss)
   if DL.dead[boss] then return end
   DL.boss = boss
-  if boss == "jhet" then DL.pairEngaged = true end
   if DL.locTrigger then killTrigger(DL.locTrigger) end
   if DL.locTimer then killTimer(DL.locTimer) end
 
   DL.locTrigger = tempRegexTrigger([[^Location:\s*(.+?)\s+Time Rem:]], function()
     killTimer(DL.locTimer)
-    if DL.dead[boss] then return end            -- died while we were looking it up
+    if DL.PAIR[boss] then                       -- died while we were looking it up
+      if not DL.pairTarget() then return end
+    elseif DL.dead[boss] then return end
     local location = matches[2]
     local route = DL.travel[location]
     if not route then
@@ -124,31 +127,51 @@ function DL.findAndAttack(boss)
   send("event")
 end
 
--- Jhet and Macubyree always fight together, and people kill them in either order.
--- Track both: when one dies go after the other only if it's still alive; when both
--- are down, wait for the next boss's start line.
+-- Jhet and Macubyree always stand together. Pursue Jhet (`pursue macub` can find
+-- Macubyree demonspawn, a different mob), kill Macubyree first, then Jhet - no
+-- pursuing in between. People kill them in either order: only attack the living one.
 DL.PAIR = { jhet = "macub", macub = "jhet" }
 DL.PAIR_NAMES = { jhet = "Jhet", macub = "Macubyree" }
 
 function DL.startPair()
   if DL.pairStarted then return end             -- once per event: a repeated shout mustn't revive the dead
-  DL.pairStarted = true
-  DL.pairDead, DL.pairEngaged = { jhet = false, macub = false }, false
+  DL.pairStarted, DL.pairArrived = true, false
   DL.dead.jhet, DL.dead.macub = nil, nil
   DL.goTo("jhet")
 end
 
+-- Macubyree first, then Jhet; nil when both are dead
+function DL.pairTarget()
+  if not DL.dead.macub then return "macub" end
+  if not DL.dead.jhet then return "jhet" end
+end
+
+-- After travelling (or a rival): find them through Jhet, attack whichever is next
+function DL.attackPair()
+  local target = DL.pairTarget()
+  if not target then return end
+  DL.boss, DL.pairArrived = target, true
+  local guide = DL.dead.jhet and "macub" or "jhet"   -- only if Jhet died before we got there
+  send("pursue " .. guide)
+  send("sense " .. guide)
+  send(DL.attack .. " " .. target)
+  DL.verify(target)
+end
+
 function DL.pairDied(who)
-  DL.pairDead = DL.pairDead or { jhet = false, macub = false }
-  DL.pairDead[who], DL.dead[who] = true, true
-  local other = DL.PAIR[who]
-  if DL.pairDead[other] or DL.dead[other] then
+  if DL.dead[who] then return end                -- a repeated line
+  DL.dead[who] = true
+  local target = DL.pairTarget()
+  if not target then
     DL.boss = nil
     info("green", "Jhet and Macubyree are both down - " .. (DL.pending and "going after the next boss" or "waiting for the next boss"))
     DL.flushPending()
-  elseif DL.boss ~= other then
-    info("white", DL.PAIR_NAMES[who] .. " is down - going after " .. DL.PAIR_NAMES[other])
-    DL.engage(other)
+  elseif DL.boss ~= target then
+    info("white", DL.PAIR_NAMES[who] .. " is down - attacking " .. DL.PAIR_NAMES[target])
+    DL.boss = target
+    if next(DL.rivals) or not DL.pairArrived then return end   -- resume / the travel attacks it
+    send(DL.attack .. " " .. target)             -- same room: no pursue
+    DL.verify(target)
   end
 end
 
@@ -171,7 +194,6 @@ end
 -- Travel to a boss now, or as soon as we're free
 function DL.goTo(boss)
   if not DL.active then return end
-  if boss ~= "jhet" then DL.pairEngaged = false end   -- a later boss's start line: the pair is over
   DL.pendingSince = os.time()
   if DL.busy() then
     DL.pending = boss
