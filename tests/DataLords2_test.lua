@@ -6,8 +6,14 @@ msdp = {}
 local handlers, saved, clock = {}, {}, 1000
 os.time = function() return clock end
 function getMudletHomeDir() return "/profile" end
-function table.save(path, t) saved[path] = { name = t.name } end
-function table.load(path, t) if not saved[path] then error("no file") end; for k, v in pairs(saved[path]) do t[k] = v end end
+local function copy(v)
+  if type(v) ~= "table" then return v end
+  local c = {}
+  for k, x in pairs(v) do c[k] = copy(x) end
+  return c
+end
+function table.save(path, t) saved[path] = copy(t) end      -- like Mudlet: a snapshot on disk
+function table.load(path, t) if not saved[path] then error("no file") end; for k, v in pairs(copy(saved[path])) do t[k] = v end end
 function send(c) sent[#sent + 1] = c end
 function cecho(s) LOG = (LOG or "") .. s end
 function enableTrigger(n) enabled[n] = true end
@@ -113,5 +119,52 @@ dl2.command("loop", "on"); dl2.zenzeyhDied(); flush(); expect("get all.tab | req
 -- After the event ends, rivals are ignored
 dl2.ended(); dl2.rivalAppears("Capella", "you"); expect("")
 dl2.command("attack", "kame"); dl2.attackBoss("x"); expect("pursue x | sense x | kame x")
+-- Token spending: 10,000 per event you request, one session per connection
+LOG, sent = "", {}
+dl2.command("tokens", "reset")
+assert(dl2.session.spent == 0 and dl2.tokenLimit == 100000)
+dl2.command("limit", "30k"); assert(dl2.tokenLimit == 30000 and LOG:find("Session token limit: 30,000 %(3 events%)"))
+dl2.command("loop", "on"); assert(dl2.loop)
+dl2.requested("technine"); assert(dl2.session.spent == 10000 and dl2.session.events == 1)
+assert(LOG:find("Event cost 10,000 tokens %- this session: 10,000 of 30,000"))
+dl2.requested("Bob"); assert(dl2.session.spent == 10000)           -- someone else's event costs you nothing
+dl2.requested("technine"); dl2.zenzeyhDied(); flush()
+assert(sent[#sent] == "req event 18")                               -- 20,000 spent: the loop re-requests
+dl2.requested("technine"); assert(dl2.session.spent == 30000)
+assert(not dl2.loop and LOG:find("Session token limit reached %(30,000 of 30,000 spent%)"))
+sent = {}
+dl2.zenzeyhDied(); flush(); assert(sent[1] ~= "req event 18")       -- no fourth request
+LOG = ""
+dl2.command("loop", "on"); assert(not dl2.loop and LOG:find("Loop stays OFF"))
+print("OK  loop stops at the session token limit")
+
+-- Saved: a reload of the package keeps the session's spending
+dofile("packages/DataLords2/src/DataLords2.lua"); sent = {}
+assert(dl2.session.spent == 30000 and dl2.tokenLimit == 30000)
+print("OK  spending survives a reload")
+
+-- A new connection starts a new session; the old one goes into the history
+handlers["sysConnectionEvent:new session"]("sysConnectionEvent")
+assert(dl2.session.spent == 0 and dl2.history[1].spent == 30000 and dl2.history[1].events == 3)
+LOG = ""; dl2.command("tokens")
+assert(LOG:find("This session") and LOG:find("30,000 tokens, 3 events"))
+print("OK  new session per connection, old one kept in history")
+
+-- Your token balance (MSDP) also stops the loop
+MSDP.Player.Tokens = 5000
+LOG = ""; dl2.command("loop", "on"); assert(not dl2.loop and LOG:find("Only 5,000 tokens left"))
+MSDP.Player.Tokens = nil
+print("OK  too few tokens left stops the loop")
+
+-- Limit forms
+assert(dl2.parseTokens("200k") == 200000 and dl2.parseTokens("1.5m") == 1500000 and dl2.parseTokens("200,000") == 200000)
+assert(dl2.parseTokens("lots") == nil)
+LOG = ""; dl2.command("limit", "lots"); assert(LOG:find("Didn't understand 'lots'") and dl2.tokenLimit == 30000)
+dl2.command("limit", "off"); assert(dl2.tokenLimit == false)
+dl2.command("loop", "on"); assert(dl2.loop)                         -- no limit: loop allowed
+dofile("packages/DataLords2/src/DataLords2.lua"); sent = {}
+assert(dl2.tokenLimit == false)                                      -- "off" is saved too
+print("OK  limit accepts 200k / 1.5m / 200,000 / off")
+
 dl2.command("help"); dl2.command("status"); dl2.command("bogus")
 print("\ndl2: ALL PASSED")

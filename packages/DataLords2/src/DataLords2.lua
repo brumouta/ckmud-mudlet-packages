@@ -84,14 +84,82 @@ local function nonEmpty(name)
   if type(name) == "string" and name ~= "" and name ~= "???" then return name end
 end
 
-function DL.loadName()
+-- ---------------------------------------------------------------- token spending
+-- Each Data Lords v2.0 request costs tokens. Every event you request (by hand or
+-- through `dl2 loop`) is recorded against the current session - one per connection -
+-- and the loop stops before a request would go over the session's limit.
+DL.EVENT_COST   = 10000
+DL.DEFAULT_LIMIT = 100000                    -- per session; `dl2 limit` changes it, `dl2 limit off` removes it
+DL.HISTORY_KEEP = 20                         -- past sessions remembered
+
+local function newSession()
+  return { started = os.time(), events = 0, spent = 0 }
+end
+
+-- Name, limit, current session and history all live in one file in your profile
+function DL.save()
+  pcall(table.save, DL.SAVE_FILE, { name = DL.name, limit = DL.tokenLimit, session = DL.session, history = DL.history })
+end
+
+function DL.load()
   local saved = {}
-  if pcall(table.load, DL.SAVE_FILE, saved) then DL.name = nonEmpty(saved.name) end
+  if pcall(table.load, DL.SAVE_FILE, saved) then
+    DL.name = nonEmpty(saved.name)
+    DL.tokenLimit = saved.limit
+    DL.session, DL.history = saved.session, saved.history
+  end
+  if DL.tokenLimit == nil then DL.tokenLimit = DL.DEFAULT_LIMIT end
+  DL.session = DL.session or newSession()
+  DL.history = DL.history or {}
 end
 
 function DL.setName(name)
   DL.name = name
-  pcall(table.save, DL.SAVE_FILE, { name = name })
+  DL.save()
+end
+
+-- 100000 -> "100,000"
+function DL.fmtTokens(n)
+  local str = tostring(math.floor(n))
+  return (str:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+end
+
+-- Close the current session (kept in the history if anything was spent) and start a new one
+function DL.newSession()
+  if DL.session and DL.session.events > 0 then
+    table.insert(DL.history, 1, DL.session)
+    while #DL.history > DL.HISTORY_KEEP do table.remove(DL.history) end
+  end
+  DL.session = newSession()
+  DL.save()
+end
+
+-- Can we afford another event? Returns false plus the reason if not.
+function DL.canAfford()
+  if DL.tokenLimit and DL.session.spent + DL.EVENT_COST > DL.tokenLimit then
+    return false, "Session token limit reached (" .. DL.fmtTokens(DL.session.spent) .. " of " ..
+                  DL.fmtTokens(DL.tokenLimit) .. " spent) - raise it with `dl2 limit` or start over with `dl2 tokens reset`"
+  end
+  local M = rawget(_G, "MSDP")
+  local balance = M and M.Player and M.Player.Tokens
+  if balance and balance < DL.EVENT_COST then
+    return false, "Only " .. DL.fmtTokens(balance) .. " tokens left - an event costs " .. DL.fmtTokens(DL.EVENT_COST)
+  end
+  return true
+end
+
+-- One of your events was requested: record what it cost
+function DL.recordEvent()
+  DL.session.events = DL.session.events + 1
+  DL.session.spent = DL.session.spent + DL.EVENT_COST
+  DL.save()
+  info("white", "Event cost " .. DL.fmtTokens(DL.EVENT_COST) .. " tokens - this session: " .. DL.fmtTokens(DL.session.spent) ..
+                (DL.tokenLimit and (" of " .. DL.fmtTokens(DL.tokenLimit)) or ""))
+  local ok, why = DL.canAfford()
+  if not ok and DL.loop then
+    DL.loop = false
+    info("yellow", why .. ". Loop OFF after this event.")
+  end
 end
 
 local function shared() return rawget(_G, "MSDP") end
@@ -124,6 +192,7 @@ function DL.requested(requester)
     DL.active = true
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
+    DL.recordEvent()
   else
     DL.stop()
     if me then
@@ -148,6 +217,11 @@ end
 function DL.zenzeyhDied()
   DL.bossDied(nil)
   if DL.loop then
+    local ok, why = DL.canAfford()
+    if not ok then
+      DL.loop = false
+      return info("yellow", why .. ". Loop OFF.")
+    end
     tempTimer(DL.loopDelay, function() send(DL.requestCmd) end)
     info("green", "Re-requesting the event in " .. DL.loopDelay .. "s")
   end
@@ -219,8 +293,9 @@ function DL.checkMSDP()
   info("red", "DataLords2 needs the MSDP package. Install MSDP.mpackage from the ckmud-mudlet-packages release, then reconnect.")
 end
 registerNamedEventHandler("dl2", "need MSDP", "sysConnectionEvent", function() tempTimer(2, DL.checkMSDP) end)
+registerNamedEventHandler("dl2", "new session", "sysConnectionEvent", function() DL.newSession() end)
 tempTimer(5, DL.checkMSDP)
-DL.loadName()
+DL.load()
 
 -- ---------------------------------------------------------------- `dl2` alias
 DL.HELP = {
@@ -230,6 +305,9 @@ DL.HELP = {
   { "dl2 attack <command>",  "Attack used on bosses and rivals, e.g. dl2 attack ss" },
   { "dl2 resume",            "Forget pending rivals and continue the pursuit" },
   { "dl2 name [<you>]",       "Show or set your character name (used to spot your own requests)" },
+  { "dl2 tokens",            "Tokens spent this session (10,000 per event) and in past sessions" },
+  { "dl2 tokens reset",      "Start a new session count now" },
+  { "dl2 limit <n>|off",     "Per-session token limit for the loop, e.g. dl2 limit 200k (default 100,000)" },
   { "dl2 off",               "Stop the event automation now" },
 }
 
@@ -251,6 +329,41 @@ function DL.status()
   cecho("  <white>Rivals: " .. (#rivals > 0 and table.concat(rivals, ", ") or "-") .. "\n")
   cecho("  <white>Attack: " .. DL.attack .. "\n")
   cecho("  <white>Loop:   " .. onoff(DL.loop) .. "\n")
+  cecho("  <white>Tokens: " .. DL.fmtTokens(DL.session.spent) .. " spent this session (" .. DL.session.events .. " events)" ..
+        (DL.tokenLimit and (", limit " .. DL.fmtTokens(DL.tokenLimit)) or ", no limit") .. "\n")
+end
+
+function DL.tokens()
+  local s = DL.session
+  cecho("\n<cyan>dl2 tokens (" .. DL.fmtTokens(DL.EVENT_COST) .. " per event):\n")
+  cecho("  <white>This session (since " .. os.date("%Y-%m-%d %H:%M", s.started) .. "): <yellow>" ..
+        DL.fmtTokens(s.spent) .. "<white> tokens, " .. s.events .. " events\n")
+  if DL.tokenLimit then
+    local left = math.max(0, DL.tokenLimit - s.spent)
+    cecho("  <white>Limit: " .. DL.fmtTokens(DL.tokenLimit) .. " - " .. DL.fmtTokens(left) .. " left (" ..
+          math.floor(left / DL.EVENT_COST) .. " more events)\n")
+  else
+    cecho("  <white>Limit: none\n")
+  end
+  local M = rawget(_G, "MSDP")
+  if M and M.Player and M.Player.Tokens then
+    cecho("  <white>Your balance (MSDP): " .. DL.fmtTokens(M.Player.Tokens) .. "\n")
+  end
+  if #DL.history > 0 then
+    cecho("  <white>Past sessions:\n")
+    for i = 1, math.min(10, #DL.history) do
+      local h = DL.history[i]
+      cecho(string.format("    <grey>%s<white>  %s tokens, %d events\n", os.date("%Y-%m-%d %H:%M", h.started),
+            DL.fmtTokens(h.spent), h.events))
+    end
+  end
+end
+
+-- "200000", "200,000", "200k", "1.5m" -> number; nil if it isn't one
+function DL.parseTokens(text)
+  local num, unit = text:lower():gsub(",", ""):match("^(%d*%.?%d+)([km]?)$")
+  if not num then return nil end
+  return math.floor(tonumber(num) * (unit == "k" and 1000 or unit == "m" and 1000000 or 1) + 0.5)
 end
 
 function DL.command(cmd, arg)
@@ -259,8 +372,32 @@ function DL.command(cmd, arg)
   elseif cmd == "status" then
     DL.status()
   elseif cmd == "loop" then
-    DL.loop = (arg == "on") or (arg == nil and not DL.loop)
+    local want = (arg == "on") or (arg == nil and not DL.loop)
+    local ok, why = DL.canAfford()
+    if want and not ok then
+      DL.loop = false
+      return info("yellow", why .. ". Loop stays OFF.")
+    end
+    DL.loop = want
     info("white", "Loop " .. (DL.loop and "ON" or "OFF"))
+  elseif cmd == "tokens" then
+    if arg == "reset" then
+      DL.newSession()
+      info("white", "New session started: 0 tokens spent")
+    else
+      DL.tokens()
+    end
+  elseif cmd == "limit" and arg then
+    if arg == "off" then
+      DL.tokenLimit = false
+    else
+      local n = DL.parseTokens(arg)
+      if not n or n <= 0 then return info("yellow", "Didn't understand '" .. arg .. "'. Use e.g. dl2 limit 100000, 200k or off") end
+      DL.tokenLimit = n
+    end
+    DL.save()
+    info("white", DL.tokenLimit and ("Session token limit: " .. DL.fmtTokens(DL.tokenLimit) .. " (" ..
+                  math.floor(DL.tokenLimit / DL.EVENT_COST) .. " events)") or "No session token limit")
   elseif cmd == "attack" and arg then
     DL.attack = arg
     info("white", "Attack set to '" .. arg .. "'")
