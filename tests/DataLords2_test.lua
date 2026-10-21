@@ -49,7 +49,7 @@ dl2.requested("Bob"); assert(not dl2.active and enabled["dl2 Bosses"] == false)
 assert(LOG:find("I don't know your name yet"))
 
 -- Requesting it yourself teaches the bot your name (and it's saved)
-typed("req event 18"); clock = clock + 5
+typed("request event 18"); clock = clock + 5
 dl2.requested("Technine"); assert(dl2.active and enabled["dl2 Bosses"] and dl2.name == "Technine")
 assert(saved["/profile/DataLords2.lua"].name == "Technine")
 print("OK  learned the name from my own request")
@@ -114,7 +114,8 @@ expect("pursue macub | sense macub | ss macub")
 
 -- Boss chain and the loop
 dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | sense zenzeyh | ss zenzeyh")
-dl2.command("loop", "on"); dl2.zenzeyhDied(); flush(); expect("get all.tab | req event 18")
+dl2.command("loop", "off"); dl2.zenzeyhDied(); flush(); expect("get all.tab")          -- loop off: just the tab
+dl2.command("loop", "on"); dl2.zenzeyhDied(); flush(); expect("get all.tab | request event 18")
 
 -- After the event ends, rivals are ignored
 dl2.ended(); dl2.rivalAppears("Capella", "you"); expect("")
@@ -129,11 +130,11 @@ dl2.requested("technine"); assert(dl2.session.spent == 10000 and dl2.session.eve
 assert(LOG:find("Event cost 10,000 tokens %- this session: 10,000 of 30,000"))
 dl2.requested("Bob"); assert(dl2.session.spent == 10000)           -- someone else's event costs you nothing
 dl2.requested("technine"); dl2.zenzeyhDied(); flush()
-assert(sent[#sent] == "req event 18")                               -- 20,000 spent: the loop re-requests
+assert(sent[#sent] == "request event 18")                               -- 20,000 spent: the loop re-requests
 dl2.requested("technine"); assert(dl2.session.spent == 30000)
 assert(not dl2.loop and LOG:find("Session token limit reached %(30,000 of 30,000 spent%)"))
 sent = {}
-dl2.zenzeyhDied(); flush(); assert(sent[1] ~= "req event 18")       -- no fourth request
+dl2.zenzeyhDied(); flush(); assert(table.concat(sent, " | ") == "get all.tab")   -- still loots, no fourth request
 LOG = ""
 dl2.command("loop", "on"); assert(not dl2.loop and LOG:find("Loop stays OFF"))
 print("OK  loop stops at the session token limit")

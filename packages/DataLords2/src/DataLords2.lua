@@ -7,7 +7,7 @@ local DL = dl2
 DL.attack      = DL.attack or "ss"          -- attack used on bosses and rivals
 DL.rivalVolley = DL.rivalVolley or 4        -- attacks queued when a rival appears
 DL.loop        = DL.loop or false           -- re-request the event after Zenzeyh dies
-DL.requestCmd  = "req event 18"
+DL.requestCmd  = "request event 18"
 DL.loopDelay   = 7                          -- seconds before re-requesting
 DL.loot        = "get all.tab"
 
@@ -76,9 +76,9 @@ end
 -- Your name comes from the shared MSDP package (MSDP.Player.name: from the server
 -- if it sends CHARACTER_NAME, otherwise from your score sheet). Until that is known
 -- (no `score` yet), it falls back to a saved name: set with `dl2 name`, or learned
--- from the request line that follows your own `req event`.
+-- from the request line that follows your own `request event`.
 DL.SAVE_FILE = getMudletHomeDir() .. "/DataLords2.lua"
-DL.REQUEST_WINDOW = 20      -- seconds after you send `req event` that a request line counts as yours
+DL.REQUEST_WINDOW = 20      -- seconds after you send `request event` (or `req event`) that a request line counts as yours
 
 local function nonEmpty(name)
   if type(name) == "string" and name ~= "" and name ~= "???" then return name end
@@ -214,8 +214,10 @@ function DL.ended()
   info("yellow", "Event ended, triggers OFF")
 end
 
+-- Zenzeyh is the last boss: always grab the tab; with the loop on (and tokens to
+-- spare) also request the next event
 function DL.zenzeyhDied()
-  DL.bossDied(nil)
+  DL.bossDied(nil)                               -- get all.tab
   if DL.loop then
     local ok, why = DL.canAfford()
     if not ok then
