@@ -15,9 +15,10 @@ DL.loot        = "get all.tab"
 DL.CHECK_AFTER = 10                         -- seconds after attacking a boss to check it became my target
 DL.MAX_TRIES   = 3                          -- travel attempts per boss before giving up
 DL.MAX_WAIT    = 20                         -- seconds a queued boss waits for my current target to clear
-DL.LOOK_WAIT   = 2                          -- seconds to wait for a "not here" answer to `look <npc>`
--- The answer to `look <npc>` when it isn't in the room
-DL.NOT_HERE    = [[^(?:You do not see that here|You don't see that here|You don't see anything like that|There is no one by that name)]]
+DL.LOOK_WAIT   = 2                          -- seconds to wait for an answer to `look <npc>` (no answer: assume here)
+-- The answers to `look <npc>`: "Gine is in excellent condition." / "You do not see that here."
+DL.IS_HERE     = [[^(.+?) is in .+ condition\.$]]
+DL.NOT_HERE    = [[^You do not see that here\.]]
 
 -- How to reach each planet's event zone
 DL.travel = {
@@ -107,19 +108,22 @@ function DL.bossDead(name)
 end
 
 -- Ask `event` where the boss is, travel there, then attack
--- `look <npc>`: onHere if no "not here" answer arrives, onMissing if it does
+-- `look <npc>`: onHere on "<Npc> is in ... condition." (or no answer within LOOK_WAIT),
+-- onMissing on "You do not see that here."
 function DL.checkHere(npc, onHere, onMissing)
   if DL.lookTrigger then killTrigger(DL.lookTrigger) end
+  if DL.hereTrigger then killTrigger(DL.hereTrigger) end
   if DL.lookTimer then killTimer(DL.lookTimer) end
-  DL.lookTrigger = tempRegexTrigger(DL.NOT_HERE, function()
-    killTimer(DL.lookTimer); DL.lookTimer = nil
-    killTrigger(DL.lookTrigger); DL.lookTrigger = nil
-    onMissing()
+  local function done(fn)
+    killTimer(DL.lookTimer); killTrigger(DL.lookTrigger); killTrigger(DL.hereTrigger)
+    DL.lookTimer, DL.lookTrigger, DL.hereTrigger = nil, nil, nil
+    fn()
+  end
+  DL.lookTrigger = tempRegexTrigger(DL.NOT_HERE, function() done(onMissing) end)
+  DL.hereTrigger = tempRegexTrigger(DL.IS_HERE, function()
+    if matches[2]:lower():sub(1, #npc) == npc:lower() then done(onHere) end
   end)
-  DL.lookTimer = tempTimer(DL.LOOK_WAIT, function()
-    killTrigger(DL.lookTrigger); DL.lookTrigger, DL.lookTimer = nil, nil
-    onHere()
-  end)
+  DL.lookTimer = tempTimer(DL.LOOK_WAIT, function() done(onHere) end)
   send("look " .. npc)
 end
 

@@ -30,6 +30,12 @@ local function here()                               -- no "not here" answer: the
   local tm = dl2.lookTimer and timers[dl2.lookTimer]
   if tm then timers[dl2.lookTimer] = nil; tm.f() end
 end
+local function looked(line)                         -- the MUD's answer to `look <npc>`
+  for _, tm in pairs(temps) do
+    local name = (tm.p == dl2.IS_HERE) and line:match("^(.-) is in .+ condition%.$")
+    if name then matches = { line, name }; tm.f() end
+  end
+end
 local function notHere()                            -- the MUD answers `look <npc>` with "not here"
   for i, tm in pairs(temps) do if tm.p == dl2.NOT_HERE then tm.f(); return end end
   error("nobody is waiting for a look answer")
@@ -312,6 +318,12 @@ do
     at(planet); here(); sent = {}; timers = {}
   end
   print("OK  the instant is checked on every planet (malak, dende, gine, innkeeper, minotia, joe)")
+  dl2.tries = 0; dl2.findAndAttack("phenix"); at("Vegeta"); sent = {}
+  looked("Malak is in excellent condition."); expect("")                           -- someone else: keep waiting
+  looked("Gine is in excellent condition."); expect("pursue phenix | sense phenix | ss phenix")   -- straight on
+  assert(dl2.lookTimer == nil)
+  print("OK  \"Gine is in excellent condition.\" confirms the instant at once")
+  timers = {}
   dl2.requested("technine"); dl2.eventBusy(); flush(); expect("")                   -- loop off: not ours to retry
   timers = {}
 end
