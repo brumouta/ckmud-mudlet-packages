@@ -72,15 +72,64 @@ function DL.bossDied(nextBoss)
 end
 
 -- ---------------------------------------------------------------- event on/off
+-- ---------------------------------------------------------------- who am I
+-- The MUD stopped sending MSDP CHARACTER_NAME (July 2026), so the name comes from,
+-- in order: the saved name (`dl2 name`, or learned from your own request), CK's
+-- score parsing, the Score package, and MSDP in case it ever comes back.
+DL.SAVE_FILE = getMudletHomeDir() .. "/DataLords2.lua"
+DL.REQUEST_WINDOW = 20      -- seconds after you send `req event` that a request line counts as yours
+
+local function nonEmpty(name)
+  if type(name) == "string" and name ~= "" and name ~= "???" then return name end
+end
+
+function DL.loadName()
+  local saved = {}
+  if pcall(table.load, DL.SAVE_FILE, saved) then DL.name = nonEmpty(saved.name) end
+end
+
+function DL.setName(name)
+  DL.name = name
+  pcall(table.save, DL.SAVE_FILE, { name = name })
+end
+
+function DL.myName()
+  if DL.name then return DL.name, "saved" end
+  local ok, ckName = pcall(function() return CK.API:getName() end)
+  if ok and nonEmpty(ckName) then return ckName, "CK score" end
+  local ok2, scName = pcall(function() return SC.Player.name end)
+  if ok2 and nonEmpty(scName) then return scName, "Score package" end
+  if msdp and nonEmpty(msdp.CHARACTER_NAME) then return msdp.CHARACTER_NAME, "MSDP" end
+end
+
+-- Remember when you (or the loop) ask for an event: the next request line is yours
+function DL.onCommandSent(_, command)
+  if type(command) == "string" and command:lower():match("^req%a*%s+event") then
+    DL.requestedAt = os.time()
+  end
+end
+registerNamedEventHandler("dl2", "own request", "sysDataSendRequest", DL.onCommandSent)
+
 function DL.requested(requester)
-  local me = msdp and msdp.CHARACTER_NAME
+  local justAsked = DL.requestedAt and os.time() - DL.requestedAt <= DL.REQUEST_WINDOW
+  DL.requestedAt = nil
+  local me = DL.myName()
+  if not me and justAsked then
+    DL.setName(requester)                      -- learned: it was our own request
+    me = requester
+    info("white", "Learned your name: " .. requester .. " (change it with `dl2 name <you>`)")
+  end
   if me and requester:lower() == me:lower() then
     DL.active = true
     enableTrigger(DL.BOSSES)
     info("green", "Requested by me, triggers ON")
   else
     DL.stop()
-    info("yellow", "Requested by " .. requester .. ", triggers OFF")
+    if me then
+      info("yellow", "Requested by " .. requester .. ", triggers OFF")
+    else
+      info("yellow", "Requested by " .. requester .. ", triggers OFF - I don't know your name yet: `dl2 name <you>`, or request the event yourself")
+    end
   end
 end
 
@@ -161,12 +210,13 @@ function DL.forceResume()
 end
 
 -- ---------------------------------------------------------------- MSDP
--- CHARACTER_NAME: who requested the event. COMBO_HISTORY: used by the daze triggers.
+-- COMBO_HISTORY is used by the daze triggers. (CHARACTER_NAME is no longer sent.)
 function DL.subscribe()
-  sendMSDP("REPORT", "CHARACTER_NAME", "COMBO_HISTORY")
+  sendMSDP("REPORT", "COMBO_HISTORY")
 end
 registerNamedEventHandler("dl2", "subscribe", "sysConnectionEvent", DL.subscribe)
 DL.subscribe()
+DL.loadName()
 
 -- ---------------------------------------------------------------- `dl2` alias
 DL.HELP = {
@@ -175,6 +225,7 @@ DL.HELP = {
   { "dl2 loop [on|off]",     "Re-request the event after Zenzeyh dies (no arg toggles)" },
   { "dl2 attack <command>",  "Attack used on bosses and rivals, e.g. dl2 attack ss" },
   { "dl2 resume",            "Forget pending rivals and continue the pursuit" },
+  { "dl2 name [<you>]",       "Show or set your character name (used to spot your own requests)" },
   { "dl2 off",               "Stop the event automation now" },
 }
 
@@ -188,6 +239,8 @@ end
 function DL.status()
   local function onoff(b) return b and "<green>ON<white>" or "<red>OFF<white>" end
   cecho("\n<cyan>dl2 status:\n")
+  local name, source = DL.myName()
+  cecho("  <white>Name:   " .. (name and (name .. " (" .. source .. ")") or "<yellow>unknown - dl2 name <you><white>") .. "\n")
   cecho("  <white>Event:  " .. onoff(DL.active) .. "\n")
   cecho("  <white>Boss:   " .. (DL.boss or "-") .. "\n")
   local rivals = rivalList()
@@ -209,6 +262,14 @@ function DL.command(cmd, arg)
     info("white", "Attack set to '" .. arg .. "'")
   elseif cmd == "resume" then
     DL.forceResume()
+  elseif cmd == "name" then
+    if arg then
+      DL.setName(arg)
+      info("white", "Name set to " .. arg)
+    else
+      local name, source = DL.myName()
+      info("white", name and ("Your name: " .. name .. " (from " .. source .. ")") or "Name unknown - `dl2 name <you>`")
+    end
   elseif cmd == "off" then
     DL.ended()
   else

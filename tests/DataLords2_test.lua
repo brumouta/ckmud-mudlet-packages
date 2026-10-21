@@ -1,7 +1,13 @@
 -- dl2: event gate, boss chain, rivals (including group rivals) and the dl2 command.
 -- Run from the repo root: lua tests/DataLords2_test.lua
 local sent, enabled, timers, temps, id = {}, {}, {}, {}, 0
-msdp = { CHARACTER_NAME = "Technine" }
+-- Like the real MUD since July 2026: MSDP does not send CHARACTER_NAME
+msdp = {}
+local handlers, saved, clock = {}, {}, 1000
+os.time = function() return clock end
+function getMudletHomeDir() return "/profile" end
+function table.save(path, t) saved[path] = { name = t.name } end
+function table.load(path, t) if not saved[path] then error("no file") end; for k, v in pairs(saved[path]) do t[k] = v end end
 function send(c) sent[#sent + 1] = c end
 function cecho(s) LOG = (LOG or "") .. s end
 function enableTrigger(n) enabled[n] = true end
@@ -12,7 +18,8 @@ local lastRegex
 function tempRegexTrigger(_, f) id = id + 1; temps[id] = f; lastRegex = id; return id end
 function killTrigger(i) temps[i] = nil end
 function sendMSDP(...) sent[#sent + 1] = "MSDP " .. table.concat({ ... }, " ") end
-function registerNamedEventHandler() end
+function registerNamedEventHandler(_, name, event, fn) handlers[event .. ":" .. name] = fn end
+local function typed(cmd) handlers["sysDataSendRequest:own request"]("sysDataSendRequest", cmd) end
 local function flush() for i, f in pairs(timers) do timers[i] = nil; f() end end
 local function expect(want)
   local got = table.concat(sent, " | "); sent = {}
@@ -21,11 +28,38 @@ local function expect(want)
 end
 
 dofile("packages/DataLords2/src/DataLords2.lua")
-expect("MSDP REPORT CHARACTER_NAME COMBO_HISTORY")
+expect("MSDP REPORT COMBO_HISTORY")                      -- no longer asks for CHARACTER_NAME
 
--- Only my own request turns the bosses on
+-- Name unknown: someone else's request stays off and says how to fix it
 dl2.requested("Bob"); assert(not dl2.active and enabled["dl2 Bosses"] == false)
+assert(LOG:find("I don't know your name yet"))
+
+-- Requesting it yourself teaches the bot your name (and it's saved)
+typed("req event 18"); clock = clock + 5
+dl2.requested("Technine"); assert(dl2.active and enabled["dl2 Bosses"] and dl2.name == "Technine")
+assert(saved["/profile/DataLords2.lua"].name == "Technine")
+print("OK  learned the name from my own request")
+
+-- A request long after mine is not assumed to be mine
+dl2.name = nil; saved = {}
+typed("req event 18"); clock = clock + 60
+dl2.requested("Bob"); assert(not dl2.active and dl2.name == nil)
+
+-- CK's score-parsed name is used when nothing is saved
+CK = { API = { getName = function() return "Technine" end } }
+dl2.requested("Bob"); assert(not dl2.active)
+dl2.requested("technine"); assert(dl2.active)
+CK = { API = { getName = function() return "???" end } }   -- CK's "unknown" placeholder is ignored
+assert(dl2.myName() == nil)
+CK = nil
+print("OK  CK name used; CK placeholder ignored")
+
+-- dl2 name sets it, and it survives a reload of the script
+dl2.command("name", "Technine"); dl2.name = nil
+dofile("packages/DataLords2/src/DataLords2.lua"); sent = {}
+assert(dl2.name == "Technine")
 dl2.requested("technine"); assert(dl2.active and enabled["dl2 Bosses"])
+print("OK  saved name survives a reload")
 
 -- Location lookup, then travel and attack
 dl2.findAndAttack("jhet"); expect("event")
