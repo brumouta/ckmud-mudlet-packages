@@ -495,39 +495,56 @@ raiseEvent("sysSpeedwalkFinished")
 check(AL.API.State:is(AL.API.State.NORMAL), "state back to NORMAL after return walk")
 
 ---------------------------------------------------------------------------
--- 9b. "You lack sufficient god ki to use that technique!" -> rest until god ki is full
+-- 9b. "You lack sufficient god ki to use that technique!": set that skill aside,
+--     train the ones using ki/fatigue first, rest only when nothing else can be done
 ---------------------------------------------------------------------------
 realprint("=== PHASE: out of god ki ===")
 do
   local L = AL.API.Learning
   local god_ki_fn = load("AL.API.Learning:out_of_god_ki()")   -- the trigger's script
+  -- Something left to train for this phase: two attacks, both affordable
+  for _, sk in ipairs({ "finger", "dsphere" }) do
+    AL.Player.Skills.Learned[sk] = true
+    AL.Player.Skills.Mastered[sk] = nil
+  end
+  AL.Player.GK = 50                                  -- low god ki, everything else full
+
+  SENT = {}
+  pcall(TIMERS["AL:Learning"].func)
+  local first = SENT[1]
+  check(first ~= nil, "tick trains a skill (sent: " .. table.concat(SENT, " | ") .. ")")
   ok, err = pcall(god_ki_fn); check(ok, "out-of-god-ki trigger script" .. (ok and "" or (" -- " .. tostring(err))))
-  check(L.need_god_ki == true, "the message is noted while autolearn runs")
-  -- in a fight: finish it first
-  AL.Target.level = 5
+  local skill = first and first:match("^(%S+)")
+  check(skill and L:gk_blocked_skill(skill), "the skill that hit the god ki wall is set aside: " .. tostring(skill))
+
   SENT, SPEEDWALKS = {}, {}
   pcall(TIMERS["AL:Learning"].func)
-  check(#SPEEDWALKS == 0 and L.need_god_ki, "doesn't leave mid-fight")
-  AL.Target.level = 0
-  -- out of the fight: rest first, before trying any skill (everything else is full)
+  check(#SPEEDWALKS == 0 and SENT[1] ~= nil and not SENT[1]:find(skill, 1, true),
+        "keeps training another skill instead of resting (sent: " .. table.concat(SENT, " | ") .. ")")
+
+  -- Nothing else affordable: now it rests (god ki isn't full, so it isn't "rested")
+  AL.Player.Ki, AL.Player.Fatigue = 1, 1
   SENT, SPEEDWALKS = {}, {}
-  ok, err = pcall(TIMERS["AL:Learning"].func)
-  check(ok, "tick after the god ki message" .. (ok and "" or (" -- " .. tostring(err))))
-  check(#SPEEDWALKS == 1 and #SENT == 0, "goes to rest instead of attacking (sent: " .. table.concat(SENT, " | ") .. ")")
+  pcall(TIMERS["AL:Learning"].func)
+  check(#SPEEDWALKS == 1, "rests once nothing else can be trained")
   raiseEvent("sysSpeedwalkFinished")
-  check(table.contains(SENT, "sleep") and AL.API.State:is(AL.API.State.REST), "sleeps at the rest spot")
-  -- god ki still low: keep sleeping
-  AL.Player.GK = 100
+  check(AL.API.State:is(AL.API.State.REST), "sleeping")
+  AL.Player.Ki, AL.Player.Fatigue = AL.Player.MaxKi, AL.Player.MaxFatigue
   SENT = {}
   pcall(TIMERS["AL:Learning"].func)
   check(not table.contains(SENT, "wake"), "stays asleep while god ki isn't full")
-  -- god ki full again: wake and walk back
   AL.Player.GK = AL.Player.MaxGK
   SENT = {}
   pcall(TIMERS["AL:Learning"].func)
   check(table.contains(SENT, "wake"), "wakes once god ki is full")
   raiseEvent("sysSpeedwalkFinished")
-  check(AL.API.State:is(AL.API.State.NORMAL) and not L.need_god_ki, "back to training")
+
+  -- Back at the target with full god ki: the set-aside skill is tried again
+  SENT = {}
+  pcall(TIMERS["AL:Learning"].func)
+  check(not L:gk_blocked_skill(skill), "set-aside skill released once god ki is full")
+  check(SENT[1] ~= nil and SENT[1]:find(skill, 1, true), "and it's trained again (sent: " .. table.concat(SENT, " | ") .. ")")
+  for _, sk in ipairs({ "finger", "dsphere" }) do AL.Player.Skills.Mastered[sk] = true end
 end
 
 ---------------------------------------------------------------------------
@@ -551,7 +568,7 @@ SENT = {}
 pcall(land_fn)
 check(not table.contains(SENT, "land"), "doesn't land when autolearn is off (your own commands)")
 pcall(load("AL.API.Learning:out_of_god_ki()"))
-check(not AL.API.Learning.need_god_ki, "the god ki message is ignored when autolearn is off")
+check(not next(AL.API.Learning.gk_blocked), "the god ki message is ignored when autolearn is off")
 
 ---------------------------------------------------------------------------
 -- 11. Ultra training gate: GK >= 500 * (100 - level) / 100 + 5 (nil level -> 1)

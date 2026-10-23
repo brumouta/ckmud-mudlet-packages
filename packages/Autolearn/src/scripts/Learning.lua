@@ -47,19 +47,18 @@ local function do_learning()
         local target = AL.table.sample_items(learn.target:split(","))
         local sent = false
         local to_learn = learn.to_learn
+        if next(learn.gk_blocked) and Player.GK and Player.MaxGK and Player.GK >= Player.MaxGK then
+            learn.gk_blocked = {}                   -- god ki is full again: try those skills again
+        end
         local learned = learn:setup_skills(target)
         learn:maybe_adjust_gravity()
 
-        -- "You lack sufficient god ki to use that technique!": the bot thought it could
-        -- afford a god ki skill but couldn't. Rest (we wake only once god ki is full).
-        if learn.need_god_ki and Target.level == 0 then
-            if learn.teleported then
-                learn:return_home()                 -- rest from the target's room, not king kai's
-                return
-            end
-            learn.need_god_ki = false
-            learn:go_rest(speedwalk_path)
-            return
+        -- The first command sent below is this tick's skill attempt. If the MUD answers
+        -- "You lack sufficient god ki...", that's the skill to set aside (out_of_god_ki).
+        learn.attempt = nil
+        local function send(cmd, ...)
+            if learn.attempt == nil then learn.attempt = cmd end
+            return _G.send(cmd, ...)
         end
 
         -- Handle Primary Skills
@@ -245,15 +244,36 @@ function learn:go_rest(speedwalk_path)
     end
 end
 
--- Trigger: "You lack sufficient god ki to use that technique!" (only while the bot runs)
+-- Skills set aside because they need more god ki than we have: { ultrainstinct = true, ... }.
+-- Cleared once god ki is full (e.g. after resting). Names compare without spaces, so
+-- "iron will", "ironwill" and focus 'iron will' are the same skill.
+learn.gk_blocked = learn.gk_blocked or {}
+local function skill_key(name)
+    return (name or ""):lower():gsub("%s", "")
+end
+
+-- The skill a command trains: focus 'ultra instinct' -> ultra instinct, "hakai troll" -> hakai
+local function skill_of(command)
+    return command:match("^%s*focus%s+'([^']+)'") or command:match("^%s*(%S+)")
+end
+
+function learn:gk_blocked_skill(name)
+    return self.gk_blocked[skill_key(name)] == true
+end
+
+-- Trigger: "You lack sufficient god ki to use that technique!" (only while the bot runs).
+-- Set that skill aside and keep training ones that use ki or fatigue; the bot rests by
+-- itself once nothing else can be done (resting refills all three), then tries it again.
 function learn:out_of_god_ki()
-    if not Mode:is(Mode.Learning) then
+    if not Mode:is(Mode.Learning) or not learn.attempt then
         return
     end
-    if not learn.need_god_ki then
-        cecho("\n<yellow>[ Autolearn ] - Out of god ki: going to rest until it's full.\n")
+    local skill = skill_of(learn.attempt)
+    if skill and not learn:gk_blocked_skill(skill) then
+        learn.gk_blocked[skill_key(skill)] = true
+        cecho(f "\n<yellow>[ Autolearn ] - Not enough god ki for {skill}: training other skills first, " ..
+            "then resting until god ki is full.\n")
     end
-    learn.need_god_ki = true
 end
 
 function learn:use_recall_rest()
@@ -343,12 +363,19 @@ function learn:setup_skills(target)
     to_learn.buffs = Skills:filter_mastered(Skills:buffs())
     to_learn.heals = Skills:filter_mastered(Skills:heals())
     to_learn.ultras = Skills:filter_mastered(Skills:ultras())
+    for _, kind in ipairs({ "energy", "melee", "aoe", "learnable", "buffs", "heals", "ultras" }) do
+        local kept = {}
+        for _, name in ipairs(to_learn[kind]) do
+            if not learn:gk_blocked_skill(name) then table.insert(kept, name) end
+        end
+        to_learn[kind] = kept
+    end
     return self:count_to_learn()
 end
 
 function learn:need_to_master(name)
-    -- If its learned and not mastered
-    return Skills:learned(name) and not Skills:mastered(name)
+    -- If its learned and not mastered (and not set aside for lack of god ki)
+    return Skills:learned(name) and not Skills:mastered(name) and not learn:gk_blocked_skill(name)
 end
 
 function learn:count_to_learn()
