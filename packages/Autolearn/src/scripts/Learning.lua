@@ -35,6 +35,18 @@ local function ultra_ok(skill)
     return Player.GK >= ((500 * (100 - (Skills:level(skill) or 1)) / 100) + 5)
 end
 
+-- The first skill in the list we have enough ki / fatigue / god ki for, using the
+-- costs in the attack table. Lets a cheaper skill train while an expensive one waits.
+local function first_affordable(list, can_use)
+    for _, name in ipairs(list) do
+        if can_use(name) then return name end
+    end
+end
+
+local function can_use_energy(name) return API:can_use_energy_attack(name) end
+local function can_use_melee(name) return API:can_use_melee_attack(name) end
+local function can_use_any(name) return API:can_use_attack(name) end
+
 ---@diagnostic disable-next-line: unused-function
 local function do_learning()
     if not API:is_connected() then
@@ -62,11 +74,17 @@ local function do_learning()
         end
 
         -- Handle Primary Skills
-        if #(to_learn.energy) > 0 and API:can_use_energy_attack(to_learn.energy[1]) then
-            send(f "{to_learn.energy[1]} {target}")
+        -- Ki attacks first, then fatigue ones: when ki runs low the melee skills keep
+        -- training (and the other way round). Resting only happens once nothing fits.
+        local energy = first_affordable(to_learn.energy, can_use_energy)
+        local melee = first_affordable(to_learn.melee, can_use_melee)
+        local ultra = first_affordable(to_learn.ultras, ultra_ok)
+        local learnable = first_affordable(to_learn.learnable, can_use_any)
+        if energy then
+            send(f "{energy} {target}")
             sent = true
-        elseif #(to_learn.melee) > 0 and API:can_use_melee_attack(to_learn.melee[1]) then
-            send(f "{to_learn.melee[1]} {target}")
+        elseif melee then
+            send(f "{melee} {target}")
             sent = true
         elseif #(to_learn.aoe) > 0 and aoe_ok() then
             send(f "{to_learn.aoe[1]}")
@@ -77,12 +95,12 @@ local function do_learning()
         elseif #(to_learn.heals) > 0 and heal_ok() then
             send(f "focus '{to_learn.heals[1]}'")
             sent = true
-        elseif #(to_learn.ultras) > 0 and ultra_ok(to_learn.ultras[1]) then
-            send(f "focus '{to_learn.ultras[1]}'")
+        elseif ultra then
+            send(f "focus '{ultra}'")
             send("urevert")
             sent = true
-        elseif #(to_learn.learnable) > 0 and API:can_use_attack(to_learn.learnable[1]) then
-            send(f "{to_learn.learnable[1]} {target}")
+        elseif learnable then
+            send(f "{learnable} {target}")
             sent = true
         elseif learn:need_to_master("powersense") and API:status_ok() then
             send(f "powersense {target}")
@@ -353,7 +371,7 @@ function learn:setup_skills(target)
         to_learn.energy = learn:known_attacks(Skills:filter_mastered(Skills:energy_attacks()))
         to_learn.melee = learn:known_attacks(Skills:filter_mastered(Skills:melee_attacks()))
         to_learn.aoe = Skills:filter_mastered(Skills:AoE())
-        to_learn.learnable = Skills:learnable()
+        to_learn.learnable = learn:known_attacks(Skills:learnable())
     else
         to_learn.energy = {}
         to_learn.melee = {}

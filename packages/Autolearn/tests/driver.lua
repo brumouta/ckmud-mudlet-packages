@@ -463,6 +463,33 @@ multimatches = { {}, { ["PL"] = "90,000", ["Forms"] = "" } }
 ok, err = pcall(prompt_fn); check(ok, "Prompt during learning" .. (ok and "" or (" -- " .. tostring(err))))
 
 ---------------------------------------------------------------------------
+-- 8b. Costs from the attack table: an expensive skill waits while cheaper ones train
+---------------------------------------------------------------------------
+realprint("=== PHASE: affordable skills first ===")
+do
+  local P = AL.Player
+  P.Skills.Learned["finalk"] = true; P.Skills.Level["finalk"] = 10
+  table.insert(P.Skills.Sections.Ki, 1, "finalk")          -- finalk costs 1000 ki, kame 20
+  P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue = 500, 1000, 1000, 1000
+  SENT = {}
+  ok, err = pcall(TIMERS["AL:Learning"].func)
+  check(ok, "tick with low ki" .. (ok and "" or (" -- " .. tostring(err))))
+  check(table.contains(AL.API.Learning.to_learn.energy, "finalk"), "finalk is waiting to be trained")
+  check(table.contains(SENT, "kame troll") and not table.contains(SENT, "finalk troll"),
+    "not enough ki for finalk: kame trains instead (sent: " .. table.concat(SENT, " | ") .. ")")
+  P.Ki = 1
+  SENT = {}
+  ok, err = pcall(TIMERS["AL:Learning"].func)
+  check(ok, "tick with no ki" .. (ok and "" or (" -- " .. tostring(err))))
+  check(table.contains(SENT, "roundhouse troll") or table.contains(SENT, "punch troll"), "out of ki: a fatigue skill trains (sent: " .. table.concat(SENT, " | ") .. ")")
+  P.Ki = 1000
+  SENT = {}
+  ok, err = pcall(TIMERS["AL:Learning"].func)
+  check(table.contains(SENT, AL.API.Learning.to_learn.energy[1] .. " troll"), "enough ki again: the first energy skill trains, whichever it is")
+  P.Skills.Mastered["finalk"] = true; P.Skills.Level["finalk"] = 100
+end
+
+---------------------------------------------------------------------------
 -- 9. Everything mastered + tired -> rest cycle
 ---------------------------------------------------------------------------
 realprint("=== PHASE: rest cycle ===")
