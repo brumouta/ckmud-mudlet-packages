@@ -248,6 +248,24 @@ function learn:can_return()
     return ok
 end
 
+-- Skills the MUD added after our attack table was written (thunderclap was one) have
+-- no cost data, so the bot could never afford them and would stop training that whole
+-- list. Leave them out, and say once which ones need adding to Attacks.lua.
+learn.unknown_warned = learn.unknown_warned or {}
+function learn:known_attacks(list)
+    local known = {}
+    for _, name in ipairs(list) do
+        if Player.Attacks[name] then
+            table.insert(known, name)
+        elseif not self.unknown_warned[name] then
+            self.unknown_warned[name] = true
+            cecho(f "\n<yellow>[ Autolearn ] - Skipping {name}: Autolearn doesn't know this attack yet (its cost and damage). " ..
+                "Send its `help {name}` to have it added.\n")
+        end
+    end
+    return known
+end
+
 function learn:find_target(ability)
     if not Mode:is(Mode.Learning) then
         disableTrigger("autolearn no target")
@@ -283,8 +301,8 @@ function learn:setup_skills(target)
     to_learn.set = true
 
     if target ~= "self" then
-        to_learn.energy = Skills:filter_mastered(Skills:energy_attacks())
-        to_learn.melee = Skills:filter_mastered(Skills:melee_attacks())
+        to_learn.energy = learn:known_attacks(Skills:filter_mastered(Skills:energy_attacks()))
+        to_learn.melee = learn:known_attacks(Skills:filter_mastered(Skills:melee_attacks()))
         to_learn.aoe = Skills:filter_mastered(Skills:AoE())
         to_learn.learnable = Skills:learnable()
     else

@@ -84,6 +84,8 @@ add_melee("deathstorm", 8, 0.5, LBS, 2, 6, {Extras.piercing, Extras.piercing_maj
 
 add_melee("shining", 8, 0.45, UBS, 2, 4, {Extras.shock})
 add_melee("gigaspike", 4, 0.8, UBS, 1, 1, {Extras.daze})
+-- help thunderclap: 4 fatigue, 95% PHY_DAM on UBS, 1 round, bypasses armor 20/25/30%, can daze
+add_melee("thunderclap", 4, 0.95, UBS, 1, 1, {Extras.daze, Extras.piercing, Extras.piercing_major})
 
 add_melee("tsuki", 6, 0.75, UBS, 1, 1, {Extras.bleed})
 add_melee("nukitsuke", 20, 2, UBS, 2, 1)

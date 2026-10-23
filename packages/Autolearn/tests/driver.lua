@@ -722,6 +722,32 @@ ok, err = pcall(alias_fn); check(ok, "toggle off after recall rest phase" .. (ok
 ---------------------------------------------------------------------------
 -- Tuffle racial skills: Distortion Ray and Quantum Cannon
 ---------------------------------------------------------------------------
+realprint("=== PHASE: new melee skills ===")
+do
+  local function logged(text)
+    for _, l in ipairs(LOG) do if l:find(text, 1, true) then return true end end
+    return false
+  end
+  local X, tc = AL.API.Attacks.Extras, AL.Player.Attacks["thunderclap"]
+  check(tc ~= nil and tc[1] == 4 and tc[2] == 0.95 and tc[3] == true and tc[4] == 1,
+        "thunderclap: 4 fatigue, 95% damage on UBS, 1 round cooldown")
+  check(tc and tc[6][X.daze] and tc[6][X.piercing] and tc[6][X.piercing_major],
+        "thunderclap dazes and bypasses armor 20/25/30%")
+  LOG = {}
+  AL.API:can_use_melee_attack("thunderclap")
+  check(not logged("Unknown Melee"), "no more 'Unknown Melee thunderclap' error")
+
+  -- A skill the MUD adds later: skipped (once warned), the rest still gets trained
+  LOG = {}
+  local L = AL.API.Learning
+  local list = L:known_attacks({ "skillfromthefuture", "thunderclap", "kick" })
+  check(#list == 2 and list[1] == "thunderclap" and list[2] == "kick", "unknown attacks are left out of training")
+  check(logged("Skipping skillfromthefuture"), "with a warning naming the skill")
+  LOG = {}
+  L:known_attacks({ "skillfromthefuture" })
+  check(not logged("Skipping skillfromthefuture"), "warned only once")
+end
+
 realprint("=== PHASE: tuffle racials ===")
 do
   local AT = AL.Player.Attacks
