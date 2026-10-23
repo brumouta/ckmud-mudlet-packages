@@ -495,6 +495,42 @@ raiseEvent("sysSpeedwalkFinished")
 check(AL.API.State:is(AL.API.State.NORMAL), "state back to NORMAL after return walk")
 
 ---------------------------------------------------------------------------
+-- 9b. "You lack sufficient god ki to use that technique!" -> rest until god ki is full
+---------------------------------------------------------------------------
+realprint("=== PHASE: out of god ki ===")
+do
+  local L = AL.API.Learning
+  local god_ki_fn = load("AL.API.Learning:out_of_god_ki()")   -- the trigger's script
+  ok, err = pcall(god_ki_fn); check(ok, "out-of-god-ki trigger script" .. (ok and "" or (" -- " .. tostring(err))))
+  check(L.need_god_ki == true, "the message is noted while autolearn runs")
+  -- in a fight: finish it first
+  AL.Target.level = 5
+  SENT, SPEEDWALKS = {}, {}
+  pcall(TIMERS["AL:Learning"].func)
+  check(#SPEEDWALKS == 0 and L.need_god_ki, "doesn't leave mid-fight")
+  AL.Target.level = 0
+  -- out of the fight: rest first, before trying any skill (everything else is full)
+  SENT, SPEEDWALKS = {}, {}
+  ok, err = pcall(TIMERS["AL:Learning"].func)
+  check(ok, "tick after the god ki message" .. (ok and "" or (" -- " .. tostring(err))))
+  check(#SPEEDWALKS == 1 and #SENT == 0, "goes to rest instead of attacking (sent: " .. table.concat(SENT, " | ") .. ")")
+  raiseEvent("sysSpeedwalkFinished")
+  check(table.contains(SENT, "sleep") and AL.API.State:is(AL.API.State.REST), "sleeps at the rest spot")
+  -- god ki still low: keep sleeping
+  AL.Player.GK = 100
+  SENT = {}
+  pcall(TIMERS["AL:Learning"].func)
+  check(not table.contains(SENT, "wake"), "stays asleep while god ki isn't full")
+  -- god ki full again: wake and walk back
+  AL.Player.GK = AL.Player.MaxGK
+  SENT = {}
+  pcall(TIMERS["AL:Learning"].func)
+  check(table.contains(SENT, "wake"), "wakes once god ki is full")
+  raiseEvent("sysSpeedwalkFinished")
+  check(AL.API.State:is(AL.API.State.NORMAL) and not L.need_god_ki, "back to training")
+end
+
+---------------------------------------------------------------------------
 -- 10. no-target trigger + toggle off
 ---------------------------------------------------------------------------
 realprint("=== PHASE: no-target + toggle off ===")
@@ -514,6 +550,8 @@ check(TIMERS["AL:Learning"] == nil, "learning timer deleted")
 SENT = {}
 pcall(land_fn)
 check(not table.contains(SENT, "land"), "doesn't land when autolearn is off (your own commands)")
+pcall(load("AL.API.Learning:out_of_god_ki()"))
+check(not AL.API.Learning.need_god_ki, "the god ki message is ignored when autolearn is off")
 
 ---------------------------------------------------------------------------
 -- 11. Ultra training gate: GK >= 500 * (100 - level) / 100 + 5 (nil level -> 1)

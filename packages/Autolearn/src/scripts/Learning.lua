@@ -50,6 +50,18 @@ local function do_learning()
         local learned = learn:setup_skills(target)
         learn:maybe_adjust_gravity()
 
+        -- "You lack sufficient god ki to use that technique!": the bot thought it could
+        -- afford a god ki skill but couldn't. Rest (we wake only once god ki is full).
+        if learn.need_god_ki and Target.level == 0 then
+            if learn.teleported then
+                learn:return_home()                 -- rest from the target's room, not king kai's
+                return
+            end
+            learn.need_god_ki = false
+            learn:go_rest(speedwalk_path)
+            return
+        end
+
         -- Handle Primary Skills
         if #(to_learn.energy) > 0 and API:can_use_energy_attack(to_learn.energy[1]) then
             send(f "{to_learn.energy[1]} {target}")
@@ -128,26 +140,7 @@ local function do_learning()
         end
 
         if sent == false and not API:is_rested() and Target.level == 0 then
-            -- Try to Rest
-            if API:isAndroid() then
-                State:set(State.REST)
-                send("vent")
-                send("repair")
-            elseif learn:use_recall_rest() then
-                -- Recall-based path works from any room, unlike the
-                -- reversible speedwalk which assumes we stand at the target
-                State:set(State.REST)
-                API:send_multi(ck:constant("learning.recall_isolation"))
-                send("sleep")
-            elseif speedwalk_path then
-                State:set(State.SPEEDWALK)
-
-                registerAnonymousEventHandler("sysSpeedwalkFinished", function()
-                    State:set(State.REST)
-                    send("sleep")
-                end, true)
-                speedwalk(speedwalk_path, false, 0.5)
-            end
+            learn:go_rest(speedwalk_path)
             return
         end
 
@@ -225,6 +218,42 @@ function learn:return_home()
     if path ~= "" then
         API:send_multi(path)
     end
+end
+
+-- Go and rest: androids vent and repair; otherwise recall to the isolation tank, or
+-- speedwalk the rest path. Getting back up happens in the REST state once
+-- API:is_rested() (PL, ki, fatigue and god ki all full).
+function learn:go_rest(speedwalk_path)
+    if API:isAndroid() then
+        State:set(State.REST)
+        send("vent")
+        send("repair")
+    elseif learn:use_recall_rest() then
+        -- Recall-based path works from any room, unlike the
+        -- reversible speedwalk which assumes we stand at the target
+        State:set(State.REST)
+        API:send_multi(ck:constant("learning.recall_isolation"))
+        send("sleep")
+    elseif speedwalk_path then
+        State:set(State.SPEEDWALK)
+
+        registerAnonymousEventHandler("sysSpeedwalkFinished", function()
+            State:set(State.REST)
+            send("sleep")
+        end, true)
+        speedwalk(speedwalk_path, false, 0.5)
+    end
+end
+
+-- Trigger: "You lack sufficient god ki to use that technique!" (only while the bot runs)
+function learn:out_of_god_ki()
+    if not Mode:is(Mode.Learning) then
+        return
+    end
+    if not learn.need_god_ki then
+        cecho("\n<yellow>[ Autolearn ] - Out of god ki: going to rest until it's full.\n")
+    end
+    learn.need_god_ki = true
 end
 
 function learn:use_recall_rest()

@@ -69,5 +69,15 @@
             }
         ],
         "script": "AL.API.Learning:land()"
+    },
+    {
+        "name": "autolearn out of god ki",
+        "patterns": [
+            {
+                "pattern": "You lack sufficient god ki to use that technique!",
+                "type": "substring"
+            }
+        ],
+        "script": "AL.API.Learning:out_of_god_ki()"
     }
 ]
