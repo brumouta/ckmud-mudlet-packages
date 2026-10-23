@@ -259,6 +259,15 @@ function learn:find_target(ability)
     end
 end
 
+-- "Maybe you should land first!": the bot tried something that can't be done while
+-- flying. Land; the next tick tries it again. Only while the bot runs, so a command
+-- you typed yourself doesn't make you land.
+function learn:land()
+    if Mode:is(Mode.Learning) then
+        send("land")
+    end
+end
+
 function learn:maybe_adjust_gravity()
     local new_grav = API:get_gravity()
     if Room.Gravity < new_grav and ck:feature("learning.use_zeta") then

@@ -59,5 +59,15 @@
             }
         ],
         "script": "AL.API.Learning:find_target(multimatches[2][2])"
+    },
+    {
+        "name": "autolearn land",
+        "patterns": [
+            {
+                "pattern": "Maybe you should land first!",
+                "type": "substring"
+            }
+        ],
+        "script": "AL.API.Learning:land()"
     }
 ]

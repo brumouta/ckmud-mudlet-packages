@@ -439,6 +439,12 @@ check(table.contains(SENT, "learn"), "'learn' sent on enter")
 check(TIMERS["AL:Learning"] ~= nil, "learning timer registered")
 check(TRIGGER_STATE["autolearn no target"] == true, "no-target trigger enabled")
 
+-- "Maybe you should land first!" while the bot runs: land
+SENT = {}
+local land_fn = load("AL.API.Learning:land()")       -- the 'autolearn land' trigger's script
+ok, err = pcall(land_fn); check(ok, "land trigger script" .. (ok and "" or (" -- " .. tostring(err))))
+check(table.contains(SENT, "land"), "lands when told to while autolearn runs")
+
 ---------------------------------------------------------------------------
 -- 8. Bot tick: should send a skill at the target
 ---------------------------------------------------------------------------
@@ -505,6 +511,9 @@ matches = { "autolearn", nil, nil }
 ok, err = pcall(alias_fn); check(ok, "autolearn toggle off" .. (ok and "" or (" -- " .. tostring(err))))
 check(AL.API.Mode:is(AL.API.Mode.Interactive), "Mode back to Interactive")
 check(TIMERS["AL:Learning"] == nil, "learning timer deleted")
+SENT = {}
+pcall(land_fn)
+check(not table.contains(SENT, "land"), "doesn't land when autolearn is off (your own commands)")
 
 ---------------------------------------------------------------------------
 -- 11. Ultra training gate: GK >= 500 * (100 - level) / 100 + 5 (nil level -> 1)
