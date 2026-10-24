@@ -1,0 +1,188 @@
+{
+  "name": "HighStakes",
+  "version": "1.0.0",
+  "title": "High Stakes poker advisor",
+  "description": "Advice for the Friday High Stakes hold'em tournament: win chance, pot odds and a tight-aggressive suggestion on your turn; `hs go` sends it. Type `hs help`.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "HighStakes",
+      "file": "src/HighStakes.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "hs",
+      "regex": "^hs(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nhs.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "HighStakes",
+      "folder": true,
+      "children": [
+        {
+          "name": "hs New hand",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "The High Stakes Dealer pitches two cards to each player."
+            }
+          ],
+          "script": "hs.newHand()"
+        },
+        {
+          "name": "hs Hand start",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "Hand (\\d+), blinds ([\\d,]+) and ([\\d,]+)\\."
+            }
+          ],
+          "script": "hs.onHandStart(matches[2], matches[3], matches[4])"
+        },
+        {
+          "name": "hs Your cards",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*Your cards: ((?:\\[[0-9TJQKA]{1,2}[CDHS]\\]\\s*){2})"
+            }
+          ],
+          "script": "hs.onHole(matches[2])"
+        },
+        {
+          "name": "hs Street",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The High Stakes Dealer says, 'The (flop|turn|river): (.+)'"
+            }
+          ],
+          "script": "hs.onStreet(matches[2], matches[3])"
+        },
+        {
+          "name": "hs Table",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*High Stakes Tournament\\s+Level"
+            }
+          ],
+          "script": "hs.onTableStart(line)"
+        },
+        {
+          "name": "hs Board",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*Board: (.+)$"
+            }
+          ],
+          "script": "hs.onBoard(matches[2])"
+        },
+        {
+          "name": "hs Seat",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s+(\\w+)\\s+stack ([\\d,]+)"
+            }
+          ],
+          "script": "hs.onSeat(matches[2], matches[3])"
+        },
+        {
+          "name": "hs Limits",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*Players left: \\d+"
+            }
+          ],
+          "script": "hs.onEarly(line)"
+        },
+        {
+          "name": "hs Limits off",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "The early limits are off."
+            }
+          ],
+          "script": "hs.onEarly(line)"
+        },
+        {
+          "name": "hs Action on",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The High Stakes Dealer says, 'Action is on (\\w+)\\.'"
+            }
+          ],
+          "script": "hs.onActionOn(matches[2])"
+        },
+        {
+          "name": "hs Play",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The High Stakes Dealer (?:says|exclaims), '(\\w+) (folds|checks|calls|bets|raises)(.*)$"
+            }
+          ],
+          "script": "hs.onPlay(matches[2], matches[3], matches[4])"
+        },
+        {
+          "name": "hs Show",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The High Stakes Dealer says, '(\\w+) shows (.+)'"
+            }
+          ],
+          "script": "hs.onShow(matches[2], matches[3])"
+        },
+        {
+          "name": "hs Pot won",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The High Stakes Dealer says, '(?:Everyone folds\\. )?(\\w+) (?:wins|takes) the pot of ([\\d,]+)"
+            }
+          ],
+          "script": "hs.onPotWon(matches[2], matches[3])"
+        },
+        {
+          "name": "hs Your turn",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Your turn: (.+)$"
+            }
+          ],
+          "script": "hs.onYourTurn(matches[2])"
+        },
+        {
+          "name": "hs Tourney turn",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^TOURNEY: Your turn\\. (.+)$"
+            }
+          ],
+          "script": "hs.onTourneyTurn(matches[2])"
+        },
+        {
+          "name": "hs Ten seconds",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The High Stakes Dealer says, '(\\w+), ten seconds\\.'"
+            }
+          ],
+          "script": "hs.onTenSeconds(matches[2])"
+        }
+      ]
+    }
+  ]
+}

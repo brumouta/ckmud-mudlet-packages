@@ -12,11 +12,12 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [DataLords2](packages/DataLords2) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain (not Data Lords 1 or 3) when *you* requested it, pausing for rivals (yours or your group's). |
 | [Blackjack](packages/Blackjack) | `bj help` | Plays **blackjack** with basic strategy after you `cjoin`, and tracks wins, zenni, Lucky Tails and XP. |
 | [VideoPoker](packages/VideoPoker) | `vp help` | Plays the **video poker** machine (Jacks or Better) with the standard strategy, with stop loss / target / hand limits and stats. |
+| [HighStakes](packages/HighStakes) | `hs help` | Advice for the Friday **High Stakes** hold'em tournament: win chance, pot odds and a suggested move on your turn; `hs go` sends it. |
 | [FriezaQuest](packages/FriezaQuest) | `fq help` | Automates the **Frieza's Spaceship** quest from Appule to the Bridge Access Card. |
 | [BossTimer](packages/BossTimer) | `boss help` | Counts down to the **boss respawn** (from `uptime`), warns 5 and 1 minutes before, and re-checks by itself after each respawn. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Blackjack uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer and VideoPoker work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Blackjack uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer, VideoPoker and HighStakes work without it.
 
 ## Installing
 
@@ -38,9 +39,9 @@ packages/
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler JSON + .lua files
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  Blackjack/ DataLords2/ FriezaQuest/ VideoPoker/ YamoshiSpawn/  single-script packages
+  Blackjack/ DataLords2/ FriezaQuest/ HighStakes/ VideoPoker/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases
-    src/<Package>.lua     all the logic, in one Lua table named after its command (bj, dl2, fq, vp, ys)
+    src/<Package>.lua     all the logic, in one Lua table named after its command (bj, dl2, fq, hs, vp, ys)
 tests/                    Lua tests for the single-script packages + run.sh for everything
 docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
 tools/
@@ -73,7 +74,7 @@ sh tests/run.sh
 
 Needs Lua 5.1+, Python 3 and Node (Node is only used for the muddler packages; their tests are skipped without it). What it covers:
 
-- **Blackjack, DataLords2, FriezaQuest, VideoPoker, YamoshiSpawn:** Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test.
+- **Blackjack, DataLords2, FriezaQuest, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test.
 - **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted, because muddler silently ships an empty script if a trigger's `.lua` file is missing. Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
 
 ## Versioning
