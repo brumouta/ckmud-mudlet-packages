@@ -8,7 +8,7 @@ on:
 
 jobs:
   simple:
-    name: Single-script packages (MSDP, BossTimer, Blackjack, DataLords2, FriezaQuest, YamoshiSpawn)
+    name: Single-script packages (MSDP, BossTimer, Blackjack, DataLords2, FriezaQuest, VideoPoker, YamoshiSpawn)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

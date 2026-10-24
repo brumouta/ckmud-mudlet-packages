@@ -1,0 +1,110 @@
+{
+  "name": "VideoPoker",
+  "version": "1.0.0",
+  "title": "Video poker bot",
+  "description": "Plays the casino's Jacks or Better video poker machine with the standard strategy. Type `vp help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "VideoPoker",
+      "file": "src/VideoPoker.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "vp",
+      "regex": "^vp(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nvp.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "VideoPoker",
+      "folder": true,
+      "children": [
+        {
+          "name": "vp Cards",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*(?:\\[[0-9TJQKA]{1,2}[CDHS]\\]\\s*){5}$"
+            }
+          ],
+          "script": "vp.onCards(line)"
+        },
+        {
+          "name": "vp Feed",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You feed ([\\d,]+) zenni into the machine for (\\d+) coins?"
+            }
+          ],
+          "script": "vp.onFeed(matches[2], matches[3])"
+        },
+        {
+          "name": "vp Credit",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*Credit: ([\\d,]+) zenni"
+            }
+          ],
+          "script": "vp.onCredit(matches[2], line)"
+        },
+        {
+          "name": "vp Hold prompt",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Type 'vpoker hold <positions>' to keep cards"
+            }
+          ],
+          "script": "vp.onHoldPrompt()"
+        },
+        {
+          "name": "vp Paytable",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^o-{40,60}o$"
+            },
+            {
+              "type": "regex",
+              "pattern": "^\\s+JACKS OR BETTER"
+            },
+            {
+              "type": "regex",
+              "pattern": "^\\s+Hand\\s+1\\s+2\\s+3\\s+4\\s+5\\s*$"
+            },
+            {
+              "type": "regex",
+              "pattern": "^\\s+(?:Royal Flush|Straight Flush|Four of a Kind|Full House|Flush|Straight|Three of a Kind|Two Pair|Jacks or Better)\\s+[\\d,]+\\s+[\\d,]+\\s+[\\d,]+"
+            }
+          ],
+          "script": "vp.gag()"
+        },
+        {
+          "name": "vp Lucky Tails",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You earn ([\\d,]+) Lucky Tails"
+            }
+          ],
+          "script": "vp.luckyTails(matches[2])"
+        },
+        {
+          "name": "vp XP",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You have gained ([\\d,]+) (?:strength|STR) XP"
+            }
+          ],
+          "script": "vp.xpGained(matches[2])"
+        }
+      ]
+    }
+  ]
+}
