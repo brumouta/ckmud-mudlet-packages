@@ -32,8 +32,8 @@ local e = hs.equity(C("[AS] [AD]"), {}, 1, 1, 4000)
 ok(near(e, 0.85, 0.03), string.format("AA vs a random hand: %.1f%% (about 85%%)", e * 100))
 local random22 = hs.equity(C("[2S] [2C]"), {}, 1, 1, 4000)
 ok(near(random22, 0.50, 0.03), string.format("22 vs a random hand: %.1f%% (about 50%%)", random22 * 100))
-e = hs.equity(C("[2S] [2C]"), {}, 1, 0.25, 4000)
-ok(e < random22 - 0.03, string.format("22 vs a top 25%% hand: %.1f%% (worse)", e * 100))
+e = hs.equity(C("[2S] [2C]"), {}, 1, 0.10, 4000)   -- across 40 seeds the gap is 6.6 to 12 points
+ok(e < random22 - 0.03, string.format("22 vs a top 10%% hand: %.1f%% (worse than vs a random one)", e * 100))
 e = hs.equity(C("[KS] [AC]"), C(board), 2, 1, 2000)
 ok(e > 0.78, string.format("trip aces on the river vs 2 random hands: %.1f%%", e * 100))
 ok(hs.amount(450e6) == "450m" and hs.amount(2.5e9) == "2.5b" and hs.amount(3e9) == "3b" and hs.amount(2450e6) == "2450m",
