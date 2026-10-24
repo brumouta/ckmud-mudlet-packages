@@ -1,6 +1,6 @@
 {
   "name": "VideoPoker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Video poker bot",
   "description": "Plays the casino's Jacks or Better video poker machine with the standard strategy. Type `vp help` for commands.",
   "author": "Bruno Mouta",
@@ -61,6 +61,20 @@
             }
           ],
           "script": "vp.onHoldPrompt()"
+        },
+        {
+          "name": "vp Result",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(Royal Flush|Straight Flush|Four of a Kind|Full House|Flush|Straight|Three of a Kind|Two Pair|Jacks or Better)\\b.*?([\\d,]+) zenni"
+            },
+            {
+              "type": "regex",
+              "pattern": "^No win\\. You lose your ([\\d,]+) zenni"
+            }
+          ],
+          "script": "if matches[3] then vp.onResult(matches[2], matches[3]) else vp.onResult(\"Nothing\", \"0\") end"
         },
         {
           "name": "vp Paytable",

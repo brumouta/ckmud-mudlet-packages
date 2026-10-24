@@ -398,7 +398,7 @@ function VP.deal()
   if VP.stopping then return VP.stop() end
   local why = VP.limitReached()
   if why then return VP.stop(why) end
-  VP.state = "dealing"
+  VP.state, VP.result = "dealing", nil
   command(VP.coins == 5 and "vpoker deal" or ("vpoker deal " .. VP.coins))
 end
 
@@ -448,30 +448,57 @@ function VP.onCredit(credit, text)
     s.startCredit = s.credit + ((VP.state == "dealing" and VP.betZenni) or 0)
   end
   if VP.state == "drawing" then
-    cancel("_watchdog")
-    VP.state = "settling"
-    later("_next", VP.delay, function() VP.handDone(); VP.deal() end)   -- cards may follow the credit line
+    VP.settle()
   elseif VP.state == "looking" then
     cancel("_watchdog")
     later("_next", VP.delay + 0.5, VP.deal)       -- unless a hold prompt says a hand is waiting
   end
 end
 
--- Score the drawn hand and count it
+-- The hand is over (result or credit line): count it once the rest of the screen is in
+function VP.settle()
+  if VP.state ~= "drawing" then return end
+  cancel("_watchdog")
+  VP.state = "settling"
+  later("_next", VP.delay, function() VP.handDone(); VP.deal() end)   -- cards may follow
+end
+
+local HAND_BY_NAME = {}
+for _, h in ipairs(VP.HANDS) do HAND_BY_NAME[h.name:lower()] = h.key end
+
+-- "Jacks or Better returns your 25,000,000 zenni." / "No win. You lose your 25,000,000 zenni."
+-- name = the machine's name for the hand ("Nothing" for no win), zenni = paid out
+function VP.onResult(name, zenni)
+  if not VP.active or (VP.state ~= "drawing" and VP.state ~= "settling") then return end
+  VP.result = { key = HAND_BY_NAME[name:lower()] or "nothing", zenni = num(zenni) }
+  VP.settle()
+end
+
+-- Score the drawn hand and count it. The machine's result line wins over our own scoring.
 function VP.handDone()
-  local s, cards = VP.stats, VP.cards
+  local s, cards, result = VP.stats, VP.cards, VP.result
+  VP.result = nil
   local coins = VP.betCoins or VP.coins
   s.hands = s.hands + 1
   s.coinsBet = s.coinsBet + coins
-  if not cards then return end
-  local key = VP.score(cards)
+  s.zenniBet = (s.zenniBet or 0) + (VP.betZenni or 0)
+  if result then s.zenniWon = (s.zenniWon or 0) + result.zenni end
+  if not cards and not result then return end
+  local key = cards and VP.score(cards)
+  if result then
+    if key and key ~= result.key then
+      info("yellow", "The machine says " .. HAND[result.key].name .. " but the cards read as " .. HAND[key].name ..
+        " (" .. cardsText(cards) .. "). Counting the machine's.")
+    end
+    key = result.key
+  end
   local won = VP.payout(key, coins)
   s.coinsWon = s.coinsWon + won
   s.byHand[key] = (s.byHand[key] or 0) + 1
   if key ~= "nothing" and (not s.best or HAND[key].order < HAND[s.best].order) then s.best = key end
   local net = (s.credit and s.startCredit) and (s.credit - s.startCredit) or 0
   local color = won > coins and "green" or won == coins and "white" or "grey"
-  info(color, string.format("%s  %s%s<grey>   hand %d, net %s zenni", cardsText(cards), HAND[key].name,
+  info(color, string.format("%s  %s%s<grey>   hand %d, net %s zenni", cards and cardsText(cards) or "", HAND[key].name,
     won > 0 and (" +" .. won .. " coins") or "", s.hands, signed(net)))
   if key == "royal" then
     info("magenta", "ROYAL FLUSH! " .. fmt(won) .. " coins")
@@ -541,6 +568,9 @@ function VP.status()
     "   target " .. limitText(VP.target, true) .. "\n")
   local ret = s.coinsBet > 0 and string.format("  (%.1f%% returned)", 100 * s.coinsWon / s.coinsBet) or ""
   cecho(string.format("  <white>Hands:    %d   coins bet %s, won %s%s\n", s.hands, fmt(s.coinsBet), fmt(s.coinsWon), ret))
+  if (s.zenniBet or 0) > 0 then
+    cecho("  <white>Paid in:  " .. fmt(s.zenniBet) .. " zenni   paid out " .. fmt(s.zenniWon or 0) .. " zenni\n")
+  end
   for _, h in ipairs(VP.HANDS) do
     local n = s.byHand[h.key]
     if n then cecho(string.format("  <white>  %-16s %d\n", h.name, n)) end

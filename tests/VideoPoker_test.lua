@@ -41,6 +41,9 @@ local function feed(text)
       if l:match("^%s+" .. name .. "%s+[%d,]+%s+[%d,]+%s+[%d,]+") then gag = true end
     end
     if gag then vp.gag() end
+    local hand, paid = l:match("^(%a[%a ]-) %a+ your ([%d,]+) zenni")
+    if hand and hand ~= "No win. You lose" then vp.onResult(hand, paid) end
+    if l:match("^No win%. You lose your ([%d,]+) zenni") then vp.onResult("Nothing", "0") end
     local t = l:match("^You earn ([%d,]+) Lucky Tails"); if t then vp.luckyTails(t) end
     local x = l:match("^You have gained ([%d,]+) strength XP"); if x then vp.xpGained(x) end
   end
@@ -142,9 +145,11 @@ ok(vp.stats.startCredit == 261451214676, "starting credit is the credit before t
 wait(1)
 ok(took() == "vpoker draw 2345", "holds J Q 10 K and draws in one command")
 
-feed(drawScreen("[9C]      [JC]      [QS]      [10D]     [KH]", "261,526,214,676"))
+feed(drawScreen("[9C]      [JC]      [QS]      [10D]     [KH]", "261,526,214,676") ..
+     "\nStraight returns your 100,000,000 zenni.")
 wait(1)
 ok(vp.stats.hands == 1 and vp.stats.byHand.straight == 1 and vp.stats.coinsWon == 20, "scores the drawn straight: 20 coins")
+ok(vp.stats.zenniWon == 100000000 and vp.stats.zenniBet == 25000000, "zenni paid in and out come from the feed and result lines")
 ok(LOG:find("Straight %+20 coins") and LOG:find("net %+75,000,000 zenni"), "prints the result and the real net from the credit")
 ok(took() == "vpoker deal", "and deals the next hand")
 
@@ -157,6 +162,26 @@ wait(1)
 ok(vp.stats.hands == 2 and vp.stats.byHand.jacks == 1, "cards after the credit line are still the ones scored")
 took()
 
+-- The real result lines end a hand even without a credit line
+feed(dealScreen("[2C]      [4D]      [6H]      [8S]      [9C]", "261,476,214,676")); wait(1); took()
+feed("  [3C]      [5D]      [7H]      [10S]     [QC]\nNo win. You lose your 25,000,000 zenni.")
+wait(1)
+ok(vp.stats.hands == 3 and vp.stats.byHand.nothing == 1 and took() == "vpoker deal", "No win. You lose...: counted as a loss, next hand dealt")
+feed(dealScreen("[JC]      [4D]      [6H]      [8S]      [JD]", "261,451,214,676")); wait(1); took()
+feed("  [JC]      [4D]      [9H]      [8S]      [JD]\nJacks or Better returns your 25,000,000 zenni.")
+wait(1)
+ok(vp.stats.hands == 4 and vp.stats.byHand.jacks == 2 and vp.stats.zenniWon == 125000000, "Jacks or Better returns your...: bet back")
+took()
+feed("  Credit: 261,476,214,676 zenni"); wait(2)
+ok(took() == "" and vp.stats.hands == 4, "a credit line after the result doesn't count the hand twice")
+-- The machine's word wins if the cards were misread
+feed(dealScreen("[JC]      [4D]      [6H]      [8S]      [JD]", "261,451,214,676")); wait(1); took()
+feed("Two Pair returns your 50,000,000 zenni.\n  [JC]      [4D]      [9H]      [8S]      [JD]")
+wait(1)
+ok(vp.stats.byHand.twopair == 1 and LOG:find("The machine says Two Pair"), "the machine's result wins over a misread")
+took()
+
+local wonBefore = vp.stats.coinsWon
 -- Lag: no answer to the deal, so it looks; the hand is waiting on the table, so it plays it
 wait(10)
 ok(took() == "vpoker", "no answer for 10 seconds: looks at the machine")
@@ -167,7 +192,7 @@ wait(3)
 ok(took() == "vpoker draw 1234", "plays the hand it found instead of dealing over it")
 feed(drawScreen("[AS]      [KS]      [QS]      [JS]      [10S]", "261,576,214,676"))
 wait(1)
-ok(vp.stats.byHand.royal == 1 and vp.stats.coinsWon == 20 + 5 + 4000 and ALERTED, "royal flush: 4,000 coins and a flash")
+ok(vp.stats.byHand.royal == 1 and vp.stats.coinsWon - wonBefore == 4000 and ALERTED, "royal flush: 4,000 coins and a flash")
 took()
 
 -- Rewards

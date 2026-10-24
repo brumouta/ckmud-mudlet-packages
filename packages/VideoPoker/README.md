@@ -38,5 +38,6 @@ This machine pays **Full House 8, Flush 5** ("8/5" Jacks or Better). The bot use
 ## How it reads the machine
 
 - The five cards come from the `[3C] [JC] [QS] [10D] [KH]` line, and the hand is played when `Type 'vpoker hold <positions>'...` appears.
-- After the draw, the bot scores the final hand itself and reads your real zenni from the `Credit:` line, so `vp status` shows the true net.
+- The hand ends on the machine's result line (`Jacks or Better returns your 25,000,000 zenni.` / `No win. You lose your 25,000,000 zenni.`), or on the `Credit:` line if no result line shows up. The machine's result is what gets counted; if the bot's own reading of the cards disagrees, it says so.
+- `vp status` shows the zenni paid in and out, and the true net from the `Credit:` line.
 - If nothing answers for 10 seconds, it sends `vpoker` to see where things stand.
