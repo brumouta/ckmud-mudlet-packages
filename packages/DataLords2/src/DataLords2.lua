@@ -13,8 +13,8 @@ DL.busyRetry   = 1                          -- "There is already an event runnin
 DL.BUSY_TRIES  = 60                         -- ...at most this many times
 DL.loot        = "get all.tab"
 DL.CHECK_AFTER = 10                         -- seconds after attacking a boss to check it became my target
-DL.MAX_TRIES   = 5                          -- travel attempts per boss before giving up
-DL.RETRY_DELAY = 3                          -- seconds before travelling again (e.g. a fight refused the instant)
+DL.MAX_TRIES   = 10                         -- travel attempts per boss before giving up
+DL.RETRY_DELAY = 1                          -- seconds before travelling again (e.g. a fight refused the instant)
 DL.LOOK_WAIT   = 2                          -- seconds to wait for an answer to `look <npc>` (no answer: assume here)
 -- The answers to `look <npc>`: "Gine is in excellent condition." / "You do not see that here."
 DL.IS_HERE     = [[^(.+?) is in .+ condition\.$]]
@@ -49,7 +49,6 @@ function DL.attackBoss(boss)
   if DL.dead[boss] then return end              -- never chase a boss we saw die
   DL.boss = boss
   send("pursue " .. boss)
-  send("sense " .. boss)
   send(DL.attack .. " " .. boss)
   DL.verify(boss)
 end
@@ -146,18 +145,19 @@ function DL.findAndAttack(boss)
       info("yellow", "Unknown location: " .. location)
       return
     end
-    -- The instant comes first; check it worked (its npc is here) before the rest of the route
+    -- Everything goes at once, for speed: the instant, `look <npc>` to check it worked,
+    -- the rest of the route and the attack. If the look says the npc isn't here, the
+    -- instant failed (the rest went nowhere): travel again.
     send(route[1])
     local npc = route[1]:match("^focus 'instant' (%S+)")
-    local function onward()
-      if not stillAfter(boss) and not (DL.PAIR[boss] and DL.pairTarget()) then return end
-      for i = 2, #route do send(route[i]) end
-      DL.attackBoss(boss)
+    if npc then
+      DL.checkHere(npc, function() end, function()
+        local now = DL.PAIR[boss] and DL.PAIR[DL.boss] and DL.boss or boss   -- the pair: whoever we attack now
+        if DL.active and not next(DL.rivals) then DL.retry(now, "The instant to " .. npc .. " failed") end
+      end)
     end
-    if not npc then return onward() end
-    DL.checkHere(npc, onward, function()
-      if DL.active and not next(DL.rivals) then DL.retry(boss, "The instant to " .. npc .. " failed") end
-    end)
+    for i = 2, #route do send(route[i]) end
+    DL.attackBoss(boss)
   end, 1)
   DL.locTimer = tempTimer(10, function()          -- `event` never answered (lag)
     killTrigger(DL.locTrigger)
@@ -193,7 +193,6 @@ function DL.attackPair()
   if not target then return end
   DL.boss, DL.pairArrived = target, true
   send("pursue jhet")
-  send("sense jhet")
   send(DL.attack .. " " .. target)
   DL.verify(target)
 end
@@ -211,12 +210,14 @@ function DL.pairDied(who)
     info("white", DL.PAIR_NAMES[who] .. " is down - attacking " .. DL.PAIR_NAMES[target])
     DL.boss = target
     if next(DL.rivals) or not DL.pairArrived then return end   -- resume / the travel attacks it
-    local function hit() if DL.boss == target and not DL.dead[target] then send(DL.attack .. " " .. target); DL.verify(target) end end
-    DL.checkHere(target, hit, function()         -- he should be right here; if not, find him
-      if DL.boss ~= target then return end
+    -- He should be right here: attack at once, and pursue only if the look says he isn't
+    DL.checkHere(target, function() end, function()
+      if DL.boss ~= target or DL.dead[target] then return end
       send("pursue " .. target)
-      hit()
+      send(DL.attack .. " " .. target)
     end)
+    send(DL.attack .. " " .. target)
+    DL.verify(target)
   end
 end
 
@@ -246,7 +247,7 @@ function DL.flushPending()
   local boss = DL.pending
   DL.pending = nil
   DL.boss = boss
-  tempTimer(1, function() if DL.active and DL.boss == boss then DL.findAndAttack(boss) end end)
+  DL.findAndAttack(boss)
 end
 
 -- Attack a boss in the same area; during a rival just remember it (resume attacks it)
@@ -491,7 +492,7 @@ function DL.rivalDies(deadName)
     return
   end
   disableTrigger(DL.RIVAL_DIES)
-  tempTimer(1, DL.resume)  -- let the MUD finish the kill output
+  tempTimer(0.5, DL.resume)  -- let the MUD finish the kill output
 end
 
 function DL.resume()

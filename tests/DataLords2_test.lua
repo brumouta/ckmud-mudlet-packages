@@ -114,8 +114,8 @@ print("OK  saved name survives a reload")
 dl2.findAndAttack("jhet"); expect("event")
 matches = { "Location: Otherworld   Time Rem: 60 mins", "Otherworld" }
 temps[lastRegex].f(); here()
-expect("focus 'instant' joe | look joe | fly | fly | pursue jhet | sense jhet | ss macub")
-dl2.attackBoss("macub"); expect("pursue jhet | sense jhet | ss macub")
+expect("focus 'instant' joe | look joe | fly | fly | pursue jhet | ss macub")
+dl2.attackBoss("macub"); expect("pursue jhet | ss macub")
 
 -- A rival pauses the event; another mob dying doesn't resume it; the rival dying does
 dl2.rivalAppears("Capella", "you"); assert(enabled["dl2 Bosses"] and enabled["dl2 Rival dies"])   -- boss lines still recorded
@@ -123,7 +123,7 @@ expect("ss Capella | ss Capella | ss Capella | ss Capella")
 dl2.rivalDies("Jhet 2.0"); expect("")
 dl2.rivalDies("Capella the Saiba"); expect("get all"); flush()
 assert(enabled["dl2 Bosses"] and not enabled["dl2 Rival dies"])
-expect("pursue jhet | sense jhet | ss macub")
+expect("pursue jhet | ss macub")
 
 -- Group rival plus a second rival: resume only when both are dead
 dl2.rivalAppears("Capella", "Bob"); expect("ss Capella | ss Capella | ss Capella | ss Capella")
@@ -132,7 +132,7 @@ dl2.rivalAppears("Laser", "you"); expect("")                    -- same rival ag
 dl2.rivalDies("Capella the Saiba"); expect("get all | ss Laser")
 flush(); assert(next(dl2.rivals)); expect("")          -- still paused: no boss attack yet
 dl2.rivalDies("Laser the Android"); expect("get all"); flush()
-assert(enabled["dl2 Bosses"]); expect("pursue jhet | sense jhet | ss macub")
+assert(enabled["dl2 Bosses"]); expect("pursue jhet | ss macub")
 
 -- dl2 resume clears a rival that never died
 dl2.rivalAppears("Nappa", "you"); expect("ss Nappa | ss Nappa | ss Nappa | ss Nappa")
@@ -140,14 +140,14 @@ dl2.command("resume"); assert(enabled["dl2 Bosses"] and not next(dl2.rivals))
 expect("event")                                       -- looks the boss up again and travels
 
 -- Boss chain and the loop
-dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | sense zenzeyh | ss zenzeyh")
+dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | ss zenzeyh")
 dl2.command("loop", "off"); dl2.zenzeyhDied(); flush(); expect("get all.tab")          -- loop off: just the tab
 dl2.requested("technine"); sent = {}                                                  -- the next event
 dl2.command("loop", "on"); dl2.zenzeyhDied(); flush(); expect("get all.tab | request event 18")
 
 -- After the event ends, rivals are ignored
 dl2.ended(); dl2.rivalAppears("Capella", "you"); expect("")
-dl2.command("attack", "kame"); dl2.attackBoss("x"); expect("pursue x | sense x | kame x")
+dl2.command("attack", "kame"); dl2.attackBoss("x"); expect("pursue x | kame x")
 -- Jhet and Macubyree fight together and die in either order
 local function arrive()                              -- the `event` reply: travel and attack Jhet
   matches = { "Location: Earth   Time Rem: 60 mins", "Earth" }
@@ -155,8 +155,8 @@ local function arrive()                              -- the `event` reply: trave
 end
 dl2.command("attack", "ss"); dl2.requested("technine"); sent = {}     -- our event is running
 dl2.startPair(); arrive()
-expect("event | focus 'instant' malak | look malak | pursue jhet | sense jhet | ss macub")
-dl2.pairDied("macub"); expect("look jhet"); here(); expect("ss jhet")                                  -- usual order: then Jhet, no pursue
+expect("event | focus 'instant' malak | look malak | pursue jhet | ss macub")
+dl2.pairDied("macub"); expect("look jhet | ss jhet")                                  -- usual order: then Jhet, no pursue
 dl2.pairDied("jhet"); expect("")                                           -- both down: wait for the next boss
 assert(dl2.boss == nil and LOG:find("are down"))
 print("OK  Macubyree first, then Jhet (same room, no pursue)")
@@ -171,7 +171,7 @@ print("OK  Jhet killed first: the pair is done, goes to Weezpurr on her start li
 
 
 dl2.requested("technine"); dl2.startPair(); arrive(); sent = {}
-dl2.pairDied("macub"); expect("look jhet"); here(); expect("ss jhet")
+dl2.pairDied("macub"); expect("look jhet | ss jhet")
 dl2.pairDied("macub"); expect("")                    -- a repeated line doesn't restart the chase
 print("OK  a new pair starts fresh; repeats are ignored")
 
@@ -195,7 +195,7 @@ expect("event")                                     -- the rival's gone: off to 
 dl2.rivalAppears("Capella", "you"); sent = {}
 dl2.bossDied("daiue"); expect("get all.tab")        -- Phenix died during the rival: loot, but don't chase yet
 dl2.rivalDies("Capella the Saiba"); flush()
-expect("get all | pursue daiue | sense daiue | ss daiue")
+expect("get all | pursue daiue | ss daiue")
 print("OK  boss lines during a rival are kept and acted on afterwards")
 
 -- Safety net: a queued boss is also picked up by the 5-second check
@@ -215,20 +215,20 @@ dl2.pairDied("macub"); sent = {}                    -- Jhet's death line never s
 dl2.goTo("weezp"); expect("event")
 print("OK  Weezpurr goes even if a pair death line was missed")
 
--- A fight refuses the instant: "You do not see that here." -> travel again 3 seconds later
+-- A fight refuses the instant: "You do not see that here." -> travel again a second later
 timers = {}; LOG = ""
 dl2.goTo("phenix"); matches = { "Location: Vegeta   Time Rem: 60 mins", "Vegeta" }; temps[lastRegex].f()
-expect("event | focus 'instant' gine | look gine")
+expect("event | focus 'instant' gine | look gine | pursue phenix | ss phenix")
 notHere(); expect("")                               -- waits a moment...
-assert(LOG:find("travelling again in 3s %(try 1/5%)"))
+assert(LOG:find("travelling again in 1s %(try 1/10%)"))
 flush(); expect("event")                            -- ...then looks it up again
-print("OK  a refused instant is tried again after 3 seconds")
+print("OK  a refused instant is tried again after a second")
 
 -- Did `focus 'instant'` work? After attacking, the boss must be my target; otherwise travel again
 timers = {}; MSDP.set("Target", "name", ""); LOG = ""
-dl2.goTo("weezp"); arriveAt("Namek"); expect("event | focus 'instant' dende | look dende | pursue weezp | sense weezp | ss weezp")
+dl2.goTo("weezp"); arriveAt("Namek"); expect("event | focus 'instant' dende | look dende | pursue weezp | ss weezp")
 later(); flush(); expect("event")                   -- not my target 10s later: look it up again
-assert(LOG:find("weezp isn't my target %- travelling again in 3s %(try 1/5%)"))
+assert(LOG:find("weezp isn't my target %- travelling again in 1s %(try 1/10%)"))
 arriveAt("Namek"); sent = {}
 MSDP.set("Target", "name", "Weezpurr v2.0")         -- this time it worked
 later(); expect("")
@@ -252,7 +252,7 @@ print("OK  no retry for a dead boss; an unanswered `event` is asked again")
 -- Jhet dies, Macubyree's death is seen: nothing ever pursues Macubyree again
 timers = {}; MSDP.set("Target", "name", ""); dl2.requested("technine")
 dl2.startPair(); arriveAt("Earth"); sent = {}
-dl2.bossDead("Macubyree"); expect("get all.tab | look jhet"); here(); expect("ss jhet")   -- loot, then Jhet
+dl2.bossDead("Macubyree"); expect("get all.tab | look jhet | ss jhet")   -- loot, then Jhet
 dl2.bossDead("Jhet"); expect("get all.tab"); assert(dl2.boss == nil)
 later(); expect("")                                 -- no retry: he's dead
 dl2.attackBoss("macub"); dl2.engage("macub"); dl2.findAndAttack("macub"); dl2.command("resume"); later()
@@ -280,20 +280,20 @@ do
   dl2.command("limit", "off"); dl2.command("loop", "on")
   typed("request event 18"); dl2.requested("technine"); expect("")                 -- my request: everything ON
   dl2.startPair(); expect("event"); at("Earth")                                     -- Macubyree's shout
-  expect("focus 'instant' malak | look malak")                                      -- did the instant work?
+  expect("focus 'instant' malak | look malak | pursue jhet | ss macub")             -- all at once; the look checks it
   notHere(); flush(); expect("event")                                                        -- no malak here: it didn't, again
-  at("Earth"); expect("focus 'instant' malak | look malak"); here()
-  expect("pursue jhet | sense jhet | ss macub")                                     -- pursue Jhet, attack Macubyree
-  dl2.bossDead("Macubyree"); expect("get all.tab | look jhet")                     -- loot, is Jhet here?
+  at("Earth"); looked("Malak is in excellent condition.")
+  expect("focus 'instant' malak | look malak | pursue jhet | ss macub")             -- pursue Jhet, attack Macubyree
+  dl2.bossDead("Macubyree"); expect("get all.tab | look jhet | ss jhet")           -- loot, attack Jhet, is he here?
   notHere(); expect("pursue jhet | ss jhet")                                        -- not here: pursue him first
   dl2.bossDead("Jhet"); expect("get all.tab")
   dl2.goTo("weezp"); expect("event"); at("Namek"); here()                           -- Weezpurr's shout
-  expect("focus 'instant' dende | look dende | pursue weezp | sense weezp | ss weezp")
+  expect("focus 'instant' dende | look dende | pursue weezp | ss weezp")
   dl2.bossDead("Weezpurr"); expect("get all.tab")
   dl2.goTo("phenix"); expect("event"); at("Vegeta"); here()
-  expect("focus 'instant' gine | look gine | pursue phenix | sense phenix | ss phenix")
-  dl2.bossDead("Phenix"); dl2.bossDied("daiue"); expect("get all.tab | pursue daiue | sense daiue | ss daiue")
-  dl2.bossDead("Daiue"); dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | sense zenzeyh | ss zenzeyh")
+  expect("focus 'instant' gine | look gine | pursue phenix | ss phenix")
+  dl2.bossDead("Phenix"); dl2.bossDied("daiue"); expect("get all.tab | pursue daiue | ss daiue")
+  dl2.bossDead("Daiue"); dl2.bossDied("zenzeyh"); expect("get all.tab | pursue zenzeyh | ss zenzeyh")
   dl2.ended(); timers = {}; dl2.zenzeyhDied(); expect("get all.tab")
   assert(LOG:find("Re%-requesting the event in 5s"))
   flush(); expect("request event 18")                                               -- 5 seconds later
@@ -305,16 +305,16 @@ do
   for planet, route in pairs(dl2.travel) do                                         -- every planet's instant is checked
     local npc = route[1]:match("^focus 'instant' (%S+)")
     dl2.tries = 0; dl2.findAndAttack("weezp"); at(planet)
-    expect("event | " .. route[1] .. " | look " .. npc)
+    local rest = {}; for i = 2, #route do rest[#rest + 1] = route[i] .. " | " end
+    expect("event | " .. route[1] .. " | look " .. npc .. " | " .. table.concat(rest) .. "pursue weezp | ss weezp")
     notHere(); flush(); expect("event")                                                      -- failed: travel again
     at(planet); here(); sent = {}; timers = {}
   end
   print("OK  the instant is checked on every planet (malak, dende, gine, innkeeper, minotia, joe)")
   dl2.tries = 0; dl2.findAndAttack("phenix"); at("Vegeta"); sent = {}
-  looked("Malak is in excellent condition."); expect("")                           -- someone else: keep waiting
-  looked("Gine is in excellent condition."); expect("pursue phenix | sense phenix | ss phenix")   -- straight on
-  assert(dl2.lookTimer == nil)
-  print("OK  \"Gine is in excellent condition.\" confirms the instant at once")
+  looked("Malak is in excellent condition."); assert(dl2.lookTimer)               -- someone else: still checking
+  looked("Gine is in excellent condition."); assert(dl2.lookTimer == nil); expect("")   -- confirmed, nothing to redo
+  print("OK  \"Gine is in excellent condition.\" confirms the instant")
   timers = {}
   dl2.requested("technine"); dl2.eventBusy(); flush(); expect("")                   -- loop off: not ours to retry
   timers = {}
