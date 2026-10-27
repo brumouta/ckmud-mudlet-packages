@@ -59,6 +59,7 @@ local fullname_to_cmd = {
     ["justice blitz"] = "justice",
     ["cyclone kick"] = "cyclone",
     ["super godfist"] = "supergodfist",
+    ["super dragon fist"] = "superdragonfist",
     ["heel stomp"] = "heel",
     ["wolf fang fist"] = "wolf",
     ["chou kamehameha"] = "chou",

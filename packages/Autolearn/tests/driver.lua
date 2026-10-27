@@ -819,6 +819,15 @@ do
   AL.API:can_use_melee_attack("thunderclap")
   check(not logged("Unknown Melee"), "no more 'Unknown Melee thunderclap' error")
 
+  local sdf = AL.Player.Attacks["superdragonfist"]
+  check(sdf ~= nil and sdf[1] == 8 and sdf[2] == 0.80 and sdf[3] == true and sdf[4] == 2 and sdf[5] == 6,
+        "superdragonfist: 8 fatigue, 80% damage on UBS, 2 rounds, up to 6 hits")
+  check(sdf and sdf[6][X.piercing] and sdf[6][X.piercing_major], "superdragonfist bypasses armor 30%")
+  check(AL.API.Skills:translate("super dragon fist") == "superdragonfist", "'super dragon fist' from learn is superdragonfist")
+  LOG = {}
+  AL.API:can_use_melee_attack(AL.API.Skills:translate("super dragon fist"))
+  check(not logged("Unknown Melee"), "no more 'Unknown Melee super dragon fist' error")
+
   -- A skill the MUD adds later: skipped (once warned), the rest still gets trained
   LOG = {}
   local L = AL.API.Learning
