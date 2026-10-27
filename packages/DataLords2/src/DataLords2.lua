@@ -13,8 +13,8 @@ DL.busyRetry   = 1                          -- "There is already an event runnin
 DL.BUSY_TRIES  = 60                         -- ...at most this many times
 DL.loot        = "get all.tab"
 DL.CHECK_AFTER = 10                         -- seconds after attacking a boss to check it became my target
-DL.MAX_TRIES   = 3                          -- travel attempts per boss before giving up
-DL.MAX_WAIT    = 20                         -- seconds a queued boss waits for my current target to clear
+DL.MAX_TRIES   = 5                          -- travel attempts per boss before giving up
+DL.RETRY_DELAY = 3                          -- seconds before travelling again (e.g. a fight refused the instant)
 DL.LOOK_WAIT   = 2                          -- seconds to wait for an answer to `look <npc>` (no answer: assume here)
 -- The answers to `look <npc>`: "Gine is in excellent condition." / "You do not see that here."
 DL.IS_HERE     = [[^(.+?) is in .+ condition\.$]]
@@ -92,8 +92,10 @@ function DL.retry(boss, why)
     DL.tries = 0
     return info("red", why .. " after " .. DL.MAX_TRIES .. " tries - giving up. `dl2 resume` tries again")
   end
-  info("yellow", why .. " - travelling again (try " .. DL.tries .. "/" .. DL.MAX_TRIES .. ")")
-  DL.findAndAttack(boss)
+  info("yellow", why .. " - travelling again in " .. DL.RETRY_DELAY .. "s (try " .. DL.tries .. "/" .. DL.MAX_TRIES .. ")")
+  tempTimer(DL.RETRY_DELAY, function()
+    if stillAfter(boss) and not next(DL.rivals) then DL.findAndAttack(boss) end
+  end)
 end
 
 -- "<Name> [v]2.0 is dead!" for any event boss
@@ -219,28 +221,20 @@ function DL.pairDied(who)
 end
 
 -- ---------------------------------------------------------------- waiting until free
--- A new boss's start line can arrive mid-fight (or during a rival). Travelling then
--- fails - `focus 'instant'` and `pursue` are refused in combat. So travel waits, queued,
--- until no rival is alive and MSDP shows no target - but for the target at most
--- MAX_WAIT seconds (it may never clear in a busy zone); verify() retries if it fails.
-function DL.fighting()
-  local M = rawget(_G, "MSDP")
-  local target = M and M.Target and M.Target.name
-  return type(target) == "string" and target ~= ""
-end
-
+-- A new boss's start line can arrive during a rival fight: travel waits, queued, until
+-- every rival is dead. (MSDP's target isn't used for this: it can keep an old opponent
+-- long after the fight.) Any other fight that refuses the instant is caught by the
+-- `look <npc>` check, which travels again a few seconds later.
 function DL.busy()
-  if next(DL.rivals) ~= nil then return true end
-  return DL.fighting() and os.time() - (DL.pendingSince or os.time()) < DL.MAX_WAIT
+  return next(DL.rivals) ~= nil
 end
 
--- Travel to a boss now, or as soon as we're free
+-- Travel to a boss now, or as soon as the rivals are dead
 function DL.goTo(boss)
   if not DL.active then return end
-  DL.pendingSince = os.time()
   if DL.busy() then
     DL.pending = boss
-    info("white", boss .. " is up - going after it once this fight is over")
+    info("white", boss .. " is up - going after it once the rivals are dead")
     return
   end
   DL.pending = nil
@@ -263,9 +257,6 @@ function DL.engage(boss)
   DL.attackBoss(boss)
 end
 
-registerNamedEventHandler("dl2", "free after fight", "MSDP.changed", function(_, kind, field, value)
-  if kind == "Target" and field == "name" and value == "" then DL.flushPending() end
-end)
 registerNamedTimer("dl2", "pending check", 5, function() DL.flushPending() end, true)   -- safety net
 
 -- Loot the dead boss, then go after the next one (if any)
