@@ -259,7 +259,9 @@ local function solveChamber()
     end
     trigs[1] = tempRegexTrigger([[^(This presence is solid, certain|The ki signature is stable and bright)]],
       function() touch(suspects[i]) end)
+    -- an echo (either wording): sense the next one
     trigs[2] = tempTrigger("Something feels wrong. The energy seems... copied, fragmented.", senseNext)
+    trigs[3] = tempTrigger("Cold and lifeless. An echo of a warrior, not the real thing.", senseNext)
     senseNext()
   end }
 end

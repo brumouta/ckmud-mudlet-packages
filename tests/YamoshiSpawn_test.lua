@@ -137,8 +137,11 @@ local function mud(cmd)
     local j = r.name:match("(J%d)"); assert(j, cmd .. " outside a chamber: " .. r.name)
     local who = cmd:match(" (%a+)$")
     if cmd:match("^sense") then
+      -- the game words an echo two ways: alternate them so both are handled
+      state.echoes = (state.echoes or 0) + (TRUE_WARRIOR[j] == who and 0 or 1)
       say(TRUE_WARRIOR[j] == who and "The ki signature is stable and bright. No flicker. No hesitation."
-          or "Something feels wrong. The energy seems... copied, fragmented.")
+          or state.echoes % 2 == 1 and "Something feels wrong. The energy seems... copied, fragmented."
+          or "Cold and lifeless. An echo of a warrior, not the real thing.")
     else
       assert(TRUE_WARRIOR[j] == who, "touched a false warrior in " .. j)
       assert(not state.chambers[j], "solved " .. j .. " twice")
