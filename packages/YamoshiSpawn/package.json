@@ -1,6 +1,6 @@
 {
   "name": "YamoshiSpawn",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "title": "Yamoshi spawn quest helper",
   "description": "Runs the three Temple trials (Memory, Perception, Power) and the ritual that summons Yamoshi. Type `ys help` for commands.",
   "author": "Bruno Mouta",
@@ -15,6 +15,11 @@
       "name": "ys",
       "regex": "^ys(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
       "script": "local function arg(s) if s and s ~= \"\" then return s end end\nys.command(arg(matches[2]), arg(matches[3]))"
+    },
+    {
+      "name": "yamoportal",
+      "regex": "^yamoportal(?:\\s+(no))?$",
+      "script": "ys.portal(matches[2] ~= \"no\")"
     }
   ],
   "triggers": [
@@ -101,6 +106,16 @@
             }
           ],
           "script": "ys.summoned()"
+        },
+        {
+          "name": "ys Quiz",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Tetsu[ks]ai (?:asks|says), '(.+)"
+            }
+          ],
+          "script": "ys.quiz(matches[2])"
         }
       ]
     }

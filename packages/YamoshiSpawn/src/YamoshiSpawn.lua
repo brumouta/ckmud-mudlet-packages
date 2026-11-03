@@ -337,6 +337,48 @@ function YS.startStage()
   end
 end
 
+-- ---------------------------------------------------------------- Tetsukai's quiz
+-- Tetsukai / Tetsusai ask about Yamoshi's story; answered whenever a known question shows up.
+YS.QUIZ = {
+  { "performed this to unlock Yamoshi's true potential", "ritual" },
+  { "penned the Book of",                                "namek" },
+  { "color of the aura that surrounded us",              "blue" },
+  { "What was Yamoshi's ultimate fate",                  "death" },
+  { "How many saiyans did Yamoshi seek out",             "5" },
+  { "unlocked what ability in Yamoshi",                  "Super Saiyan God" },
+  { "burned in the hearts of Yamoshi's comrades",        "Righteousness" },
+  { "fought bravely to defeat which threat",             "Evil Saiyans" },
+  { "what form did Yamoshi achieve",                     "SSJ" },
+  { "seeking out comrades in arms",                      "Wander" },
+}
+
+function YS.quiz(question)
+  for _, qa in ipairs(YS.QUIZ) do
+    if question:find(qa[1], 1, true) then
+      send("say " .. qa[2])
+      return qa[2]
+    end
+  end
+end
+
+-- ---------------------------------------------------------------- `yamoportal` alias
+-- The switch-and-portal walk, searching for a fragment in every room unless `yamoportal no`.
+YS.PORTAL_WALK = {
+  "search;;get fragment", "press switch", "press switch", "enter portal",
+  "search;;get fragment", "press switch", "enter portal",
+  "search;;get fragment", "press switch", "enter portal",
+  "search;;get fragment", "press switch", "press switch", "enter portal",
+  "search;;get fragment", "press switch", "enter portal",
+  "search;;get fragment", "press switch", "press switch", "enter portal",
+  "search;;get fragment",
+}
+
+function YS.portal(search)
+  for _, cmd in ipairs(YS.PORTAL_WALK) do
+    if search or cmd ~= "search;;get fragment" then send(cmd) end
+  end
+end
+
 -- ---------------------------------------------------------------- `ys` alias
 YS.HELP = {
   { "ys help",          "Show this list" },
@@ -346,6 +388,7 @@ YS.HELP = {
   { "ys status",        "Show the current stage" },
   { "ys stage <name>",  "Set the stage: " .. table.concat(YS.STAGES, ", ") },
   { "ys attack <cmd>",  "Attack used on the bosses (default ss)" },
+  { "yamoportal [no]",  "Walk the switches and portals, searching for fragments (no: skip the searches)" },
 }
 
 function YS.help()

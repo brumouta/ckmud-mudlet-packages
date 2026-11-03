@@ -14,6 +14,11 @@ Runs the three trials in the Temple of the Ancient Saiyajins and the ritual that
 | `ys stage <name>` | Set the stage: memory, perception, power, ritual, done |
 | `ys attack <cmd>` | Attack used on the bosses (default `ss`) |
 | `ys status` / `ys stop` | Show the stage / turn the helper off |
+| `yamoportal [no]` | Walk the switch-and-portal rooms, `search;;get fragment` in each (`no` skips the searches) |
+
+## Tetsukai's quiz
+
+When Tetsukai or Tetsusai asks one of the ten known questions about Yamoshi, the answer is said automatically (always on, even with the helper off). Answers are in `YS.QUIZ`.
 
 ## Trials
 

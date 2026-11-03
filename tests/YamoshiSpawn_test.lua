@@ -237,3 +237,41 @@ assert(state.warriors == 4)
 assert(ys.stage == "done" and not ys.active, "ended at stage " .. ys.stage)
 assert(not (LOG or ""):find("Timed out"), "a wait timed out")
 print("\nFULL YAMOSHI RUN PASSED: " .. #sent .. " commands, 0 invalid moves, " .. (state.refusals or 0) .. " maze refusals")
+
+-- ---------------------------------------------------------------- quiz and yamoportal
+local out = {}
+function send(c) out[#out + 1] = c end
+local function quizLine(l)
+  local q = l:match("^Tetsu[ks]ai asks, '(.+)") or l:match("^Tetsu[ks]ai says, '(.+)")
+  if q then return ys.quiz(q) end
+end
+local QUIZ = {
+  { "Tetsukai says, 'Yamoshi and his comrades performed this to unlock Yamoshi's true potential.'", "ritual" },
+  { "Tetsusai asks, 'A Elder of this race was moved by Yamoshi's tale and penned the Book of Yamoshi. Which race?'", "namek" },
+  { "Tetsukai asks, 'During the Divine Ritual... What was the color of the aura that surrounded us?'", "blue" },
+  { "Tetsusai asks, 'While battling the evil Saiyans... What was Yamoshi's ultimate fate?'", "death" },
+  { "Tetsukai asks, 'How many saiyans did Yamoshi seek out to perform the divine ritual?'", "5" },
+  { "Tetsukai asks, 'The divine ritual unlocked what ability in Yamoshi long after his death?'", "Super Saiyan God" },
+  { "Tetsukai asks, 'What quality burned in the hearts of Yamoshi's comrades?'", "Righteousness" },
+  { "Tetsusai asks, 'Before his death, Yamoshi fought bravely to defeat which threat?'", "Evil Saiyans" },
+  { "Tetsusai asks, 'When he battled the Evil Saiyans, what form did Yamoshi achieve?'", "SSJ" },
+  { "Tetsusai says, 'After his death he did this for a millenia seeking out comrades in arms.'", "Wander" },
+}
+for _, qa in ipairs(QUIZ) do
+  out = {}
+  assert(quizLine(qa[1]) == qa[2], "quiz: " .. qa[1])
+  assert(out[1] == "say " .. qa[2] and #out == 1, "quiz sent: " .. table.concat(out, " | "))
+end
+out = {}
+assert(quizLine("Tetsukai says, 'Welcome, traveller.'") == nil and #out == 0, "unknown line answered")
+
+out = {}; ys.portal(true)
+assert(#out == 22, "yamoportal sends " .. #out)
+local searches = 0
+for _, c in ipairs(out) do if c == "search;;get fragment" then searches = searches + 1 end end
+assert(searches == 7 and out[1] == "search;;get fragment" and out[22] == "search;;get fragment")
+out = {}; ys.portal(false)
+assert(#out == 15, "yamoportal no sends " .. #out)
+for _, c in ipairs(out) do assert(c ~= "search;;get fragment") end
+assert(table.concat(out, ",") == "press switch,press switch,enter portal,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal")
+print("QUIZ AND YAMOPORTAL PASSED")
