@@ -22,7 +22,7 @@ When Tetsukai or Tetsusai asks one of the ten known questions about Yamoshi, the
 
 ## Trials
 
-Every stage starts and ends at the Atrium. The vortexes are crossed with `enter vortex`.
+Every stage starts and ends at the Atrium. Go in through the vortexes with `enter vortex` and come back out with `up` (the vortex doesn't take you out of a trial).
 
 | Trial | Automated |
 |---|---|

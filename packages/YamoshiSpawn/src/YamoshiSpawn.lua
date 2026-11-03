@@ -5,7 +5,8 @@ local YS = ys
 
 -- ---------------------------------------------------------------- settings
 YS.attack = YS.attack or "ss"        -- attack used on the bosses
-YS.vortex = "enter vortex"           -- the swirling vortexes between the hallways and the trials
+YS.vortex = "enter vortex"           -- the swirling vortexes from the hallways into the trials
+YS.exit   = "up"                     -- the way back out; the vortex doesn't take you out of a trial
 
 YS.STAGES = { "memory", "perception", "power", "ritual", "done" }
 YS.HINTS = {
@@ -115,9 +116,9 @@ YS.ROUTE = {
   power      = concat(rep("e", 3), YS.vortex, "w"),            -- Hall of Champions
 }
 YS.BACK = {
-  memory     = concat(rep("s", 4), YS.vortex, rep("e", 3)),    -- Kaizor's room -> Atrium
-  perception = concat("n", "n", "e", "n", "n", "n", "w", rep("n", 5), YS.vortex, rep("s", 3)),  -- Varkuun -> Atrium
-  power      = concat(rep("e", 10), YS.vortex, rep("w", 3)),   -- Renzakai -> Atrium
+  memory     = concat(rep("s", 4), YS.exit, rep("e", 3)),    -- Kaizor's room -> Atrium
+  perception = concat("n", "n", "e", "n", "n", "n", "w", rep("n", 5), YS.exit, rep("s", 3)),  -- Varkuun -> Atrium
+  power      = concat(rep("e", 10), YS.exit, rep("w", 3)),   -- Renzakai -> Atrium
 }
 
 -- ---------------------------------------------------------------- Trial of Memory

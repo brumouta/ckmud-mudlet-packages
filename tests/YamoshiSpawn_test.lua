@@ -20,9 +20,9 @@ for _, p in ipairs({ { 0, 1 }, { 1, 0 }, { -1, 0 }, { 0, -1 } }) do room("t", p[
 room("t", -2, 0, "Hallway W1"); room("t", -3, 0, "Hallway W2"); line("t", { { -1, 0 }, { -2, 0 }, { -3, 0 } })
 room("t", 0, 2, "Hallway N1"); room("t", 0, 3, "Hallway N2"); line("t", { { 0, 1 }, { 0, 2 }, { 0, 3 } })
 room("t", 2, 0, "Hallway E1"); room("t", 3, 0, "Hallway E2"); line("t", { { 1, 0 }, { 2, 0 }, { 3, 0 } })
--- the vortex rooms: "enter vortex" goes through in either direction
+-- the vortex rooms: "enter vortex" takes you into a trial, "up" takes you back out
 local PORTALS = { ["t:-3,0:enter vortex"] = { "mem", 0, -2 }, ["t:0,3:enter vortex"] = { "per", 0, 2 }, ["t:3,0:enter vortex"] = { "pow", 0, 0 },
-                  ["mem:0,-2:enter vortex"] = { "t", -3, 0 }, ["per:0,2:enter vortex"] = { "t", 0, 3 }, ["pow:0,0:enter vortex"] = { "t", 3, 0 } }
+                  ["mem:0,-2:up"] = { "t", -3, 0 }, ["per:0,2:up"] = { "t", 0, 3 }, ["pow:0,0:up"] = { "t", 3, 0 } }
 
 -- Memory: arrival 0,-2 -> 0,-1 -> crossing 0,0 -> Hall 0,1 -> Kaizor 0,2; square loop x=-2..2, y=0..4
 room("mem", 0, -2, "Forgotten Chamber"); room("mem", 0, -1, "Forgotten Chamber"); room("mem", 0, 0, "Forgotten Crossing")
@@ -96,6 +96,8 @@ local function mud(cmd)
   if PORTALS[key] then
     local p = PORTALS[key]; zone, pos = p[1], { p[2], p[3] }; return arrive()
   end
+  if cmd == "enter vortex" and zone ~= "t" then bad[#bad + 1] = "enter vortex inside a trial at " .. r.name; return say("Nothing happens.") end
+  if cmd == "up" then bad[#bad + 1] = "up outside an exit room at " .. r.name; return say("Alas, you cannot go that way...") end
   if cmd == "enter vortex" then bad[#bad + 1] = "enter vortex outside a vortex room at " .. r.name; return end
   if cmd == "look" then return say(r.name) end
   -- like the real game: until the maze opens, heading south out of the guardian's rooms
