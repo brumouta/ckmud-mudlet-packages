@@ -283,15 +283,21 @@ local function walkPortal(foundInRoom, silentRoom)
   end
   assert(next(timers) == nil and next(temps) == nil, "yamoportal left triggers/timers behind")
   local searches = 0
-  for _, c in ipairs(out) do if c == "search;;get fragment" then searches = searches + 1 end end
+  local grabs, grabbedAt = 0, nil
+  for i, c in ipairs(out) do
+    if c == "search" then searches = searches + 1 end
+    if c == "get fragment" then grabs = grabs + 1; grabbedAt = i end
+  end
+  assert(grabs == (foundInRoom and 1 or 0), "get fragment sent " .. grabs .. " times")
+  if grabbedAt then assert(out[grabbedAt - 1] == "search", "get fragment not right after the search that found it") end
   local moves = {}
-  for _, c in ipairs(out) do if c ~= "search;;get fragment" then moves[#moves + 1] = c end end
+  for _, c in ipairs(out) do if c ~= "search" and c ~= "get fragment" then moves[#moves + 1] = c end end
   return searches, table.concat(moves, ","), out
 end
 local MOVES = "press switch,press switch,enter portal,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal"
 local n, moves, all = walkPortal(nil)
 assert(n == 7 and moves == MOVES and #all == 22, "no fragment: " .. n .. " searches")
-assert(all[1] == "search;;get fragment" and all[22] == "search;;get fragment")
+assert(all[1] == "search" and all[22] == "search")
 n, moves = walkPortal(1)
 assert(n == 1 and moves == MOVES, "found in room 1: " .. n .. " searches")
 n, moves, all = walkPortal(3)
@@ -305,11 +311,11 @@ out = {}; temps, timers = {}, {}
 ys.portal(true)
 assert(#out == 1, "only the first search goes out before an answer")
 for _, t in pairs(temps) do if t.t == ys.FRAGMENT_MISSED then t.f() end end
-assert(table.concat(out, ",") == "search;;get fragment,press switch,press switch,enter portal,search;;get fragment")
+assert(table.concat(out, ",") == "search,press switch,press switch,enter portal,search")
 ys.command("stop")
 assert(next(timers) == nil and next(temps) == nil, "ys stop leaves the walk running")
 out = {}; ys.portal(false)
 assert(#out == 15, "yamoportal no sends " .. #out)
-for _, c in ipairs(out) do assert(c ~= "search;;get fragment") end
+for _, c in ipairs(out) do assert(c ~= "search" and c ~= "get fragment") end
 assert(table.concat(out, ",") == "press switch,press switch,enter portal,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal")
 print("QUIZ AND YAMOPORTAL PASSED")

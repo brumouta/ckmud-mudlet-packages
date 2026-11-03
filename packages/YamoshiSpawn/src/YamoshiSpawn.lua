@@ -364,11 +364,13 @@ end
 
 -- ---------------------------------------------------------------- `yamoportal` alias
 -- The switch-and-portal walk. Each room is searched and the walk moves on as soon as the
--- search answers; once a fragment turns up the rest of the walk is sent straight away.
+-- search answers; once a fragment turns up it's picked up and the rest of the walk is sent
+-- straight away.
 -- `yamoportal no` skips the searches.
 YS.FRAGMENT_FOUND = "After searching around you managed to uncover a fragment of memories!"
 YS.FRAGMENT_MISSED = "You search around the area, but fail to find anything."
-YS.SEARCH = "search;;get fragment"
+YS.SEARCH = "search"
+YS.GRAB = "get fragment"
 YS.portalDelay = YS.portalDelay or 5   -- seconds to wait for a search answer before moving on anyway
 YS.PORTAL_ROOMS = {                    -- what to send after searching each room
   { "press switch", "press switch", "enter portal" },
@@ -424,6 +426,7 @@ function YS.portal(search)
       local room = walk.room
       if not room then return end
       YS.portalStop()
+      send(YS.GRAB)
       info("green", "yamoportal: fragment found - skipping the other searches")
       sendRooms(room)
     end),
