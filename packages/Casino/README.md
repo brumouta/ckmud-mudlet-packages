@@ -127,22 +127,25 @@ This machine pays **Full House 8, Flush 5** ("8/5" Jacks or Better). The bot use
 
 Command: `sl`
 
-Pulls the lever every few seconds (`pull <lines>`) and keeps score from your zenni (MSDP). Stand at a slot machine and `sl start`.
+Stand at a slot machine and `sl start`. It sends `pull <lines>`, waits for `You won ...` / `You lost your ...`, and pulls again a second later.
 
 | Command | Effect |
 |---|---|
-| `sl start` / `sl stop` | Start or stop pulling |
-| `sl status` | Pulls, winning pulls, zenni net, best win, Lucky Tails, STR XP |
-| `sl lines <1-5>` | Lines per pull (default 5). Each line is another bet: 1 middle row, 2 + top, 3 all rows, 4 + one diagonal, 5 both diagonals |
-| `sl delay <secs>` | Seconds between pulls (default 4) |
+| `sl start` / `sl stop` | Start pulling / finish the pull on the machine, then stop |
+| `sl status` | Pulls, paying pulls, full lines, Dragonballs, best win, zenni in / out / net, % returned, Lucky Tails, STR XP |
+| `sl lines <1-5>` | Lines per pull (default 5). Each line is another bet: 1 middle row, 2 + top, 3 + bottom, 4 + top-left diagonal, 5 + bottom-left diagonal |
 | `sl pulls <n>` | Stop after n pulls (0 = no limit) |
 | `sl stoploss <zenni>` / `sl target <zenni>` | Stop once down / up this much, e.g. `500m`, `2b` (0 = off) |
-| `sl keep <zenni>` | Stop before your zenni drops below this (0 = off) |
+| `sl keep <zenni>` | Stop before your zenni drops below this (needs MSDP; 0 = off) |
+| `sl delay <secs>` | Pause between a result and the next pull (default 1) |
+| `sl quiet on\|off` | Hide the machine's 9 lines a pull and show one summary line instead (default on) |
 | `sl reset` | Clear the stats |
 
-The zenni change between two pulls is the last pull's result, so wins and the limits need **MSDP**. Without it the bot warns and only `sl pulls` can stop it. It also stops by itself when three pulls in a row don't change your zenni: you're not at a machine, or can't pay for the pull.
+Each pull is scored with the machine's payout rules (from `payout`): a full line pays the symbol's multiplier x the line bet x the lines played, the first two reels matching pay 10% of that, the middle row plus another row of the same symbol pays x10 and all three rows x25. The summary line names what paid (`Cherry diagonal`, `2x Z top`), a Dragonball line raises an alert, and if the machine ever pays something different from the score you get a warning with the reels.
 
-Slots have no strategy, and the house wins on average. Lucky Tails and STR XP only come from **[VIP]** machines (Lucky Tails when a line is a full match).
+If the machine doesn't answer a pull in 8 seconds it pulls again; after two unanswered retries it stops (not at a machine, or out of zenni).
+
+Slots have no strategy, and the house wins on average. Lucky Tails (full lines only) and STR XP only come from **[VIP]** machines.
 
 ## High Stakes
 

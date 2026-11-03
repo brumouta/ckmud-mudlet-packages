@@ -1,6 +1,6 @@
 {
   "name": "Casino",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "title": "Lucky Monkey Casino",
   "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp), slots (sl) and the High Stakes tournament (hs). Type `casino` for the list.",
   "author": "Bruno Mouta",
@@ -282,6 +282,70 @@
                 }
               ],
               "script": "vp.gag()"
+            }
+          ]
+        },
+        {
+          "name": "Slots",
+          "folder": true,
+          "children": [
+            {
+              "name": "sl Bet",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You put ([\\d,]+) zenni in the slot machine\\."
+                }
+              ],
+              "script": "sl.onBet(matches[2])"
+            },
+            {
+              "name": "sl Reels",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*\\[\\s*\\|(.{3})\\|\\s*\\|(.{3})\\|\\s*\\|(.{3})\\|\\s*\\]\\s*$"
+                }
+              ],
+              "script": "sl.onReels(matches[2], matches[3], matches[4])"
+            },
+            {
+              "name": "sl Won",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You won ([\\d,]+) zenni!$"
+                }
+              ],
+              "script": "sl.onResult(matches[2])"
+            },
+            {
+              "name": "sl Lost",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You lost your ([\\d,]+) zenni!$"
+                }
+              ],
+              "script": "sl.onResult(\"0\")"
+            },
+            {
+              "name": "sl Machine lines",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^Slot Machine Results:$"
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^o-{20,30}o$"
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^See payouts by typing 'payout'\\.$"
+                }
+              ],
+              "script": "sl.gag()"
             }
           ]
         },
