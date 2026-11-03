@@ -27,26 +27,10 @@ local function newStats()
 end
 VP.stats = VP.stats or newStats()
 
-local function info(color, msg) cecho("\n<" .. color .. ">[vp] " .. msg .. "\n") end
-
-local function num(text) return tonumber((tostring(text):gsub(",", ""))) or 0 end
-
-local function fmt(n)
-  local str = tostring(math.floor(math.abs(n)))
-  str = str:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
-  return (n < 0 and "-" or "") .. str
-end
+local info = casino.logger("vp")
+local num, fmt, signed = casino.num, casino.fmt, casino.signed
 VP.fmt = fmt
-
-local function signed(n) return (n >= 0 and "+" or "") .. fmt(n) end
-
--- "500m", "1.5b", "250k", "25,000,000" -> zenni
-function VP.parseAmount(text)
-  local n, unit = tostring(text):lower():gsub(",", ""):match("^%s*(%d*%.?%d+)%s*([kmb]?)%s*$")
-  if not n then return nil end
-  local mult = ({ k = 1e3, m = 1e6, b = 1e9 })[unit] or 1
-  return math.floor(tonumber(n) * mult + 0.5)
-end
+VP.parseAmount = casino.parseAmount   -- "500m", "1.5b", "250k", "25,000,000" -> zenni
 
 -- ---------------------------------------------------------------- cards
 local RANK = { T = 10, J = 11, Q = 12, K = 13, A = 14 }
@@ -628,3 +612,16 @@ function VP.command(cmd, arg)
     info("yellow", "Unknown command '" .. tostring(cmd) .. (arg and (" " .. arg) or "") .. "'. Type vp help")
   end
 end
+
+casino.register{
+  key = "vp", title = "Video Poker", command = "vp",
+  active = function() return VP.active end,
+  stop = function() VP.stop() end,
+  luckyTails = VP.luckyTails,
+  xp = function(n) VP.xpGained(n) end,
+  status = function()
+    local s = VP.stats
+    local net = (s.credit and s.startCredit) and ("   net " .. signed(s.credit - s.startCredit)) or ""
+    return string.format("%d hands, %s of %s coins back%s", s.hands, fmt(s.coinsWon), fmt(s.coinsBet), net)
+  end,
+}

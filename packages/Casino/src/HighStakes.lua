@@ -23,9 +23,8 @@ HS.players = HS.players or {}     -- name -> { allins = n, shows = { "6H 9D: Two
 local function newStats() return { hands = 0, won = 0, wonZenni = 0 } end
 HS.stats   = HS.stats or newStats()
 
-local function info(color, msg) cecho("\n<" .. color .. ">[hs] " .. msg .. "\n") end
-
-local function num(text) return tonumber((tostring(text):gsub(",", ""))) or 0 end
+local info = casino.logger("hs")
+local num = casino.num
 
 -- "1.1B", "225M", "9.6B", "900K" -> zenni
 function HS.short(text)
@@ -50,7 +49,7 @@ function HS.amount(n)
 end
 
 local function me()
-  local name = HS.me or (rawget(_G, "MSDP") and MSDP.Player and MSDP.Player.name)
+  local name = HS.me or casino.me()
   if name and name ~= "" then return name end
 end
 
@@ -606,3 +605,11 @@ function HS.command(cmd, arg)
     info("yellow", "Unknown command. Type hs help")
   end
 end
+
+casino.register{
+  key = "hs", title = "High Stakes", command = "hs",   -- an advisor: never "playing", so it gets no rewards
+  status = function()
+    return string.format("advice %s, %d hands, %d pots won (%s)", HS.enabled and "on" or "off",
+      HS.stats.hands, HS.stats.won, brief(HS.stats.wonZenni))
+  end,
+}

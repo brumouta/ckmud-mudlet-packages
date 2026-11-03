@@ -10,14 +10,12 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [KaiokenTrain](packages/KaiokenTrain) | `kaioken train`, `KT` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
 | [Score](packages/Score) | `score`, `SC` | A richer `score`: real numbers, damage at every boost level, item tier progress, training hints. |
 | [DataLords2](packages/DataLords2) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain (not Data Lords 1 or 3) when *you* requested it, pausing for rivals (yours or your group's). |
-| [Blackjack](packages/Blackjack) | `bj help` | Plays **blackjack** with basic strategy after you `cjoin`, and tracks wins, zenni, Lucky Tails and XP. |
-| [VideoPoker](packages/VideoPoker) | `vp help` | Plays the **video poker** machine (Jacks or Better) with the standard strategy, with stop loss / target / hand limits and stats. |
-| [HighStakes](packages/HighStakes) | `hs help` | Advice for the Friday **High Stakes** hold'em tournament: win chance, pot odds and a suggested move on your turn; `hs go` sends it. |
+| [Casino](packages/Casino) | `casino` | The **Lucky Monkey Casino**: plays **blackjack** (`bj`) and **video poker** (`vp`), and advises in the Friday **High Stakes** hold'em tournament (`hs`). Tracks zenni, Lucky Tails and XP. |
 | [FriezaQuest](packages/FriezaQuest) | `fq help` | Automates the **Frieza's Spaceship** quest from Appule to the Bridge Access Card. |
 | [BossTimer](packages/BossTimer) | `boss help` | Counts down to the **boss respawn** (from `uptime`), warns 5 and 1 minutes before, and re-checks by itself after each respawn. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Blackjack uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer, VideoPoker and HighStakes work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn and BossTimer work without it.
 
 ## Installing
 
@@ -39,9 +37,10 @@ packages/
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler JSON + .lua files
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  Blackjack/ DataLords2/ FriezaQuest/ HighStakes/ VideoPoker/ YamoshiSpawn/  single-script packages
-    package.json          version, triggers (patterns + one-line scripts), aliases
-    src/<Package>.lua     all the logic, in one Lua table named after its command (bj, dl2, fq, hs, vp, ys)
+  BossTimer/ Casino/ DataLords2/ FriezaQuest/ MSDP/ YamoshiSpawn/  single-script packages
+    package.json          version, triggers (patterns + one-line scripts), aliases, scripts
+    src/<Package>.lua     the logic, in one Lua table named after its command (boss, dl2, fq, msdp, ys)
+    Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, hs)
 tests/                    Lua tests for the single-script packages + run.sh for everything
 docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
 tools/

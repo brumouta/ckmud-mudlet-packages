@@ -6,7 +6,8 @@ function send(c) sent[#sent + 1] = c end
 function cecho(s) LOG = (LOG or "") .. s end
 local function ok(cond, what) assert(cond, what); print("OK  " .. what) end
 
-dofile("packages/HighStakes/src/HighStakes.lua")
+dofile("packages/Casino/src/Core.lua")
+dofile("packages/Casino/src/HighStakes.lua")
 local C = hs.parseCards
 
 -- Hand ranking ------------------------------------------------------------------

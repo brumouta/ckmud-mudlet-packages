@@ -20,7 +20,8 @@ end
 local function ok(cond, what) assert(cond, what); print("OK  " .. what) end
 local function took() local s = table.concat(sent, " | "); sent = {}; return s end
 
-dofile("packages/VideoPoker/src/VideoPoker.lua")
+dofile("packages/Casino/src/Core.lua")
+dofile("packages/Casino/src/VideoPoker.lua")
 
 -- The game: lines go through the same triggers as package.json
 local PAYROW = { "Royal Flush", "Straight Flush", "Four of a Kind", "Full House", "Flush", "Straight",

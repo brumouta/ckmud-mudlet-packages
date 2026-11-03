@@ -1,0 +1,448 @@
+{
+  "name": "Casino",
+  "version": "1.0.0",
+  "title": "Lucky Monkey Casino",
+  "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp) and the High Stakes tournament (hs). Type `casino` for the list.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "Casino core",
+      "file": "src/Core.lua"
+    },
+    {
+      "name": "Blackjack",
+      "file": "src/Blackjack.lua"
+    },
+    {
+      "name": "VideoPoker",
+      "file": "src/VideoPoker.lua"
+    },
+    {
+      "name": "HighStakes",
+      "file": "src/HighStakes.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "casino",
+      "regex": "^casino(?:\\s+(\\w+))?$",
+      "script": "casino.command(matches[2] ~= \"\" and matches[2] or nil)"
+    },
+    {
+      "name": "cjoin",
+      "regex": "^cjoin$",
+      "script": "casino.join()"
+    },
+    {
+      "name": "bj",
+      "regex": "^bj(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nbj.command(arg(matches[2]), arg(matches[3]))"
+    },
+    {
+      "name": "vp",
+      "regex": "^vp(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nvp.command(arg(matches[2]), arg(matches[3]))"
+    },
+    {
+      "name": "hs",
+      "regex": "^hs(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nhs.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Casino",
+      "folder": true,
+      "children": [
+        {
+          "name": "Rewards",
+          "folder": true,
+          "children": [
+            {
+              "name": "casino Lucky Tails",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You earn ([\\d,]+) Lucky Tails"
+                }
+              ],
+              "script": "casino.luckyTails(matches[2])"
+            },
+            {
+              "name": "casino XP",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You have gained ([\\d,]+) (\\w+) XP"
+                }
+              ],
+              "script": "casino.xpGained(matches[2], matches[3])"
+            }
+          ]
+        },
+        {
+          "name": "Blackjack",
+          "folder": true,
+          "children": [
+            {
+              "name": "bj Table open",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "A Blackjack Dealer says, 'Use 'cjoin' to join the table.'"
+                }
+              ],
+              "script": "bj.invite()"
+            },
+            {
+              "name": "bj Welcome",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "Welcome to the table, (\\w+)! Place your bet"
+                }
+              ],
+              "script": "bj.welcomed(matches[2])"
+            },
+            {
+              "name": "bj Bet prompt",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Place your bet when you're ready."
+                },
+                {
+                  "type": "substring",
+                  "pattern": "Round complete. Place your bets for the next game!"
+                }
+              ],
+              "script": "bj.placeBet()"
+            },
+            {
+              "name": "bj Round end",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Let's see who won this round."
+                }
+              ],
+              "script": "bj.roundEnd()"
+            },
+            {
+              "name": "bj Won",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You won ([\\d,]+) zenni"
+                }
+              ],
+              "script": "bj.won(matches[2])"
+            },
+            {
+              "name": "bj Lost",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You lost ([\\d,]+) zenni"
+                }
+              ],
+              "script": "bj.lost(matches[2])"
+            },
+            {
+              "name": "bj Hand",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^(\\w+)'s hand\\s*:\\s*(.+)$"
+                }
+              ],
+              "script": "bj.showHand(matches[2], matches[3])"
+            },
+            {
+              "name": "bj Turn",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "It's (\\w+)'s turn\\."
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^Current player: (\\w+)"
+                }
+              ],
+              "script": "bj.turn(matches[2])"
+            },
+            {
+              "name": "bj Nudge",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "Well (\\w+), what would you like to do\\?"
+                }
+              ],
+              "script": "bj.nudge(matches[2])"
+            },
+            {
+              "name": "bj Options",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "BLACKJACK: Hit(chit)"
+                }
+              ],
+              "script": "bj.options(line)"
+            }
+          ]
+        },
+        {
+          "name": "VideoPoker",
+          "folder": true,
+          "children": [
+            {
+              "name": "vp Cards",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*(?:\\[[0-9TJQKA]{1,2}[CDHS]\\]\\s*){5}$"
+                }
+              ],
+              "script": "vp.onCards(line)"
+            },
+            {
+              "name": "vp Feed",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You feed ([\\d,]+) zenni into the machine for (\\d+) coins?"
+                }
+              ],
+              "script": "vp.onFeed(matches[2], matches[3])"
+            },
+            {
+              "name": "vp Credit",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*Credit: ([\\d,]+) zenni"
+                }
+              ],
+              "script": "vp.onCredit(matches[2], line)"
+            },
+            {
+              "name": "vp Hold prompt",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "Type 'vpoker hold <positions>' to keep cards"
+                }
+              ],
+              "script": "vp.onHoldPrompt()"
+            },
+            {
+              "name": "vp Result",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^(Royal Flush|Straight Flush|Four of a Kind|Full House|Flush|Straight|Three of a Kind|Two Pair|Jacks or Better)\\b.*?([\\d,]+) zenni"
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^No win\\. You lose your ([\\d,]+) zenni"
+                }
+              ],
+              "script": "if matches[3] then vp.onResult(matches[2], matches[3]) else vp.onResult(\"Nothing\", \"0\") end"
+            },
+            {
+              "name": "vp Paytable",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^o-{40,60}o$"
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^\\s+JACKS OR BETTER"
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^\\s+Hand\\s+1\\s+2\\s+3\\s+4\\s+5\\s*$"
+                },
+                {
+                  "type": "regex",
+                  "pattern": "^\\s+(?:Royal Flush|Straight Flush|Four of a Kind|Full House|Flush|Straight|Three of a Kind|Two Pair|Jacks or Better)\\s+[\\d,]+\\s+[\\d,]+\\s+[\\d,]+"
+                }
+              ],
+              "script": "vp.gag()"
+            }
+          ]
+        },
+        {
+          "name": "HighStakes",
+          "folder": true,
+          "children": [
+            {
+              "name": "hs New hand",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "The High Stakes Dealer pitches two cards to each player."
+                }
+              ],
+              "script": "hs.newHand()"
+            },
+            {
+              "name": "hs Hand start",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "Hand (\\d+), blinds ([\\d,]+) and ([\\d,]+)\\."
+                }
+              ],
+              "script": "hs.onHandStart(matches[2], matches[3], matches[4])"
+            },
+            {
+              "name": "hs Your cards",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*Your cards: ((?:\\[[0-9TJQKA]{1,2}[CDHS]\\]\\s*){2})"
+                }
+              ],
+              "script": "hs.onHole(matches[2])"
+            },
+            {
+              "name": "hs Street",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer says, 'The (flop|turn|river): (.+)'"
+                }
+              ],
+              "script": "hs.onStreet(matches[2], matches[3])"
+            },
+            {
+              "name": "hs Table",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*High Stakes Tournament\\s+Level"
+                }
+              ],
+              "script": "hs.onTableStart(line)"
+            },
+            {
+              "name": "hs Board",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*Board: (.+)$"
+                }
+              ],
+              "script": "hs.onBoard(matches[2])"
+            },
+            {
+              "name": "hs Seat",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s+(\\w+)\\s+stack ([\\d,]+)"
+                }
+              ],
+              "script": "hs.onSeat(matches[2], matches[3])"
+            },
+            {
+              "name": "hs Limits",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\s*Players left: \\d+"
+                }
+              ],
+              "script": "hs.onEarly(line)"
+            },
+            {
+              "name": "hs Limits off",
+              "patterns": [
+                {
+                  "type": "substring",
+                  "pattern": "The early limits are off."
+                }
+              ],
+              "script": "hs.onEarly(line)"
+            },
+            {
+              "name": "hs Action on",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer says, 'Action is on (\\w+)\\.'"
+                }
+              ],
+              "script": "hs.onActionOn(matches[2])"
+            },
+            {
+              "name": "hs Play",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer (?:says|exclaims), '(\\w+) (folds|checks|calls|bets|raises)(.*)$"
+                }
+              ],
+              "script": "hs.onPlay(matches[2], matches[3], matches[4])"
+            },
+            {
+              "name": "hs Show",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer says, '(\\w+) shows (.+)'"
+                }
+              ],
+              "script": "hs.onShow(matches[2], matches[3])"
+            },
+            {
+              "name": "hs Pot won",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer says, '(?:Everyone folds\\. )?(\\w+) (?:wins|takes) the pot of ([\\d,]+)"
+                }
+              ],
+              "script": "hs.onPotWon(matches[2], matches[3])"
+            },
+            {
+              "name": "hs Your turn",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^Your turn: (.+)$"
+                }
+              ],
+              "script": "hs.onYourTurn(matches[2])"
+            },
+            {
+              "name": "hs Tourney turn",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^TOURNEY: Your turn\\. (.+)$"
+                }
+              ],
+              "script": "hs.onTourneyTurn(matches[2])"
+            },
+            {
+              "name": "hs Ten seconds",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer says, '(\\w+), ten seconds\\.'"
+                }
+              ],
+              "script": "hs.onTenSeconds(matches[2])"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

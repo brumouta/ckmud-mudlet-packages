@@ -22,9 +22,7 @@ local function newStats()
 end
 BJ.stats   = BJ.stats or newStats()
 
-local function info(color, msg)
-  cecho("\n<" .. color .. ">[bj] " .. msg .. "\n")
-end
+local info = casino.logger("bj")
 
 local function later(fn) tempTimer(BJ.delay, fn) end
 
@@ -93,16 +91,15 @@ function BJ.invite()
   if not BJ.active then info("cyan", "Table open - type cjoin to start the bot") end
 end
 
--- `cjoin` alias: only arms the bot when the dealer has offered a seat
+-- You typed `cjoin` (the casino's alias sends it): only arms the bot when the dealer offered a seat
 function BJ.join()
   BJ.joining = BJ.invited
-  send("cjoin", false)
 end
 
 function BJ.welcomed(name)
   if not BJ.joining then return end
-  local me = rawget(_G, "MSDP") and MSDP.Player.name   -- from the shared MSDP package
-  if me and me ~= "" and name:lower() ~= me:lower() then return end  -- someone else joined
+  local me = casino.me()
+  if me and name:lower() ~= me:lower() then return end  -- someone else joined
   BJ.me, BJ.active, BJ.joining, BJ.invited = name, true, false, false
   info("green", "Joined as " .. name .. ", bot ON (bj stop to quit)")
 end
@@ -164,13 +161,7 @@ function BJ.options(text)
 end
 
 -- ---------------------------------------------------------------- results
-local function num(text) return tonumber((text:gsub(",", ""))) or 0 end
-
-local function fmt(n)
-  local str = tostring(math.floor(math.abs(n)))
-  str = str:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
-  return (n < 0 and "-" or "") .. str
-end
+local num, fmt = casino.num, casino.fmt
 BJ.fmt = fmt
 
 -- "Let's see who won this round."
@@ -249,7 +240,7 @@ function BJ.command(cmd, arg)
   elseif cmd == "status" then
     BJ.status()
   elseif cmd == "start" then
-    BJ.me = BJ.me or (rawget(_G, "MSDP") and MSDP.Player.name)
+    BJ.me = BJ.me or casino.me()
     if not BJ.me then return info("yellow", "Don't know your name yet - join with cjoin instead") end
     BJ.active = true
     info("green", "Bot ON as " .. BJ.me)
@@ -268,3 +259,16 @@ function BJ.command(cmd, arg)
     info("yellow", "Unknown command '" .. tostring(cmd) .. "'. Type bj help")
   end
 end
+
+casino.register{
+  key = "bj", title = "Blackjack", command = "bj",
+  active = function() return BJ.active end,
+  stop = BJ.stop,
+  join = BJ.join,
+  luckyTails = BJ.luckyTails,
+  xp = function(n) BJ.xpGained(n) end,
+  status = function()
+    local s = BJ.stats
+    return string.format("%d rounds, %d won, %d lost, net %s", s.rounds, s.wins, s.losses, casino.signed(s.zenniWon - s.zenniLost))
+  end,
+}

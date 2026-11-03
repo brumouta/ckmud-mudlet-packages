@@ -13,7 +13,8 @@ local function expect(want)
   print("OK  " .. (want == "" and "(nothing)" or want))
 end
 
-dofile("packages/Blackjack/src/Blackjack.lua")
+dofile("packages/Casino/src/Core.lua")
+dofile("packages/Casino/src/Blackjack.lua")
 
 -- Cards and totals ------------------------------------------------------------
 assert(table.concat(bj.parseCards("[ A] [ 4] (15)"), ",") == "A,4")
@@ -44,9 +45,9 @@ end
 print("OK  strategy (" .. #cases .. " cases)")
 
 -- Joining ---------------------------------------------------------------------
-bj.join(); bj.welcomed("Vorrac"); assert(not bj.active)     -- cjoin without an offered seat: bot stays off
+casino.join(); bj.welcomed("Vorrac"); assert(not bj.active)     -- cjoin without an offered seat: bot stays off
 expect("cjoin")
-bj.invite(); bj.join(); bj.welcomed("Vorricer"); assert(bj.active and bj.me == "Vorricer")
+bj.invite(); casino.join(); bj.welcomed("Vorricer"); assert(bj.active and bj.me == "Vorricer")
 expect("cjoin")
 bj.welcomed("Bob"); assert(bj.me == "Vorricer")               -- someone else joining doesn't take over
 MSDP = { Player = { name = "Vorricer" } }                       -- with the MSDP package's name...
