@@ -8,6 +8,7 @@ Every casino game in one package. Each game keeps its own command; `casino` list
 |---|---|---|
 | Blackjack | `bj help` | Plays blackjack with basic strategy after you `cjoin` |
 | Video Poker | `vp help` | Plays the Jacks or Better machine with the standard strategy |
+| Slots | `sl help` | Pulls a slot machine with pull, stop loss, target and keep limits |
 | High Stakes | `hs help` | Advice on your turn in the Friday hold'em tournament; `hs go` sends it |
 
 ## Casino commands
@@ -121,6 +122,27 @@ This machine pays **Full House 8, Flush 5** ("8/5" Jacks or Better). The bot use
 - `vp status` shows the zenni paid in and out, and the true net from the `Credit:` line.
 - If nothing answers for 10 seconds, it sends `vpoker` to see where things stand.
 
+
+## Slots
+
+Command: `sl`
+
+Pulls the lever every few seconds (`pull <lines>`) and keeps score from your zenni (MSDP). Stand at a slot machine and `sl start`.
+
+| Command | Effect |
+|---|---|
+| `sl start` / `sl stop` | Start or stop pulling |
+| `sl status` | Pulls, winning pulls, zenni net, best win, Lucky Tails, STR XP |
+| `sl lines <1-5>` | Lines per pull (default 5). Each line is another bet: 1 middle row, 2 + top, 3 all rows, 4 + one diagonal, 5 both diagonals |
+| `sl delay <secs>` | Seconds between pulls (default 4) |
+| `sl pulls <n>` | Stop after n pulls (0 = no limit) |
+| `sl stoploss <zenni>` / `sl target <zenni>` | Stop once down / up this much, e.g. `500m`, `2b` (0 = off) |
+| `sl keep <zenni>` | Stop before your zenni drops below this (0 = off) |
+| `sl reset` | Clear the stats |
+
+The zenni change between two pulls is the last pull's result, so wins and the limits need **MSDP**. Without it the bot warns and only `sl pulls` can stop it. It also stops by itself when three pulls in a row don't change your zenni: you're not at a machine, or can't pay for the pull.
+
+Slots have no strategy, and the house wins on average. Lucky Tails and STR XP only come from **[VIP]** machines (Lucky Tails when a line is a full match).
 
 ## High Stakes
 

@@ -9,7 +9,7 @@ local function ok(cond, what) assert(cond, what); print("OK  " .. what) end
 local function took() local s = table.concat(sent, " | "); sent = {}; return s end
 
 local function loadAll()
-  for _, f in ipairs({ "Core", "Blackjack", "VideoPoker", "HighStakes" }) do
+  for _, f in ipairs({ "Core", "Blackjack", "VideoPoker", "HighStakes", "Slots" }) do
     dofile("packages/Casino/src/" .. f .. ".lua")
   end
 end
@@ -25,9 +25,9 @@ ok(vp.parseAmount == casino.parseAmount and bj.fmt == casino.fmt, "games share t
 -- Registry ----------------------------------------------------------------------
 local keys = {}
 for _, g in ipairs(casino.games) do keys[#keys + 1] = g.key end
-ok(table.concat(keys, ",") == "bj,vp,hs", "every game registers, in load order")
+ok(table.concat(keys, ",") == "bj,vp,hs,sl", "every game registers, in load order")
 loadAll()
-ok(#casino.games == 3, "reloading the scripts doesn't register a game twice")
+ok(#casino.games == 4, "reloading the scripts doesn't register a game twice")
 
 -- cjoin -------------------------------------------------------------------------
 casino.join()
@@ -56,9 +56,9 @@ ok(LOG:find("bj", 1, true) and LOG:find("Video Poker", 1, true) and LOG:find("Hi
 LOG = ""; casino.command("status")
 ok(LOG:find("Blackjack", 1, true) and LOG:find("0 rounds", 1, true) and LOG:find("Lucky Tails: 1,100", 1, true),
   "casino status shows each game and the totals")
-bj.active, vp.active = true, true
+bj.active, vp.active, sl.active = true, true, true
 LOG = ""; casino.command("stop")
-ok(not bj.active and not vp.active, "casino stop stops every bot")
+ok(not bj.active and not vp.active and not sl.active, "casino stop stops every bot")
 casino.command("reset")
 ok(casino.stats.tails == 0 and next(casino.stats.xp) == nil, "casino reset clears the totals")
 LOG = ""; casino.command("nonsense")

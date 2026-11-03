@@ -1,8 +1,8 @@
 {
   "name": "Casino",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Lucky Monkey Casino",
-  "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp) and the High Stakes tournament (hs). Type `casino` for the list.",
+  "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp), slots (sl) and the High Stakes tournament (hs). Type `casino` for the list.",
   "author": "Bruno Mouta",
   "scripts": [
     {
@@ -20,6 +20,10 @@
     {
       "name": "HighStakes",
       "file": "src/HighStakes.lua"
+    },
+    {
+      "name": "Slots",
+      "file": "src/Slots.lua"
     }
   ],
   "aliases": [
@@ -47,6 +51,11 @@
       "name": "hs",
       "regex": "^hs(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
       "script": "local function arg(s) if s and s ~= \"\" then return s end end\nhs.command(arg(matches[2]), arg(matches[3]))"
+    },
+    {
+      "name": "sl",
+      "regex": "^sl(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nsl.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [
