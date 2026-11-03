@@ -267,11 +267,37 @@ end
 out = {}
 assert(quizLine("Tetsukai says, 'Welcome, traveller.'") == nil and #out == 0, "unknown line answered")
 
-out = {}; ys.portal(true)
-assert(#out == 22, "yamoportal sends " .. #out)
-local searches = 0
-for _, c in ipairs(out) do if c == "search;;get fragment" then searches = searches + 1 end end
-assert(searches == 7 and out[1] == "search;;get fragment" and out[22] == "search;;get fragment")
+-- the walk, as the alias would play out: fire the search timers, optionally find a fragment
+local function walkPortal(foundInRoom)
+  out = {}; temps, timers = {}, {}
+  ys.portal(true)
+  local room = 1
+  for _ = 1, 20 do
+    if room == foundInRoom then
+      for _, t in pairs(temps) do if t.t == ys.FRAGMENT_FOUND then t.f() end end
+    end
+    local ids = {}; for k in pairs(timers) do ids[#ids + 1] = k end
+    if #ids == 0 then break end
+    local t = timers[ids[1]]; timers[ids[1]] = nil; t.f(); room = room + 1
+  end
+  assert(next(timers) == nil and next(temps) == nil, "yamoportal left triggers/timers behind")
+  local searches = 0
+  for _, c in ipairs(out) do if c == "search;;get fragment" then searches = searches + 1 end end
+  local moves = {}
+  for _, c in ipairs(out) do if c ~= "search;;get fragment" then moves[#moves + 1] = c end end
+  return searches, table.concat(moves, ","), out
+end
+local MOVES = "press switch,press switch,enter portal,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal"
+local n, moves, all = walkPortal(nil)
+assert(n == 7 and moves == MOVES and #all == 22, "no fragment: " .. n .. " searches")
+assert(all[1] == "search;;get fragment" and all[22] == "search;;get fragment")
+n, moves = walkPortal(1)
+assert(n == 1 and moves == MOVES, "found in room 1: " .. n .. " searches")
+n, moves, all = walkPortal(3)
+assert(n == 3 and moves == MOVES, "found in room 3: " .. n .. " searches")
+assert(all[#all] == "enter portal")
+n, moves = walkPortal(7)
+assert(n == 7 and moves == MOVES, "found in the last room")
 out = {}; ys.portal(false)
 assert(#out == 15, "yamoportal no sends " .. #out)
 for _, c in ipairs(out) do assert(c ~= "search;;get fragment") end

@@ -363,21 +363,59 @@ function YS.quiz(question)
 end
 
 -- ---------------------------------------------------------------- `yamoportal` alias
--- The switch-and-portal walk, searching for a fragment in every room unless `yamoportal no`.
-YS.PORTAL_WALK = {
-  "search;;get fragment", "press switch", "press switch", "enter portal",
-  "search;;get fragment", "press switch", "enter portal",
-  "search;;get fragment", "press switch", "enter portal",
-  "search;;get fragment", "press switch", "press switch", "enter portal",
-  "search;;get fragment", "press switch", "enter portal",
-  "search;;get fragment", "press switch", "press switch", "enter portal",
-  "search;;get fragment",
+-- The switch-and-portal walk. Each room is searched for a fragment until one turns up;
+-- after that the rest of the walk is sent straight away. `yamoportal no` skips the searches.
+YS.FRAGMENT_FOUND = "After searching around you managed to uncover a fragment of memories!"
+YS.SEARCH = "search;;get fragment"
+YS.portalDelay = YS.portalDelay or 2   -- seconds to wait for the search result in each room
+YS.PORTAL_ROOMS = {                    -- what to send after searching each room
+  { "press switch", "press switch", "enter portal" },
+  { "press switch", "enter portal" },
+  { "press switch", "enter portal" },
+  { "press switch", "press switch", "enter portal" },
+  { "press switch", "enter portal" },
+  { "press switch", "press switch", "enter portal" },
+  {},
 }
 
-function YS.portal(search)
-  for _, cmd in ipairs(YS.PORTAL_WALK) do
-    if search or cmd ~= "search;;get fragment" then send(cmd) end
+local walk = {}
+
+function YS.portalStop()
+  if walk.trig then killTrigger(walk.trig) end
+  if walk.timer then killTimer(walk.timer) end
+  walk = {}
+end
+
+local function sendRooms(from)
+  for i = from, #YS.PORTAL_ROOMS do
+    for _, cmd in ipairs(YS.PORTAL_ROOMS[i]) do send(cmd) end
   end
+end
+
+local function searchRoom(i)
+  if i > #YS.PORTAL_ROOMS then
+    YS.portalStop()
+    return info("yellow", "yamoportal: no fragment found")
+  end
+  walk.room = i
+  send(YS.SEARCH)
+  walk.timer = tempTimer(YS.portalDelay, function()
+    walk.timer = nil
+    for _, cmd in ipairs(YS.PORTAL_ROOMS[i]) do send(cmd) end
+    searchRoom(i + 1)
+  end)
+end
+
+function YS.portal(search)
+  YS.portalStop()
+  if not search then return sendRooms(1) end
+  walk.trig = tempTrigger(YS.FRAGMENT_FOUND, function()
+    local room = walk.room
+    YS.portalStop()
+    info("green", "yamoportal: fragment found - skipping the other searches")
+    sendRooms(room)
+  end)
+  searchRoom(1)
 end
 
 -- ---------------------------------------------------------------- `ys` alias
@@ -389,7 +427,7 @@ YS.HELP = {
   { "ys status",        "Show the current stage" },
   { "ys stage <name>",  "Set the stage: " .. table.concat(YS.STAGES, ", ") },
   { "ys attack <cmd>",  "Attack used on the bosses (default ss)" },
-  { "yamoportal [no]",  "Walk the switches and portals, searching for fragments (no: skip the searches)" },
+  { "yamoportal [no]",  "Walk the switches and portals, searching until a fragment turns up (no: skip the searches)" },
 }
 
 function YS.help()
@@ -427,6 +465,7 @@ function YS.command(cmd, arg)
   elseif cmd == "stop" then
     YS.active, YS.leg = false, nil
     YS.cancel()
+    YS.portalStop()
     info("yellow", "Helper OFF")
   elseif cmd == "stage" and arg and validStage(arg) then
     YS.setStage(arg)
