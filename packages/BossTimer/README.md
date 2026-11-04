@@ -24,8 +24,8 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 | `boss window on\|off` | A small movable window with a live countdown |
 | `boss warn <times>` | When to warn before the respawn: minutes (`boss warn 10,5,1`), decimals (`boss warn 1,0.5`) or seconds (`boss warn 2,30s`). Default 5,1 |
 | `boss flash on\|off` | Flash Mudlet's taskbar icon at the respawn |
+| `boss help` | List the commands |
 
 `boss window`, `boss warn` and `boss flash` are saved (in `BossTimer.lua` in your profile folder) and come back when Mudlet restarts; the window reopens where you left it.
-| `boss help` | List the commands |
 
 Doesn't need any other package.
