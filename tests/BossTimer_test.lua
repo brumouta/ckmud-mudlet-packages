@@ -17,9 +17,15 @@ function registerNamedTimer(_, name, _, fn) named[name] = fn end
 local isConnected = true
 function getConnectionInfo() return "ckmud", 4000, isConnected end
 function deleteNamedTimer(_, name) named[name] = nil end
+-- Saved settings live in memory
+local files = {}
+function getMudletHomeDir() return "/home" end
+function io.exists(f) return files[f] ~= nil end
+function table.save(f, t) local c = {}; for k, v in pairs(t) do c[k] = v end; files[f] = c end
+function table.load(f, into) for k, v in pairs(files[f]) do into[k] = v end end
 -- Geyser stand-ins for the window
-local labelText
-Adjustable = { Container = { new = function(_, o) return { Inside = {}, show = function() end, hide = function() end } end } }
+local labelText, windows = nil, 0
+Adjustable = { Container = { new = function(_, o) windows = windows + 1; return { Inside = {}, show = function() end, hide = function() end } end } }
 Geyser = { Label = { new = function() return { setStyleSheet = function() end, echo = function(_, t) labelText = t end } end } }
 
 dofile("packages/BossTimer/src/BossTimer.lua")
@@ -129,6 +135,7 @@ named.window = nil
 BossTimer.command("window", "off")
 ok(named.window == nil, "window off stops its refresh timer")
 
+
 -- A copyover restarts the server: the old countdown is dropped and a fresh uptime is read
 feed(UPTIME:format("40 min 0 sec"))
 LOG, sent, deleted = "", {}, 0
@@ -169,4 +176,18 @@ wait(1200); ok(LOG:find("Bosses respawn in 1m 00s!") and LOG:find("Bosses respaw
                "the estimate's warnings fire anyway (being a little off is fine)")
 
 BossTimer.command("flash", "off"); BossTimer.command("help"); BossTimer.command("bogus")
+-- Settings survive a restart: a fresh Mudlet session loads the package with nothing in memory
+local function restart()
+  BossTimer, named, windows, labelText = nil, {}, 0, nil
+  for k in pairs(timers) do timers[k] = nil end            -- a restart drops every timer
+  dofile("packages/BossTimer/src/BossTimer.lua")
+end
+BossTimer.command("window", "on"); BossTimer.command("flash", "off"); BossTimer.command("warn", "10,2")
+restart()
+ok(BossTimer.windowOn and windows == 1 and named.window, "window on is back after a restart, refreshing")
+ok(BossTimer.flash == false and table.concat(BossTimer.warnings, ",") == "600,120", "flash and warnings are back too")
+BossTimer.command("window", "off")
+restart()
+ok(not BossTimer.windowOn and windows == 0, "window off stays off after a restart")
+
 print("\nBossTimer: ALL PASSED")

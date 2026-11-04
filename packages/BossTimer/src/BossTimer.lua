@@ -185,6 +185,23 @@ function BT.refresh()
   BT.label:echo("<center><font size=5 color='" .. color .. "'>" .. text .. "</font></center>")
 end
 
+-- ---------------------------------------------------------------- saved settings
+-- The window, the warnings and the flash survive restarts (the window's place and size
+-- are saved by Mudlet's Adjustable.Container itself).
+BT.SAVE_FILE = getMudletHomeDir() .. "/BossTimer.lua"
+
+function BT.save()
+  pcall(table.save, BT.SAVE_FILE, { window = BT.windowOn or false, warnings = BT.warnings, flash = BT.flash })
+end
+
+function BT.load()
+  local saved = {}
+  if not (io.exists(BT.SAVE_FILE) and pcall(table.load, BT.SAVE_FILE, saved)) then return end
+  if type(saved.warnings) == "table" then BT.warnings = saved.warnings end
+  if saved.flash ~= nil then BT.flash = saved.flash end
+  if saved.window then BT.showWindow(true) end
+end
+
 -- ---------------------------------------------------------------- `boss` alias
 BT.HELP = {
   { "boss",                 "Time left until the bosses respawn" },
@@ -228,13 +245,16 @@ function BT.command(cmd, arg)
     BT.check(false)
   elseif cmd == "window" and (arg == "on" or arg == "off") then
     BT.showWindow(arg == "on")
+    BT.save()
   elseif cmd == "flash" and (arg == "on" or arg == "off") then
     BT.flash = arg == "on"
+    BT.save()
     info("white", "Flash " .. arg)
   elseif cmd == "warn" and arg then
     local list, bad = BT.parseWarnings(arg)
     if bad then return info("yellow", "Didn't understand '" .. bad .. "'. Use minutes like 5,1,0.5 or seconds like 30s") end
     BT.warnings = list
+    BT.save()
     local shown = {}
     for _, w in ipairs(list) do shown[#shown + 1] = BT.fmt(w) end
     info("white", #list > 0 and ("Warning at " .. table.concat(shown, ", ") .. " before the respawn")
@@ -245,3 +265,5 @@ function BT.command(cmd, arg)
     info("yellow", "Unknown command. Type boss help")
   end
 end
+
+BT.load()
