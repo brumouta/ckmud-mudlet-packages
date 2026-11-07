@@ -10,7 +10,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [KaiokenTrain](packages/KaiokenTrain) | `kaioken train`, `KT` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
 | [Score](packages/Score) | `score`, `SC` | A richer `score`: real numbers, damage at every boost level, item tier progress, training hints. |
 | [DataLords2](packages/DataLords2) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain (not Data Lords 1 or 3) when *you* requested it, pausing for rivals (yours or your group's). |
-| [Casino](packages/Casino) | `casino` | The **Lucky Monkey Casino**: plays **blackjack** (`bj`), **video poker** (`vp`) and **slots** (`sl`), and advises in the Friday **High Stakes** hold'em tournament (`hs`). Tracks zenni, Lucky Tails and XP. |
+| [Casino](packages/Casino) | `casino` | The **Lucky Monkey Casino**: plays **blackjack** (`bj`), **video poker** (`vp`) and **slots** (`slot`), and advises in the Friday **High Stakes** hold'em tournament (`hs`). Tracks zenni, Lucky Tails and XP. |
 | [FriezaQuest](packages/FriezaQuest) | `fq help` | Automates the **Frieza's Spaceship** quest from Appule to the Bridge Access Card. |
 | [BossTimer](packages/BossTimer) | `boss help` | Counts down to the **boss respawn** (from `uptime`), warns 5 and 1 minutes before, and re-checks by itself after each respawn. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |

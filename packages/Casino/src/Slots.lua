@@ -1,4 +1,4 @@
--- Slot machine bot. Type `sl help` for commands.
+-- Slot machine bot. Type `slot help` for commands.
 --
 -- Pulls, waits for the machine's "You won / You lost" line, and pulls again. It reads
 -- the reels and scores them with the machine's payout rules, so each win says which
@@ -26,7 +26,7 @@ end
 SL.stats = SL.stats or newStats()
 local timers = {}
 
-local info = casino.logger("sl")
+local info = casino.logger("slot")
 local num, fmt, signed = casino.num, casino.fmt, casino.signed
 
 -- ---------------------------------------------------------------- reels and payouts
@@ -184,9 +184,9 @@ function SL.gag()
 end
 
 function SL.start()
-  if SL.active then return info("yellow", "Already pulling (sl stop to stop)") end
+  if SL.active then return info("yellow", "Already pulling (slot stop to stop)") end
   SL.active, SL.stopping, SL.retries = true, false, 0
-  info("green", string.format("Pulling %d line%s. sl stop finishes the pull and stops.", SL.lines, SL.lines == 1 and "" or "s"))
+  info("green", string.format("Pulling %d line%s. slot stop finishes the pull and stops.", SL.lines, SL.lines == 1 and "" or "s"))
   SL.pull()
 end
 
@@ -202,20 +202,20 @@ end
 function SL.luckyTails(n) SL.stats.tails = SL.stats.tails + n end
 function SL.xpGained(n) SL.stats.xp = SL.stats.xp + n end
 
--- ---------------------------------------------------------------- `sl` alias
+-- ---------------------------------------------------------------- `slot` alias
 SL.HELP = {
-  { "sl start",            "Start pulling (stand at a slot machine first)" },
-  { "sl stop",             "Finish the pull on the machine, then stop" },
-  { "sl status",           "Pulls, zenni in and out, winning pulls, full lines, Lucky Tails, STR XP" },
-  { "sl lines <1-5>",      "Lines per pull (default 5); each line costs another bet" },
-  { "sl pulls <n>",        "Stop after n pulls (0 = no limit)" },
-  { "sl stoploss <zenni>", "Stop once down this much, e.g. 500m or 2b (0 = off)" },
-  { "sl target <zenni>",   "Stop once up this much (0 = off)" },
-  { "sl keep <zenni>",     "Stop before your zenni drops below this (needs MSDP; 0 = off)" },
-  { "sl delay <secs>",     "Seconds between a result and the next pull (default 1)" },
-  { "sl quiet on|off",     "One line per pull instead of the reels (default on)" },
-  { "sl reset",            "Clear the stats" },
-  { "sl help",             "Show this list" },
+  { "slot start",           "Start pulling (stand at a slot machine first)" },
+  { "slot stop",            "Finish the pull on the machine, then stop" },
+  { "slot status",          "Pulls, zenni in and out, winning pulls, full lines, Lucky Tails, STR XP" },
+  { "slot lines <1-5>",     "Lines per pull (default 5); each line costs another bet" },
+  { "slot pulls <n>",       "Stop after n pulls (0 = no limit)" },
+  { "slot stoploss <zenni>", "Stop once down this much, e.g. 500m or 2b (0 = off)" },
+  { "slot target <zenni>",  "Stop once up this much (0 = off)" },
+  { "slot keep <zenni>",    "Stop before your zenni drops below this (needs MSDP; 0 = off)" },
+  { "slot delay <secs>",    "Seconds between a result and the next pull (default 1)" },
+  { "slot quiet on|off",    "One line per pull instead of the reels (default on)" },
+  { "slot reset",           "Clear the stats" },
+  { "slot help",            "Show this list" },
 }
 
 function SL.help()
@@ -231,7 +231,7 @@ end
 
 function SL.status()
   local s, n = SL.stats, net()
-  cecho("\n<cyan>sl status:\n")
+  cecho("\n<cyan>slot status:\n")
   cecho("  <white>Bot:     " .. (SL.active and "<green>ON" or "<red>OFF") .. "<white>   lines " .. SL.lines ..
     "   delay " .. SL.delay .. "s   quiet " .. (SL.quiet and "on" or "off") .. "\n")
   cecho("  <white>Limits:  pulls " .. limit(SL.maxPulls) .. "   stop loss " .. limit(SL.stopLoss, true) ..
@@ -279,12 +279,12 @@ function SL.command(cmd, arg)
     SL.stats = newStats()
     info("white", "Stats cleared")
   else
-    info("yellow", "Unknown command '" .. tostring(cmd) .. (arg and (" " .. arg) or "") .. "'. Type sl help")
+    info("yellow", "Unknown command '" .. tostring(cmd) .. (arg and (" " .. arg) or "") .. "'. Type slot help")
   end
 end
 
 casino.register{
-  key = "sl", title = "Slots", command = "sl",
+  key = "sl", title = "Slots", command = "slot",
   active = function() return SL.active end,
   stop = function() SL.stop() end,
   luckyTails = SL.luckyTails,
