@@ -12,7 +12,7 @@ HS.sims    = HS.sims or 3000      -- simulated deals per decision (more = steadi
 
 -- ---------------------------------------------------------------- state
 local function newHand()
-  return { hole = nil, board = {}, folded = {}, allin = {}, turn = nil }
+  return { hole = nil, board = {}, folded = {}, allin = {}, turn = nil, aggr = {}, called = {} }
 end
 HS.hand    = HS.hand or newHand()
 HS.seats   = HS.seats or {}       -- players with chips, from the table display
@@ -176,6 +176,47 @@ function HS.handName(cards)
   return HS.CATEGORY[cat]
 end
 
+-- What the hole cards add to the board, 0..5. A "Two Pair" made of a board pair and a
+-- pocket pair below it is really one weak pair, and that's what matters for betting.
+--   5 straight or better with your cards   4 two pair with both cards, a set, trips
+--   3 top pair or an overpair               2 a weaker pair, or playing the board
+--   1 a flush or straight draw              0 nothing
+HS.STRENGTH = { [0] = "nothing", "a draw", "a weak pair", "top pair", "two pair or better", "a strong hand" }
+function HS.strength(hole, board)
+  local all = { hole[1], hole[2] }
+  for _, c in ipairs(board) do all[#all + 1] = c end
+  local cat = math.floor(HS.eval(all) / B5)
+  local boardCat = #board >= 2 and math.floor(HS.eval(board) / B5) or 0
+  if cat >= 4 then return boardCat >= cat and 2 or 5 end
+  local cnt, top = {}, 0
+  for _, c in ipairs(board) do cnt[c.r] = (cnt[c.r] or 0) + 1; top = math.max(top, c.r) end
+  local a, b = hole[1].r, hole[2].r
+  if a == b then
+    if cnt[a] then return 4 end
+    return a > top and 3 or 2
+  end
+  if cnt[a] and cnt[b] then return 4 end
+  if (cnt[a] or 0) >= 2 or (cnt[b] or 0) >= 2 then return 4 end
+  if cnt[a] or cnt[b] then return (cnt[a] and a or b) == top and 3 or 2 end
+  if #board < 5 then
+    local suits, ranks = {}, {}
+    for _, c in ipairs(all) do suits[c.s] = (suits[c.s] or 0) + 1; ranks[c.r] = true end
+    if (suits[hole[1].s] or 0) >= 4 or (suits[hole[2].s] or 0) >= 4 then return 1 end
+    ranks[1] = ranks[14]
+    for lo = 1, 10 do                              -- four of five in a row, using a hole card
+      local have, mine = 0, false
+      for r = lo, lo + 4 do
+        if ranks[r] then
+          have = have + 1
+          if r == a or r == b or (r == 1 and (a == 14 or b == 14)) then mine = true end
+        end
+      end
+      if have >= 4 and mine then return 1 end
+    end
+  end
+  return 0
+end
+
 -- ---------------------------------------------------------------- starting hands
 -- "AKs", "AKo", "TT"
 local CLASSCH = { [10] = "T", [11] = "J", [12] = "Q", [13] = "K", [14] = "A" }
@@ -232,9 +273,11 @@ local function rangeThreshold(pct)
 end
 
 -- ---------------------------------------------------------------- equity
--- Chance to win (ties count as a share) against nOpp opponents holding hands from the
--- top `range` (0..1) of starting hands, by dealing out `sims` random finishes.
-function HS.equity(hole, board, nOpp, range, sims)
+-- Chance to win (ties count as a share) against nOpp opponents, by dealing out `sims`
+-- random finishes. Each opponent holds a hand from the top `range` (0..1) of starting
+-- hands that, with the board so far, is at least mins[o] on the HS.strength scale: a
+-- player who bet and re-raised has something, not any two cards.
+function HS.equity(hole, board, nOpp, range, sims, mins)
   local dead = {}
   for _, c in ipairs(hole) do dead[c.r * 4 + c.s] = true end
   for _, c in ipairs(board) do dead[c.r * 4 + c.s] = true end
@@ -245,33 +288,45 @@ function HS.equity(hole, board, nOpp, range, sims)
     end
   end
   local thr = rangeThreshold(range or 1)
-  local mine, theirs = { hole[1], hole[2] }, {}
-  for o = 1, nOpp do theirs[o] = {} end
-  local nb = #board
-  local won, avail = 0, 0
-
-  local function take(i)
-    local c = deck[i]
-    deck[i], deck[avail] = deck[avail], c
-    avail = avail - 1
-    return c
-  end
-
-  for _ = 1, sims do
-    avail = #deck
-    for o = 1, nOpp do
-      local a, b
-      for _ = 1, 40 do                             -- a hand from their range (or anything, eventually)
-        local i = math.random(avail)
-        local j = math.random(avail - 1)
-        if j >= i then j = j + 1 end
-        if chen(deck[i], deck[j]) >= thr then
-          if i < j then i, j = j, i end
-          a = take(i); b = take(j)
-          break
+  local lists = {}
+  local function combos(min)
+    if lists[min] then return lists[min] end
+    local out, any = {}, {}
+    for i = 1, #deck do
+      for j = i + 1, #deck do
+        local x, y = deck[i], deck[j]
+        if chen(x, y) >= thr then
+          any[#any + 1] = { x, y }
+          if min == 0 or HS.strength({ x, y }, board) >= min then out[#out + 1] = { x, y } end
         end
       end
-      if not a then a = take(math.random(avail)); b = take(math.random(avail)) end
+    end
+    lists[min] = #out > 0 and out or any            -- nothing fits: their range was a guess anyway
+    return lists[min]
+  end
+  local ranges = {}
+  for o = 1, nOpp do ranges[o] = combos(#board >= 3 and mins and mins[o] or 0) end
+
+  local used, mine, theirs = {}, { hole[1], hole[2] }, {}
+  for o = 1, nOpp do theirs[o] = {} end
+  local nb, won = #board, 0
+  local function free(c, sim) return used[c.r * 4 + c.s] ~= sim end
+  local function use(c, sim) used[c.r * 4 + c.s] = sim; return c end
+  local function draw(sim)
+    while true do
+      local c = deck[math.random(#deck)]
+      if free(c, sim) then return use(c, sim) end
+    end
+  end
+
+  for sim = 1, sims do
+    for o = 1, nOpp do
+      local list, a, b = ranges[o], nil, nil
+      for _ = 1, 30 do
+        local h = list[math.random(#list)]
+        if free(h[1], sim) and free(h[2], sim) then a, b = use(h[1], sim), use(h[2], sim); break end
+      end
+      if not a then a, b = draw(sim), draw(sim) end
       theirs[o][1], theirs[o][2] = a, b
     end
     for i = 1, nb do
@@ -279,16 +334,16 @@ function HS.equity(hole, board, nOpp, range, sims)
       for o = 1, nOpp do theirs[o][i + 2] = board[i] end
     end
     for i = nb + 1, 5 do
-      local c = take(math.random(avail))
+      local c = draw(sim)
       mine[i + 2] = c
       for o = 1, nOpp do theirs[o][i + 2] = c end
     end
     local best, ties = HS.eval(mine, 7), 1
     local lost = false
     for o = 1, nOpp do
-      local s = HS.eval(theirs[o], 7)
-      if s > best then lost = true; break end
-      if s == best then ties = ties + 1 end
+      local sc = HS.eval(theirs[o], 7)
+      if sc > best then lost = true; break end
+      if sc == best then ties = ties + 1 end
     end
     if not lost then won = won + 1 / ties end
   end
@@ -335,6 +390,13 @@ local function potOdds(ctx)
   return callAmt / (pot + callAmt)
 end
 
+-- Worth half a bet from the small blind when nobody raised: suited cards, an ace or
+-- king, or connected cards that make straights
+function HS.completes(hole)
+  local hi, lo = math.max(hole[1].r, hole[2].r), math.min(hole[1].r, hole[2].r)
+  return hole[1].s == hole[2].s or hi >= 13 or (hi - lo <= 2 and lo >= 5)
+end
+
 function HS.decide(ctx)
   local bigBet = ctx.facingAllin or ctx.toCall >= ctx.stack / 3
   local need = potOdds(ctx)
@@ -358,34 +420,41 @@ function HS.decide(ctx)
       -- short stack: all in or fold
       if tier <= 4 or ctx.hole[1].r == 14 or ctx.hole[2].r == 14 then
         return { command = ctx.toCall > 0 and "craise all" or "cbet all", action = "all in",
-                 why = class .. " with " .. math.floor(m) .. " big blinds: push" }
+                 why = class .. " with " .. math.floor(m) .. " big blinds: push", need = need }
       end
-      return passive(ctx, class .. " with " .. math.floor(m) .. " big blinds: fold and wait")
+      return passive(ctx, class .. " with " .. math.floor(m) .. " big blinds: fold and wait", nil, need)
     end
     if ctx.toCall <= ctx.bb then
       -- nobody raised yet
-      if tier <= 3 then return aggressive(ctx, 3 * ctx.bb, tname .. " " .. class .. ": raise") end
-      if tier == 4 and ctx.toCall <= ctx.bb / 2 then return call(ctx, class .. ": cheap to see a flop") end
-      return passive(ctx, tname .. " " .. class)
+      if tier <= 3 then return aggressive(ctx, 3 * ctx.bb, tname .. " " .. class .. ": raise", nil, need) end
+      if ctx.toCall > 0 and ctx.toCall <= ctx.bb / 2 and (tier == 4 or HS.completes(ctx.hole)) then
+        return call(ctx, class .. ": half a bet to see a flop", nil, need)   -- small blind, limped pot
+      end
+      return passive(ctx, tname .. " " .. class, nil, need)
     end
     -- facing a raise
-    if tier == 1 then return aggressive(ctx, 3 * ctx.toCall, "premium " .. class .. ": re-raise") end
-    if tier <= 3 and ctx.toCall <= ctx.stack * 0.1 then return call(ctx, tname .. " " .. class .. " vs a raise") end
-    return passive(ctx, tname .. " " .. class .. " vs a raise")
+    if tier == 1 then return aggressive(ctx, 3 * ctx.toCall, "premium " .. class .. ": re-raise", nil, need) end
+    if tier <= 3 and ctx.toCall <= ctx.stack * 0.1 then return call(ctx, tname .. " " .. class .. " vs a raise", nil, need) end
+    return passive(ctx, tname .. " " .. class .. " vs a raise", nil, need)
   end
 
-  -- after the flop: their range narrows with the size of the bet they made
+  -- after the flop: their range narrows with the size of the bet they made (starting
+  -- hands), and with how they've bet this hand (what they must have with this board)
   local range = 0.7
   if ctx.toCall > 0 then
     local ratio = ctx.toCall / math.max(1, ctx.pot - ctx.toCall)
     range = (ctx.facingAllin or ratio >= 1) and 0.25 or ratio >= 0.5 and 0.4 or 0.6
   end
-  local eq = HS.equity(ctx.hole, ctx.board, ctx.nOpp, range, ctx.sims)
-  local made = HS.handName((function()
-    local all = { ctx.hole[1], ctx.hole[2] }
-    for _, c in ipairs(ctx.board) do all[#all + 1] = c end
-    return all
-  end)())
+  local mins = ctx.oppMins or {}
+  local eq = HS.equity(ctx.hole, ctx.board, ctx.nOpp, range, ctx.sims, mins)
+  local all = { ctx.hole[1], ctx.hole[2] }
+  for _, c in ipairs(ctx.board) do all[#all + 1] = c end
+  local made, mine = HS.handName(all), HS.strength(ctx.hole, ctx.board)
+  if mine <= 2 and made ~= "Pair" and made ~= "High Card" then
+    made = made .. " (mostly the board: " .. HS.STRENGTH[mine] .. ")"
+  end
+  local theyPush = 0                                 -- the most an opponent still in has bet and raised
+  for _, m in ipairs(mins) do theyPush = math.max(theyPush, m) end
   local strong = math.max(0.6, math.min(0.8, 2 / (ctx.nOpp + 1)))
   if ctx.toCall == 0 then
     local valueBet = math.max(0.45, math.min(0.65, 1.6 / (ctx.nOpp + 1)))
@@ -394,10 +463,14 @@ function HS.decide(ctx)
     end
     return passive(ctx, made .. ": check", eq, need)
   end
-  if eq >= strong and not bigBet then
+  -- They've bet and raised into you: only two pair or better raises back. One pair calls
+  -- if the odds are there - a raise war with one pair is how a stack goes.
+  local capped = theyPush >= 3 and mine < 4
+  if eq >= strong and not bigBet and not capped then
     return aggressive(ctx, 3 * ctx.toCall, made .. ": well ahead, raise", eq, need)
   end
-  if eq >= need + 0.03 then return call(ctx, made .. ": the pot odds say call", eq, need) end
+  local why = capped and (made .. ": they keep raising, call only") or (made .. ": the pot odds say call")
+  if eq >= need + 0.03 then return call(ctx, why, eq, need) end
   return passive(ctx, made .. ": not enough to call", eq, need)
 end
 
@@ -443,9 +516,15 @@ function HS.onBoard(text)
   local cards = HS.parseCards(text)
   if #cards >= 3 then HS.hand.board = cards end
 end
-function HS.onSeat(name, stack)
+-- "  Snuggles     stack 9,900,000,000  bet 100,000,000 (button)", " >Carolina ... to act",
+-- "  Vorrac       stack 0              all in", "  Vorrac  stack 10,150,000,000 folded"
+function HS.onSeat(name, stack, rest)
+  rest = rest or ""
   HS.stacks[name] = num(stack)
-  if num(stack) > 0 then seat(name) end
+  local allin = rest:find("all in", 1, true) ~= nil
+  if num(stack) > 0 or allin then seat(name) end
+  if rest:find("folded", 1, true) then HS.hand.folded[name] = true end
+  if allin then HS.hand.allin[name] = true end
 end
 function HS.onEarly(text) HS.early = text:find("Early limits", 1, true) ~= nil end
 
@@ -460,6 +539,10 @@ function HS.onPlay(name, verb, rest)
   if name == "Everyone" then return end            -- "Everyone folds. Cicada takes the pot..."
   seat(name)
   if verb == "folds" then HS.hand.folded[name] = true end
+  if #HS.hand.board >= 3 then                      -- after the flop: how they're playing this board
+    if verb == "bets" or verb == "raises" then HS.hand.aggr[name] = (HS.hand.aggr[name] or 0) + 1 end
+    if verb == "calls" then HS.hand.called[name] = true end
+  end
   if rest and rest:find("all in", 1, true) then
     HS.hand.allin[name] = true
     local p = HS.players[name] or { allins = 0, shows = {} }
@@ -485,13 +568,48 @@ function HS.onPotWon(name, amount)
   end
 end
 
--- Opponents still in the hand
-function HS.opponents()
-  local n = 0
-  for _, name in ipairs(HS.seats) do
-    if not isMe(name) and not HS.hand.folded[name] then n = n + 1 end
+-- "Vorrac is out of time and checks." / "... and folds."
+function HS.onTimeout(name, verb) HS.onPlay(name, verb) end
+
+-- "[CKMud Info]: The Friday High Stakes tournament begins with 3 players: Snuggles, Carolina and Vorrac."
+function HS.onTourneyStart(list)
+  HS.seats, HS.hand, HS.out, HS.place = {}, newHand(), false, nil
+  for name in list:gsub(" and ", ", "):gmatch("[^,%s]+") do seat(name) end
+  info("cyan", "Tournament with " .. #HS.seats .. " players: " .. table.concat(HS.seats, ", "))
+end
+
+-- "[CKMud Info]: Vorrac is knocked out of the High Stakes tournament in 3rd place."
+function HS.onKnockout(name, place)
+  for i, n in ipairs(HS.seats) do if n == name then table.remove(HS.seats, i); break end end
+  if isMe(name) then
+    HS.out, HS.place, HS.hand.turn = true, place, nil
+    HS.stats.finishes = (HS.stats.finishes or "") .. (HS.stats.finishes and ", " or "") .. place
+    info("yellow", "Out in " .. place .. " place")
   end
-  return math.max(1, n)
+end
+
+-- "You're out of chips and out of the High Stakes tournament."
+function HS.onOut() HS.out, HS.hand.turn = true, nil end
+
+-- Opponents still in the hand
+function HS.opponentNames()
+  local out = {}
+  for _, name in ipairs(HS.seats) do
+    if not isMe(name) and not HS.hand.folded[name] then out[#out + 1] = name end
+  end
+  return out
+end
+function HS.opponents() return math.max(1, #HS.opponentNames()) end
+
+-- What a player must hold, on the HS.strength scale, given how they've bet after the flop:
+-- called a bet = a pair or a draw, bet or raised once = the same, twice = top pair, three
+-- times or more (bet, bet, raise...) = two pair or better
+function HS.minStrength(name)
+  local a = HS.hand.aggr[name] or 0
+  if a >= 3 then return 4 end
+  if a == 2 then return 3 end
+  if a == 1 or HS.hand.called[name] then return 1 end
+  return 0
 end
 
 -- "Your turn: 75,000,000 to call. ccall, craise to 150,000,000, or cfold."
@@ -530,6 +648,8 @@ function HS.advise()
     bb = HS.bb, nOpp = HS.opponents(), minRaise = t.minRaise, betOffer = t.betOffer,
     canCheck = t.canCheck, noLimit = t.noLimit, facingAllin = facingAllin, sims = HS.sims,
   }
+  ctx.oppMins = {}
+  for i, name in ipairs(HS.opponentNames()) do ctx.oppMins[i] = HS.minStrength(name) end
   t.advice = HS.decide(ctx)
   HS.show()
 end
@@ -598,6 +718,7 @@ function HS.command(cmd, arg)
     cecho(string.format("\n<cyan>hs status:\n  <white>Advice %s   hands %d   pots won %d (%s)   big blind %s%s\n",
       HS.enabled and "on" or "off", HS.stats.hands, HS.stats.won, brief(HS.stats.wonZenni), brief(HS.bb),
       HS.early and "   early limits" or ""))
+    if HS.stats.finishes then cecho("  <white>Finished: " .. HS.stats.finishes .. "\n") end
   elseif cmd == "reset" then
     HS.stats, HS.players = newStats(), {}
     info("white", "Stats and player notes cleared")

@@ -172,7 +172,7 @@ Tip: bind a key to `hs go` (Toolbox → Keys) so playing the suggestion is one k
 | `hs on` / `hs off` | Show advice on your turns (default on) |
 | `hs sims <n>` | Simulated deals per decision (default 3000) |
 | `hs players` | How often each player went all in, and their last shown hands |
-| `hs status` | Hands seen and pots won |
+| `hs status` | Hands seen, pots won, and where you finished |
 | `hs reset` | Clear stats and player notes |
 
 ### How it decides
@@ -184,14 +184,20 @@ Tip: bind a key to `hs go` (Toolbox → Keys) so playing the suggestion is one k
 - playable: small pairs, suited aces, KTs, QTs, T9s, 98s, KJo, ATo, QJo
 
 Then:
-- **Nobody has raised yet:** raise to 3 big blinds with good hands or better. Fold the rest, or complete the small blind with a playable hand.
+- **Nobody has raised yet:** raise to 3 big blinds with good hands or better. From the small blind, complete for half a bet with a playable hand, any suited hand, any ace or king, or connected cards (8-7, 9-7...). Fold the rest.
 - **Facing a raise:** re-raise premium hands to 3×. Call with strong or good hands if it costs at most 10% of your stack. Otherwise fold.
 - **Facing an all in, or a bet over a third of your stack:** assume they hold a top-25% hand. Call only when your chance against that range beats the pot odds, or with a premium hand. With a premium hand it moves all in if it can.
 - **Your stack is 10 big blinds or less:** all in with any tier hand or any ace, otherwise fold.
 
-**After the flop**, it works out your chance to win by dealing out a few thousand random finishes against the players still in. Their likely hands narrow with the size of their bet: 70% of hands when nobody bet, 60% for a small bet, 40% for half the pot, and the top 25% for a pot-sized bet or an all in.
+**After the flop**, it works out your chance to win by dealing out a few thousand random finishes against the players still in. Each player only gets hands that fit what they've done:
+- **Their starting hand** narrows with the size of their bet: 70% of hands when nobody bet, 60% for a small bet, 40% for half the pot, and the top 25% for a pot-sized bet or an all in.
+- **What they must have on this board** depends on how often they've bet or raised since the flop. Once: at least a pair or a draw (calling a bet counts the same). Twice: top pair or better. Three times or more: two pair or better. A player who bets every street and keeps re-raising almost never has just one pair.
+
+Then:
 - **Checked to you:** bet two-thirds of the pot when you're comfortably ahead, otherwise check.
 - **Facing a bet:** raise when well ahead, call when your chance beats the pot odds (with a 3-point margin), otherwise fold.
+- **They keep raising** (three bets or raises from one player): only two pair or better raises back. One pair calls if the odds are there, otherwise folds. That's the min-raise war that cost a whole stack with top pair (hand 19 of the November 7 log).
+- **Your hand is named for what your cards add**: 66 on a Q-Q board shows as `Two Pair (mostly the board: a weak pair)`, and a river where the board plays shows `(mostly the board: nothing)`.
 - Any raise bigger than half your stack becomes `craise all`.
 
 During the **early limits** (hands 1–10) the amounts are fixed, so it sends a plain `craise`, or `cbet` with the offered amount.
@@ -200,4 +206,5 @@ During the **early limits** (hands 1–10) the amounts are fixed, so it sends a 
 
 - It plays the odds against typical ranges, not against these particular players. Cicada shoving any two cards is exactly where your own judgement beats it, and `hs players` shows their all-in history to help.
 - It needs to see your cards. If you load it mid-hand, type `ctable`.
+- It reads the tournament start, the dealer's "out of time" moves (so `hs go` doesn't send a stale move), main and side pots, and your knockout place (`hs status`).
 - Check CKMud's rules on scripts at player tables. This package only advises; every move is sent by you.

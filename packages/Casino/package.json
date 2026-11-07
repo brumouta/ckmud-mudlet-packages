@@ -1,6 +1,6 @@
 {
   "name": "Casino",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "title": "Lucky Monkey Casino",
   "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp), slots (sl) and the High Stakes tournament (hs). Type `casino` for the list.",
   "author": "Bruno Mouta",
@@ -418,10 +418,10 @@
               "patterns": [
                 {
                   "type": "regex",
-                  "pattern": "^\\s+(\\w+)\\s+stack ([\\d,]+)"
+                  "pattern": "^\\s+>?(\\w+)\\s+stack ([\\d,]+)(.*)$"
                 }
               ],
-              "script": "hs.onSeat(matches[2], matches[3])"
+              "script": "hs.onSeat(matches[2], matches[3], matches[4])"
             },
             {
               "name": "hs Limits",
@@ -478,7 +478,7 @@
               "patterns": [
                 {
                   "type": "regex",
-                  "pattern": "^The High Stakes Dealer says, '(?:Everyone folds\\. )?(\\w+) (?:wins|takes) the pot of ([\\d,]+)"
+                  "pattern": "^The High Stakes Dealer says, '(?:Everyone folds\\. )?(\\w+) (?:wins|takes) (?:the|the main|a side) pot of ([\\d,]+)"
                 }
               ],
               "script": "hs.onPotWon(matches[2], matches[3])"
@@ -512,6 +512,46 @@
                 }
               ],
               "script": "hs.onTenSeconds(matches[2])"
+            },
+            {
+              "name": "hs Out of time",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^The High Stakes Dealer says, '(\\w+) is out of time and (folds|checks)\\."
+                }
+              ],
+              "script": "hs.onTimeout(matches[2], matches[3])"
+            },
+            {
+              "name": "hs Tournament start",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\[CKMud Info\\]: The Friday High Stakes tournament begins with \\d+ players: (.+)\\.$"
+                }
+              ],
+              "script": "hs.onTourneyStart(matches[2])"
+            },
+            {
+              "name": "hs Knocked out",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^\\[CKMud Info\\]: (\\w+) is knocked out of the High Stakes tournament in (\\w+) place\\."
+                }
+              ],
+              "script": "hs.onKnockout(matches[2], matches[3])"
+            },
+            {
+              "name": "hs Out",
+              "patterns": [
+                {
+                  "type": "regex",
+                  "pattern": "^You're out of chips and out of the High Stakes tournament\\."
+                }
+              ],
+              "script": "hs.onOut()"
             }
           ]
         }
