@@ -1,0 +1,349 @@
+## intro
+Tonight is the Thanksgiving party.
+Difficulty: Normal.
+The case: Mrs. Briefs' stand-in lies smashed in the Menagerie Yard. Whoever did it thought it was the real one.
+Inspect the remains in the Menagerie Yard for the damage and the stand-in's last telemetry.
+You have one hour before the case closes itself. Leaving the house or quitting closes it too.
+Twelve people were at the party: Yamcha, Master Roshi, Launch, Mai, Mr. Satan, Tien, Gohan, Piccolo, Krillin, Android 18, Dende and Mr. Popo.
+The house clock chimed four times that night, at nine, ten, eleven and midnight. Every story is told by those times.
+The feast filled the Dining Room. Somewhere there is a seating chart.
+## notebook-start
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: Mrs. Briefs' stand-in smashed, Menagerie Yard
+Status: OPEN, 60 minutes left
+Difficulty: Normal
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [ ] 1. When: inspect remains at the scene for the stand-in's last telemetry.
+ [ ] 2. Weapon: inspect remains at the scene for the injury; the damage names the two weapons it could be.
+ [ ] 3. Physical evidence: 0 of 6 found. search the rooms; analyze <number> one in the lab (1 left). notebook guests shows who looks like what.
+      Not searched yet (22), go there and search:
+      Grand Hall, Portrait Gallery, Garden Hall,
+      Cloakroom, Dining Room, Family Lounge,
+      Kitchen, Study, Covered Walkway,
+      Robot Workshop, Service Yard,
+      Menagerie Yard, East Corridor,
+      West Corridor, Robot Charging Bay,
+      Conservatory, Hangar, Pond and Aviary,
+      Dinosaur Paddock, Infirmary,
+      Master Bedroom, Attic.
+ [ ] 4. Statements: 1 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw.
+      Not questioned yet: Yamcha, Master Roshi, Launch, Mai, Mr. Satan, Tien, Gohan, Piccolo, Android 18, Dende, Mr. Popo.
+ [ ] 5. Secrets: Yamcha (confront them)
+ [ ] 6. Sealed rooms: the lab locked (study portraits in the Portrait Gallery, then press <code> in the Lab Vestibule); the Gravity Chamber at 300G (shut gravity in the Robot Charging Bay); Bulma's Suite voice locked (a lying guest's secret has the phrase; say it on the Upper Landing East).
+ [ ] 7. Accuse: 1 of 4 findings. Anywhere in the house: accuse <suspect> with <weapon> at <time>, then accuse yes. accuse alone shows the words.
+Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## guests
+========================================
+THE GUESTS, AS ANYONE CAN SEE THEM
+========================================
+  Guest          Ki      Tread Hair
+  Yamcha         flaring light dark
+  Master Roshi   flaring light not dark
+  Launch         quiet   heavy not dark
+  Mai            quiet   light dark
+  Mr. Satan      quiet   heavy dark
+  Tien           flaring heavy not dark
+  Gohan          flaring heavy dark
+  Piccolo        flaring heavy not dark
+Cake: only Mrs. Briefs' stand-in knows. plate <suspect> in the Kitchen, once per case.
+Witnesses: Krillin, Android 18, Dende and Mr. Popo. Never the culprit, never liars.
+Match these against your evidence: notebook lists what you found.
+========================================
+## first-statements
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Grand Hall, 3 say so:
+   Master Roshi, with Dende.
+   Launch, with Master Roshi and Dende.
+   Dende, with Master Roshi.
+Dining Room, 2 say so:
+   Gohan, with Piccolo.
+   Piccolo, with Gohan.
+Family Lounge, 2 say so:
+   Yamcha, with Launch and Krillin.
+   Krillin, with Yamcha and Launch.
+Study, 3 say so:
+   Mai, with Mr. Satan and Android 18.
+   Mr. Satan, with Mai and Android 18.
+   Android 18, with Mai and Mr. Satan.
+Robot Workshop, 2 say so:
+   Tien, with Mr. Popo.
+   Mr. Popo, with Tien.
+========================================
+========================================
+STATEMENTS ABOUT TEN
+========================================
+Grand Hall, 2 say so:
+   Android 18, with Dende.
+   Dende, with Android 18.
+Dining Room, 2 say so:
+   Master Roshi, with Gohan.
+   Gohan, with Master Roshi.
+Kitchen, 2 say so:
+   Mr. Satan, with Mr. Popo.
+   Mr. Popo, with Mr. Satan.
+Robot Workshop, 2 say so:
+   Mai, with Tien.
+   Tien, with Mai.
+Menagerie Yard, 2 say so:
+   Piccolo, with Krillin.
+   Krillin, with Piccolo.
+Conservatory, 2 say so:
+   Yamcha, with Launch.
+   Launch, with Yamcha.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN
+========================================
+Grand Hall, 3 say so:
+   Tien, with Gohan and Dende.
+   Gohan, with Tien and Dende.
+   Dende, with Tien and Gohan.
+Dining Room, 2 say so:
+   Mai, with Android 18.
+   Android 18, with Mai.
+Family Lounge, 3 say so:
+   Master Roshi, with Launch and Piccolo.
+   Launch, with Master Roshi and Piccolo.
+   Piccolo, with Master Roshi and Launch.
+Study, 2 say so:
+   Yamcha, with Mr. Popo.
+   Mr. Popo, with Yamcha.
+Robot Workshop, 2 say so:
+   Mr. Satan, with Krillin.
+   Krillin, with Mr. Satan.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT
+========================================
+Grand Hall, 2 say so:
+   Mai, with Tien and Gohan.
+   Gohan, with Mai and Tien.
+Dining Room, 5 say so:
+   Yamcha, with Launch, Mr. Satan and Mr. Popo.
+   Launch, with Mr. Satan and Mr. Popo.
+   Mr. Satan, with Launch and Mr. Popo.
+   Tien, with Launch, Mr. Satan and Mr. Popo.
+   Mr. Popo, with Launch and Mr. Satan.
+Family Lounge, 2 say so:
+   Krillin, with Dende.
+   Dende, with Krillin.
+Conservatory, 3 say so:
+   Master Roshi, with Piccolo and Android 18.
+   Piccolo, with Master Roshi and Android 18.
+   Android 18, with Master Roshi and Piccolo.
+========================================
+## chart
+The seating chart, every place card signed at the feast:
+At nine: Gohan, Piccolo.
+At ten: Master Roshi, Gohan.
+At eleven: Mai, Android 18.
+At midnight: Launch, Mr. Satan, Mr. Popo.
+## logs
+Garter's door log for nine, heads per room:
+  Grand Hall       2
+  Dining Room      2
+  Family Lounge    sensor broken
+  Kitchen          0
+  Study            3
+  Robot Workshop   2
+  Menagerie Yard   sensor broken
+  Conservatory     0
+Garter's door log for ten, heads per room:
+  Grand Hall       2
+  Dining Room      2
+  Family Lounge    sensor broken
+  Kitchen          2
+  Study            0
+  Robot Workshop   2
+  Menagerie Yard   sensor broken
+  Conservatory     2
+Garter's door log for eleven, heads per room:
+  Grand Hall       3
+  Dining Room      2
+  Family Lounge    sensor broken
+  Kitchen          0
+  Study            2
+  Robot Workshop   2
+  Menagerie Yard   sensor broken
+  Conservatory     0
+Garter's door log for midnight, heads per room:
+  Grand Hall       3
+  Dining Room      3
+  Family Lounge    sensor broken
+  Kitchen          0
+  Study            0
+  Robot Workshop   0
+  Menagerie Yard   sensor broken
+  Conservatory     3
+## found
+Tucked out of sight: a love letter Yamcha wrote to himself. That belongs to Yamcha, in the Grand Hall: confront yamcha there.
+(Finding 1 of the 4 Jaco needs.)
+You find fresh scorch marks, the wallpaper still smoking. (evidence #4)
+You find a patch of air so still your ki sense slides off it. (evidence #3)
+You find a fork with a smear of birthday frosting. (evidence #2)
+Tucked out of sight: a love poem to Launch, signed with a little third eye. That belongs to Tien, in the Robot Workshop: confront tien there.
+Tucked out of sight: a wanted poster of Launch, blonde. That belongs to Launch, in the Robot Workshop: confront launch there.
+Scribbled on the back: "never trust a stand in".
+You find a trail of light, quick footprints through spilled punch. (evidence #1)
+You find an untouched slice of cake, the fork never lifted. (evidence #5)
+You find a single dark hair caught on a splinter. (evidence #6)
+## inspect
+The damage tells its own story: no mark at all; whoever it was simply went out like a light. Either the Lights Out Capsule from the Study, or the Dream Ray from the Family Lounge. Both are missing.
+The stand-in's last telemetry: its heart capsule stopped between eleven and midnight.
+## portraits
+Four portraits hang here, left to right:
+  Mrs. Briefs, capsule 6
+  Trunks, capsule 4
+  Dr. Briefs, capsule 2
+  Bulma, capsule 3
+A brass plaque below: Right to left, as they hang.
+The lab keypad takes the four numbers in that order, as one code: press 1234 style, in the Lab Vestibule.
+## confront
+Tien sees a love poem to Launch, signed with a little third eye and goes pale. "I was going to give it to her. One day."
+"So that is where I really was:"
+At midnight: "In the Grand Hall, with Mai and Gohan. Meditating. It was loud."
+Launch sees a wanted poster of Launch, blonde and goes pale. "I sneezed, all right? I went to look at the poster."
+"So that is where I really was:"
+At nine: "In the Family Lounge, with Yamcha and Krillin. Oh my, I think that is right!"
+Yamcha sees a love letter Yamcha wrote to himself and goes pale. "I was reading it to the mirror. It is a good letter."
+"So that is where I really was:"
+At midnight: "In the Family Lounge, with Krillin and Dende. I was not hiding. Much."
+## final-statements
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Grand Hall, 2 say so:
+   Master Roshi, with Dende.
+   Dende, with Master Roshi.
+Dining Room, 2 say so:
+   Gohan, with Piccolo.
+   Piccolo, with Gohan.
+Family Lounge, 3 say so:
+   Yamcha, with Launch and Krillin.
+   Launch, with Yamcha and Krillin (first said the Grand Hall).
+   Krillin, with Yamcha and Launch.
+Study, 3 say so:
+   Mai, with Mr. Satan and Android 18.
+   Mr. Satan, with Mai and Android 18.
+   Android 18, with Mai and Mr. Satan.
+Robot Workshop, 2 say so:
+   Tien, with Mr. Popo.
+   Mr. Popo, with Tien.
+========================================
+========================================
+STATEMENTS ABOUT TEN
+========================================
+Grand Hall, 2 say so:
+   Android 18, with Dende.
+   Dende, with Android 18.
+Dining Room, 2 say so:
+   Master Roshi, with Gohan.
+   Gohan, with Master Roshi.
+Kitchen, 2 say so:
+   Mr. Satan, with Mr. Popo.
+   Mr. Popo, with Mr. Satan.
+Robot Workshop, 2 say so:
+   Mai, with Tien.
+   Tien, with Mai.
+Menagerie Yard, 2 say so:
+   Piccolo, with Krillin.
+   Krillin, with Piccolo.
+Conservatory, 2 say so:
+   Yamcha, with Launch.
+   Launch, with Yamcha.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN (in the window)
+========================================
+Grand Hall, 3 say so:
+   Tien, with Gohan and Dende.
+   Gohan, with Tien and Dende.
+   Dende, with Tien and Gohan.
+Dining Room, 2 say so:
+   Mai, with Android 18.
+   Android 18, with Mai.
+Family Lounge, 3 say so:
+   Master Roshi, with Launch and Piccolo.
+   Launch, with Master Roshi and Piccolo.
+   Piccolo, with Master Roshi and Launch.
+Study, 2 say so:
+   Yamcha, with Mr. Popo.
+   Mr. Popo, with Yamcha.
+Robot Workshop, 2 say so:
+   Mr. Satan, with Krillin.
+   Krillin, with Mr. Satan.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT (in the window)
+========================================
+Grand Hall, 3 say so:
+   Mai, with Tien and Gohan.
+   Tien, with Mai and Gohan (first said the Dining Room).
+   Gohan, with Mai and Tien.
+Dining Room, 3 say so:
+   Launch, with Mr. Satan and Mr. Popo.
+   Mr. Satan, with Launch and Mr. Popo.
+   Mr. Popo, with Launch and Mr. Satan.
+Family Lounge, 3 say so:
+   Yamcha, with Krillin and Dende (first said the Dining Room).
+   Krillin, with Dende.
+   Dende, with Krillin.
+Conservatory, 3 say so:
+   Master Roshi, with Piccolo and Android 18.
+   Piccolo, with Master Roshi and Android 18.
+   Android 18, with Master Roshi and Piccolo.
+========================================
+## notebook-end
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: Mrs. Briefs' stand-in smashed, Menagerie Yard
+Status: OPEN, 23 minutes left
+Difficulty: Normal
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [x] 1. When: between eleven and midnight; the party log says all was quiet at eleven.
+ [x] 2. Weapon: the Dream Ray, kept in the Family Lounge. notebook <time> shows who claimed the Family Lounge before the attack.
+ [x] 3. Physical evidence: 6 of 6 found. search the rooms; analyze <number> one in the lab (1 left). notebook guests shows who looks like what.
+      #1 [unverified] a trail of light, quick footprints through spilled punch
+      #2 [unverified] a fork with a smear of birthday frosting
+      #3 [unverified] a patch of air so still your ki sense slides off it
+      #4 [unverified] fresh scorch marks, the wallpaper still smoking
+      #5 [unverified] an untouched slice of cake, the fork never lifted
+      #6 [unverified] a single dark hair caught on a splinter
+      Searched: every open room.
+ [x] 4. Statements: 12 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw.
+ [x] 5. Secrets: Yamcha (confronted); Launch (confronted), a phrase on the back; Tien (confronted)
+ [x] 6. Sealed rooms: the lab open; the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 13 of 4 findings. Anywhere in the house: accuse <suspect> with <weapon> at <time>, then accuse yes. accuse alone shows the words.
+Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## accuse
+Accuse in one line, anywhere in the house:
+  accuse <suspect> with <weapon> at <time>
+Suspects: yamcha roshi launch mai
+          satan tien gohan piccolo
+Weapons:  gauntlet jacket lights
+          dream hornets taser
+Times:    nine ten eleven midnight (or 9 to 12)
+Example:  accuse roshi with dream at ten
+Short:    accuse roshi dream 10
+Then accuse yes makes the arrest.
+Findings: 6 of 4. Three wrong and the case goes cold.
+## analyze
+The analyzer hums over evidence #3: PLANTED. Someone put that there to frame somebody.
+## plate
+Mrs. Briefs' stand-in checks her list: Yamcha refused the cake.
+## closed
+Jaco runs in and snaps the cuffs on with great ceremony.
+Case closed: Perfect, no wrong accusations.

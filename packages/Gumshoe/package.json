@@ -1,0 +1,38 @@
+{
+  "name": "Gumshoe",
+  "version": "1.0.0",
+  "title": "Gumshoe: Briefs mansion cases",
+  "description": "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it. Type `gum help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "Gumshoe",
+      "file": "src/Gumshoe.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "gum",
+      "regex": "^gum(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\ngum.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Gumshoe",
+      "folder": true,
+      "children": [
+        {
+          "name": "gum Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "gum.line(line)"
+        }
+      ]
+    }
+  ]
+}

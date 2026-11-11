@@ -1,0 +1,327 @@
+-- gum: the case read from a real Thanksgiving case, the map and keypad, and a whole case run
+-- in a fake house that answers like the game did. Run from the repo root: lua tests/Gumshoe_test.lua
+local now, timers, nextId, sent = 0, {}, 0, {}
+function cecho(s) LOG = (LOG or "") .. s end
+function tempTimer(d, f) nextId = nextId + 1; timers[nextId] = { at = now + d, f = f }; return nextId end
+function killTimer(i) timers[i] = nil end
+local respond
+function send(c) sent[#sent + 1] = c; if respond then respond(c) end end
+local function ok(cond, what) assert(cond, what); print("OK  " .. what) end
+local function wait(secs)
+  local target = now + secs
+  while true do
+    local best, id
+    for i, t in pairs(timers) do if t.at <= target and (not best or t.at < best.at) then best, id = t, i end end
+    if not best then break end
+    timers[id] = nil; now = best.at; best.f()
+  end
+  now = target
+end
+local function feed(lines) for _, l in ipairs(lines) do gum.line(l) end end
+
+-- The real lines, by section
+local S, cur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe.log") do
+  local name = l:match("^## (.+)$")
+  if name then cur = name; S[cur] = {} elseif cur then table.insert(S[cur], l) end
+end
+
+dofile("packages/Gumshoe/src/Gumshoe.lua")
+local G = gum
+
+-- The map ------------------------------------------------------------------------------
+local function dirs(p) local o = {} for _, s in ipairs(p) do o[#o + 1] = s.dir end return table.concat(o) end
+ok(dirs(G.path("Front Steps", "Attic")) == "nnnnnwwuu", "Front Steps to the Attic: up the west stairs")
+ok(dirs(G.path("Menagerie Yard", "Infirmary")) == "eeennneeun", "Menagerie Yard to the Infirmary: up the east stairs")
+ok(G.path("Garden Hall", "Underground Lab") == nil, "the lab is sealed until the keypad opens it")
+G.open.lab = true
+ok(dirs(G.path("Garden Hall", "Underground Lab")) == "nd", "...then it's north and down")
+G.newCase()
+for r, exits in pairs(G.EXITS) do
+  for _, e in ipairs(exits) do
+    local back = false
+    for _, b in ipairs(G.EXITS[e.to]) do if b.to == r then back = true end end
+    assert(back, r .. " -> " .. e.to .. " has no way back")
+  end
+end
+ok(true, "every exit has a way back")
+
+-- The keypad ----------------------------------------------------------------------------
+local P = { { name = "Mrs. Briefs", digit = "6" }, { name = "Trunks", digit = "4" }, { name = "Dr. Briefs", digit = "2" }, { name = "Bulma", digit = "3" } }
+ok(G.codeFromPortraits(P, "Right to left, as they hang.") == "3246", "right to left: 3246 (the code that opened the lab)")
+ok(G.codeFromPortraits(P, "Left to right, as they hang.") == "6423", "left to right: 6423")
+ok(G.codeFromPortraits(P, "Oldest to youngest.") == "2634", "oldest to youngest: Dr. Briefs, Mrs. Briefs, Bulma, Trunks")
+ok(G.codeFromPortraits(P, "Youngest to oldest.") == "4362", "youngest to oldest")
+
+-- Reading the real case -------------------------------------------------------------------
+feed(S.intro)
+ok(G.case.scene == "Menagerie Yard" and #G.guests == 12 and G.unquestioned["Mr. Popo"], "intro: scene, the twelve guests")
+feed(S["notebook-start"])
+ok(G.case.minutes == 60 and G.evTotal == 6 and G.analyses == 1, "notebook: time left, evidence count, one analysis")
+local n = 0 for _ in pairs(G.unsearched) do n = n + 1 end
+ok(n == 22 and G.unsearched["Dr. Briefs' Study"] and G.unsearched["Pond and Aviary"] and G.unsearched.Attic,
+  "notebook: the 22 rooms still to search, Study named as the room")
+ok(G.unquestioned["Android 18"] and not G.unquestioned.Krillin, "notebook: who's still to question")
+ok(G.open.lab == false and G.open.gravity == false and G.open.suite == false, "notebook: all three rooms sealed")
+ok(G.secrets.Yamcha and not G.secrets.Yamcha.confronted, "notebook: Yamcha's secret waiting")
+ok(#G.weaponsAll == 6 and G.weaponsAll[3] == "Lights Out Capsule", "notebook: the weapon list")
+feed(S.guests)
+ok(G.traits["Master Roshi"].hair == "not dark" and G.traits.Mai.ki == "quiet" and G.witnesses["Mr. Popo"] and G.witnesses["Android 18"],
+  "guests: looks and the four witnesses")
+local sus = G.suspects()
+ok(#sus == 8 and not G.witnesses[sus[1]], "eight suspects")
+feed(S["first-statements"]); feed(S.chart); feed(S.logs)
+ok(G.statements[12].Yamcha.room == "Dining Room" and #G.statements[12].Yamcha.with == 3, "statements: Yamcha's first midnight story")
+ok(G.chart[12]["Mr. Popo"] and G.chart[9].Gohan, "the seating chart")
+ok(G.log[12]["Dining Room"] == 3 and G.log[11]["Family Lounge"] == "broken", "the door log, broken sensors too")
+local rank, tag = G.alibi("Launch", 9)
+ok(tag == "LIED", "Launch at nine: Dende names only Roshi in the Grand Hall")
+rank, tag = G.alibi("Yamcha", 12)
+ok(tag == "LIED", "Yamcha at midnight: Popo and the chart leave him out of the Dining Room")
+rank, tag = G.alibi("Tien", 12)
+ok(tag == "LIED", "Tien at midnight too, before he confesses")
+rank, tag = G.alibi("Master Roshi", 12)
+ok(tag == "seen", "Roshi at midnight: Android 18 saw him")
+
+feed(S.found)
+ok(G.evFound == 6 and G.evidence[3].text:find("ki sense"), "the six pieces of evidence")
+ok(G.secrets.Tien.room == "Robot Workshop" and G.secrets.Launch.phrase == "never trust a stand in" and G.phrase == "never trust a stand in",
+  "secrets: where to confront, and the phrase on the back")
+feed(S.inspect)
+ok(G.window[11] and G.window[12] and not G.window[10] and #G.weaponCands == 2 and G.weaponCands[2].room == "Family Lounge",
+  "the remains: eleven to midnight, Lights Out Capsule or Dream Ray")
+feed(S.portraits)
+ok(G.code == "3246", "the portraits: lab code 3246")
+
+-- Before the confessions: midnight or eleven, two weapons
+local r = G.solve()
+ok(r.suspect == "Yamcha", "first read: Yamcha")
+feed(S.confront)
+ok(G.secrets.Tien.confronted and G.secrets.Launch.confronted and G.secrets.Yamcha.confronted, "the confessions mark each secret")
+feed(S["final-statements"]); feed(S["notebook-end"]); feed(S.accuse)
+ok(G.statements[9].Launch.first == "Grand Hall" and G.statements[12].Yamcha.room == "Family Lounge", "statements after the confessions")
+ok(G.weapon == "Dream Ray" and G.quiet[11], "notebook: the Dream Ray, and all quiet at eleven")
+ok(table.concat(G.akw.suspects, " ") == "yamcha roshi launch mai satan tien gohan piccolo" and #G.akw.weapons == 6,
+  "accuse: the words it takes")
+rank, tag = G.alibi("Tien", 12)
+ok(tag == "fits", "Tien's confession fits: Mai and Gohan, and three heads in the Grand Hall")
+rank, tag = G.alibi("Yamcha", 12)
+ok(tag == "LIED", "Yamcha's confession doesn't: Krillin and Dende never name him")
+r = G.solve()
+ok(r.suspect == "Yamcha" and r.time == 12 and r.weapon == "Dream Ray", "solve: Yamcha, Dream Ray, midnight")
+ok(r.line == "accuse yamcha with dream at midnight", "the accusation: " .. tostring(r.line))
+ok(r.analyze == 3, "the quiet-air clue is the one against Yamcha: analyze 3")
+ok(r.plate == "Yamcha", "the cake clues disagree: plate Yamcha")
+feed(S.analyze); feed(S.plate)
+G.weighEvidence()
+ok(G.evidence[3].state == "planted" and G.evidence[4].state == "ok", "#3 planted, so the scorch marks stand")
+r = G.solve()
+ok(G.traits.Yamcha.cake == "refused" and not r.plate and not r.analyze and r.sure, "after the lab and the plate: nothing left to check")
+ok(r.rows[1].matches == 3, "Yamcha matches three clues: light tread, flaring ki, dark hair")
+LOG = ""; G.report(r)
+ok(LOG:find("Solved: accuse yamcha with dream at midnight", 1, true), "report says it")
+sent = {}; G.command("accuse")
+ok(sent[1] == "accuse yamcha with dream at midnight", "gum accuse sends it")
+feed(S.closed)
+ok(LOG:find("Case closed: Perfect", 1, true), "case closed")
+
+-- A whole case in a fake house -------------------------------------------------------------
+-- Same guests, statements, log and evidence as the real case; gum run does everything.
+G.newCase(); G.room = nil; sent = {}; LOG = ""
+local H = {
+  room = "Front Steps", entered = 0, lab = false, gravity = false, suite = false, flashlight = false,
+  guests = { ["Entrance Hall"] = { "Mr. Popo" }, ["Sun Porch"] = { "Krillin" }, Cloakroom = { "Android 18" },
+             ["Grand Hall"] = { "Yamcha" }, ["Family Lounge"] = { "Master Roshi" }, ["Dr. Briefs' Study"] = { "Gohan" },
+             ["Robot Workshop"] = { "Tien", "Launch" }, ["Garden Hall"] = { "Dende" }, Conservatory = { "Piccolo", "Mai" },
+             ["Menagerie Yard"] = { "Mr. Satan" } },
+  hidden = {
+    ["Underground Lab"] = { "You find fresh scorch marks, the wallpaper still smoking. (evidence #4)" },
+    ["Garden Hall"] = { "You find a patch of air so still your ki sense slides off it. (evidence #3)" },
+    Conservatory = { "You find a fork with a smear of birthday frosting. (evidence #2)" },
+    ["Bulma's Suite"] = { "You find a trail of light, quick footprints through spilled punch. (evidence #1)" },
+    Attic = { "You find an untouched slice of cake, the fork never lifted. (evidence #5)" },
+    ["Gravity Chamber"] = { "You find a single dark hair caught on a splinter. (evidence #6)" },
+    ["Grand Hall"] = { "Tucked out of sight: a love letter Yamcha wrote to himself. That belongs to Yamcha, in the Grand Hall: confront yamcha there." },
+    Infirmary = { "Tucked out of sight: a love poem to Launch, signed with a little third eye. That belongs to Tien, in the Robot Workshop: confront tien there." },
+    ["Robot Charging Bay"] = { { "Tucked out of sight: a wanted poster of Launch, blonde. That belongs to Launch, in the Robot Workshop: confront launch there.",
+                                 'Scribbled on the back: "never trust a stand in".' } },
+    ["Dining Room"] = { S.chart },
+  },
+  searchable = {}, searched = {}, questioned = {}, confronted = {}, inspected = false, logs = 0,
+  darkSearches = 0, blocked = 0, events = {},
+}
+for _, r2 in ipairs({ "Grand Hall", "Portrait Gallery", "Garden Hall", "Cloakroom", "Dining Room", "Family Lounge", "Kitchen",
+  "Dr. Briefs' Study", "Covered Walkway", "Robot Workshop", "Service Yard", "Menagerie Yard", "East Corridor", "West Corridor",
+  "Robot Charging Bay", "Conservatory", "Hangar", "Pond and Aviary", "Dinosaur Paddock", "Infirmary", "Master Bedroom", "Attic" }) do
+  H.searchable[r2] = true
+end
+local NAMES = { ["Dr. Briefs' Study"] = "Study" }
+local function event(e) H.events[#H.events + 1] = e end
+local function out(lines) tempTimer(0.1, function() feed(lines) end) end
+local function arrive()
+  H.entered = now
+  local lines = { H.room, "Status:  NoQuit, NoRecall, NoPortal", "Obvious exits:" }
+  for _, g in ipairs(H.guests[H.room] or {}) do lines[#lines + 1] = g .. " stands about, looking festive." end
+  out(lines)
+end
+local function sealedText()
+  return " [ ] 6. Sealed rooms: the lab " .. (H.lab and "open" or "locked (study portraits)") .. "; the Gravity Chamber " ..
+    (H.gravity and "open" or "at 300G (shut gravity)") .. "; Bulma's Suite " .. (H.suite and "open" or "voice locked") .. "."
+end
+local function notebook()
+  local found, ev = 0, {}
+  for i = 1, 6 do if H["ev" .. i] then found = found + 1; ev[#ev + 1] = "      #" .. i .. " [unverified] " .. H["ev" .. i] end end
+  local L = { "========================================", "GALACTIC PATROL, PARTY INCIDENT REPORT",
+    "Case: Mrs. Briefs' stand-in smashed, Menagerie Yard", "Status: OPEN, 50 minutes left", "Difficulty: Normal",
+    "Wrong accusations: 0 of 3. notebook commands lists every command.", "========================================", "Leads:",
+    H.inspected and " [x] 1. When: between eleven and midnight; the party log says all was quiet at eleven." or " [ ] 1. When: inspect remains.",
+    H.inspected and " [x] 2. Weapon: the Dream Ray, kept in the Family Lounge. notebook <time> shows who." or " [ ] 2. Weapon: inspect remains.",
+    " [ ] 3. Physical evidence: " .. found .. " of 6 found. search the rooms; analyze <number> one in the lab (1 left)." }
+  for _, e in ipairs(ev) do L[#L + 1] = e end
+  local left = {}
+  for r2 in pairs(H.searchable) do if not H.searched[r2] then left[#left + 1] = NAMES[r2] or r2 end end
+  table.sort(left)
+  if #left > 0 then
+    L[#L + 1] = "      Not searched yet (" .. #left .. "), go there and search:"
+    for i = 1, #left, 3 do
+      local chunk = {}
+      for j = i, math.min(i + 2, #left) do chunk[#chunk + 1] = left[j] end
+      L[#L + 1] = "      " .. table.concat(chunk, ", ") .. (i + 2 >= #left and "." or ",")
+    end
+  else
+    L[#L + 1] = "      Searched: every open room."
+  end
+  local nq = {}
+  for _, g in ipairs(G.guests) do if not H.questioned[g] then nq[#nq + 1] = g end end
+  L[#L + 1] = " [ ] 4. Statements: " .. (12 - #nq) .. " of 12."
+  if #nq > 0 then L[#L + 1] = "      Not questioned yet: " .. table.concat(nq, ", ") .. "." end
+  L[#L + 1] = sealedText()
+  L[#L + 1] = " [ ] 7. Accuse: 9 of 4 findings."
+  L[#L + 1] = "Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser."
+  L[#L + 1] = "========================================"
+  return L
+end
+local function statements(t)
+  local block, which = {}, 0
+  for _, l in ipairs(S["final-statements"]) do
+    if l:find("^STATEMENTS ABOUT") then which = which + 1 end
+    if which == t - 8 then block[#block + 1] = l end
+  end
+  table.insert(block, 1, "========================================")
+  return block
+end
+local function section(name, pick)
+  local o = {}
+  for _, l in ipairs(S[name]) do if not pick or l:find(pick) then o[#o + 1] = l end end
+  return o
+end
+
+respond = function(c)
+  local dir = ({ n = 1, s = 1, e = 1, w = 1, u = 1, d = 1 })[c]
+  if dir then
+    for _, e in ipairs(G.EXITS[H.room]) do
+      if e.dir == c then
+        if e.to == "Underground Lab" and not H.lab then H.blocked = H.blocked + 1; return out({ "Alas, you cannot go that way..." }) end
+        if e.to == "Gravity Chamber" and not H.gravity then H.blocked = H.blocked + 1; return out({ "Three hundred G pin you in the doorway." }) end
+        if e.to == "Bulma's Suite" and not H.suite then H.blocked = H.blocked + 1; return out({ "The voice lock blinks red. say it here." }) end
+        H.room = e.to
+        return arrive()
+      end
+    end
+    H.blocked = H.blocked + 1
+    return out({ "Alas, you cannot go that way..." })
+  end
+  if c == "look" then return arrive() end
+  if c == "search" then
+    if H.gravity and not H.flashlight then H.darkSearches = H.darkSearches + 1; return out({ "It is too dark to search." }) end
+    if now - H.entered < 1 then return out({ "You are still turning this room over." }) end
+    if not H.searchable[H.room] then return out({ "Nothing is ever hidden in the " .. H.room .. "." }) end
+    local items = H.hidden[H.room]
+    if items and #items > 0 then
+      local item = table.remove(items, 1)
+      if type(item) == "string" then item = { item } end
+      for _, l in ipairs(item) do
+        local i, text = l:match("evidence #(%d)"), l:match("^You find (.-)%. %(")
+        if i then H["ev" .. i] = text end
+      end
+      event("search " .. H.room)
+      return out(item)
+    end
+    H.searched[H.room] = true
+    event("searched " .. H.room)
+    return out({ "Only dust and party streamers.", "This room is done for now. Your notebook lists the rest." })
+  end
+  local q = c:match("^question (%S+)$")
+  if q then
+    for _, g in ipairs(H.guests[H.room] or {}) do
+      if G.keyword(g, {}) == q then H.questioned[g] = true; return out({ g .. " tells you, 'Here.'", 'At midnight: "Somewhere."' }) end
+    end
+    return out({ "Nobody by that name is here." })
+  end
+  local cf = c:match("^confront (%S+)$")
+  if cf then
+    event("confront " .. cf)
+    for _, g in ipairs(H.guests[H.room] or {}) do
+      if G.keyword(g, {}) == cf then H.confronted[g] = true; return out({ g .. " sees a secret and goes pale. \"Fine.\"", '"So that is where I really was:"' }) end
+    end
+  end
+  if c == "notebook" then return out(notebook()) end
+  if c == "notebook guests" then return out(S.guests) end
+  local t = tonumber(c:match("^notebook (%d+)$") or "")
+  if t then return out(statements(t)) end
+  local lt = c:match("^read log (%a+)$")
+  if lt then
+    H.logs = H.logs + 1
+    local o, on = {}, false
+    for _, l in ipairs(S.logs) do
+      if l:find("^Garter") then on = l:find("for " .. lt .. ",") ~= nil end
+      if on then o[#o + 1] = l end
+    end
+    return out(o)
+  end
+  if c == "inspect remains" and H.room == "Menagerie Yard" then H.inspected = true; return out(S.inspect) end
+  if c == "study portraits" and H.room == "Portrait Gallery" then return out(S.portraits) end
+  if c == "press 3246" and H.room == "Lab Vestibule" then H.lab = true; H.searchable["Underground Lab"] = true
+    return out({ "The keypad chimes, and the lab door clicks open for you." }) end
+  if c == "shut gravity" and H.room == "Robot Charging Bay" then H.gravity = true; H.searchable["Gravity Chamber"] = true; event("shut")
+    return out({ "You haul the red lever down. The Gravity Chamber winds down with a groan, and every light in the house dies with it." }) end
+  if c == "take flashlight" and H.room == "Hangar" then H.flashlight = true; event("flashlight")
+    return out({ "You take a flashlight from the rack. Searching in the dark is possible now." }) end
+  if c == "say never trust a stand in" and H.room == "Upper Landing East" then H.suite = true; H.searchable["Bulma's Suite"] = true
+    return out({ "You say, 'never trust a stand in'", "The voice lock chimes green. Bulma's Suite is open to you." }) end
+  if c == "accuse" then return out(S.accuse) end
+  if c == "plate yamcha" and H.room == "Kitchen" then event("plate"); return out(S.plate) end
+  if c == "analyze 3" and H.room == "Underground Lab" then event("analyze"); return out(S.analyze) end
+end
+
+feed(S.intro)
+G.run()
+local spent = 0
+while G.running and spent < 3600 do wait(5); spent = spent + 5 end
+ok(not G.running and spent < 3600, ("the run finished (%d virtual seconds, %d commands)"):format(spent, #sent))
+ok(H.blocked == 0, "never walked into a wall or a sealed door")
+ok(H.darkSearches == 0, "never searched in the dark: the flashlight came first")
+local all = true
+for r2 in pairs(H.searchable) do if not H.searched[r2] then all = false; print("   not searched: " .. r2) end end
+ok(all and H.searched["Underground Lab"] and H.searched["Gravity Chamber"] and H.searched["Bulma's Suite"],
+  "every room searched to the end, the three sealed rooms included")
+local nq = 0 for _, g in ipairs(G.guests) do if not H.questioned[g] then nq = nq + 1 end end
+ok(nq == 0, "all twelve guests questioned")
+ok(H.inspected and H.logs == 4, "remains inspected, the door log read for all four chimes")
+ok(H.confronted.Yamcha and H.confronted.Tien and H.confronted.Launch, "the three secrets confronted")
+local lastSearch, firstConfront, shut, light
+for i, e in ipairs(H.events) do
+  if e:find("^search") then lastSearch = i end
+  if e:find("^confront") and not firstConfront then firstConfront = i end
+  if e == "shut" then shut = i end
+  if e == "flashlight" then light = i end
+end
+ok(firstConfront > lastSearch, "confronting only after every search")
+ok(shut and light == shut + 1, "shut gravity, then straight to the flashlight")
+local has = {} for _, e in ipairs(H.events) do has[e] = true end
+ok(has.analyze and has.plate, "analyzed #3 and plated Yamcha before naming him")
+ok(G.result and G.result.line == "accuse yamcha with dream at midnight" and G.result.sure, "and names him: " .. tostring(G.result and G.result.line))
+local busy = 0 for _, c in ipairs(sent) do if c == "search" then busy = busy + 1 end end
+ok(busy > 30, "searched again after every find and every 'still turning this room over'")
+
+print("gum: ALL PASSED")

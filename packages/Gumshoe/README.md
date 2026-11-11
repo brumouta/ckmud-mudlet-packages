@@ -1,0 +1,55 @@
+# Gumshoe — Briefs mansion cases
+
+Command: `gum`
+
+Solves Jaco's party cases at the Briefs house (`help mansion`). Open a case with Jaco on the Front Steps (`say case`), step inside and type `gum run`. It does the legwork, then tells you who did it. You make the arrest yourself.
+
+## Commands
+
+| Command | Effect |
+|---|---|
+| `gum run` | Do the whole case: search, question, inspect, door log, sealed rooms, confront, then solve |
+| `gum stop` | Stop walking. Everything found so far is kept |
+| `gum solve` | Show the evidence, each suspect's alibi and the accusation it points to |
+| `gum accuse` | Send the suggested accusation. You still type `accuse yes` |
+| `gum status` | What's left: rooms to search, guests to question, sealed rooms, secrets |
+| `gum go <room>` | Walk to a room, e.g. `gum go kitchen` or `gum go lab` |
+| `gum reset` | Forget the case (a new case resets by itself) |
+
+## What `gum run` does
+
+It walks to the nearest room with something left to do, does it, and repeats:
+
+- **Search** every room the notebook lists until the game says *This room is done for now*. It searches again after every find, and waits whenever the game says *You are still turning this room over*.
+- **Question** every guest, in whatever room it last saw them.
+- **Inspect the remains** at the scene, for the time window and the two possible weapons.
+- **Read Garter's door log** for all four chimes in the Inner Hall.
+- **Open the sealed rooms:**
+  - The lab: `study portraits`, work the code out from the plaque (left to right, right to left, oldest to youngest or youngest to oldest), `press` it in the Lab Vestibule, then go down.
+  - Bulma's Suite: `say` the phrase written on the back of a secret, on the Upper Landing East.
+  - The Gravity Chamber: `shut gravity` in the Robot Charging Bay. The lights go out, so it fetches the flashlight from the Hangar first, then searches the chamber.
+- **Confront** every secret, once every room has been searched.
+- **Re-read** `notebook 9` to `notebook 12` (confessions change stories), `notebook guests` and `accuse`, then solve.
+- If the cake clues disagree, it **plates** the top suspect in the Kitchen. If one clue is the only thing against the top suspect, it **analyzes** that clue in the Underground Lab. Then it solves again.
+
+## How it decides
+
+- **Witnesses** (from `notebook guests`) never lie, and nor does the seating chart, which is who sat in the Dining Room.
+- **Alibis.** For each suspect, at each hour the attack could have happened:
+
+  | Result | Meaning |
+  |---|---|
+  | **seen** | A witness or the chart puts them there |
+  | **LIED** | A witness was in that room and doesn't name them, the chart leaves them out of the Dining Room, or the door log counts fewer heads than claim the room |
+  | **fits** | Only suspects back the story, but the door log count matches |
+  | **alone** | Only suspects back the story, and no log count can check it (sensor broken) |
+
+  A confession is checked the same way. In the first case it was mapped from, Yamcha "confessed" to being in the Family Lounge at midnight, but Krillin and Dende were there and never named him.
+- **Evidence** is matched against the guest table by keyword: footprints for tread, a hair for hair colour, scorch marks or still air for ki, frosting or an untouched slice for the cake. When two clues disagree, one of them is planted, so neither counts until `analyze` or `plate` settles it. A clue that doesn't match a suspect rules them out.
+- **The time** is the window from the remains, minus any hour the notebook says was quiet. **The weapon** is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
+
+## Limits
+
+- **Case types:** it's built from a murder case. For theft, delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ).
+- **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
+- **Monthly twists** other than November's feast (the seating chart) haven't been seen yet.
