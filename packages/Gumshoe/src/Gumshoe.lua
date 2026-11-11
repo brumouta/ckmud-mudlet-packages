@@ -298,6 +298,23 @@ local function readInspect(text)
 end
 G.readInspect = readInspect
 
+-- 'In the Grand Hall, with Emperor Pilaf. Just being polite...' -> { room, with = { ... } }
+function G.parseAnswer(said)
+  local room, rest = said:match("^In the (.-)([,.].*)$")
+  if not room then return nil end
+  local with = {}
+  local list = rest:match("^, with (.*)$")
+  if list then
+    -- the sentence ends at the first ". " that isn't Mr. / Dr. / Mrs.
+    local masked = list:gsub("(%u%l?%l?)%. ", function(w)
+      if w == "Mr" or w == "Dr" or w == "Mrs" then return w .. "# " end
+    end)
+    masked = masked:match("^(.-)%.[%s\"]") or masked:match("^(.-)%.$") or masked
+    with = split((masked:gsub("#", ".")))
+  end
+  return { room = roomName(room), with = with }
+end
+
 local function parseLead(done, n, text)
   B.section = n
   if n == 1 then
@@ -305,6 +322,7 @@ local function parseLead(done, n, text)
       G.inspected = true
       setWindow((text:match("^When: ([^;]*)") or ""))
       for q in text:gmatch("quiet at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
+      for q in text:gmatch("still in its cradle at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
     else
       readInspect(text)
     end
@@ -606,9 +624,29 @@ function G.line(l)
   if l:find("^You take a flashlight") then G.flashlight = true end
   if l:find("^The voice lock chimes green") then G.open.suite = true; G.unsearched["Bulma's Suite"] = true end
 
-  -- questioning and confronting
+  -- questioning and confronting: the answers go straight into the alibis
+  local teller = l:match("^(.-) tells you, '")
+  if teller and has(G.guests, teller) then B.answer, B.confession = teller, false end
   local pale = l:match("^(.-) sees .* goes pale%.")
-  if pale and G.secrets[pale] then G.secrets[pale].confronted = true end
+  if pale then
+    if G.secrets[pale] then G.secrets[pale].confronted = true end
+    if has(G.guests, pale) then B.answer, B.confession = pale, true end
+  end
+  local at, said = l:match('^At (%a+): "(.*)$')
+  if at and TIMES[at] and B.answer then
+    local st = G.parseAnswer(said)
+    if st then
+      local t = TIMES[at]
+      G.statements[t] = G.statements[t] or {}
+      local old = G.statements[t][B.answer]
+      if B.confession and old and old.room ~= st.room then st.first = old.room end
+      -- a notebook table already read is the game's own summary; an answer only fills gaps or corrects a confession
+      if not old or B.confession then G.statements[t][B.answer] = st end
+      if t == 12 then G.questioned[B.answer] = true; G.unquestioned[B.answer] = nil end
+    end
+  elseif not l:find("^So that is where I really was") and not l:find("^\"So that is where") and not teller and not pale then
+    B.answer = nil
+  end
 
   -- the cake and the analyzer
   local plated, how = l:match("checks her list: (.-) (%a+) the cake")
@@ -890,6 +928,19 @@ function G.todo()
     add("Hangar", "flashlight")
     return t
   end
+  if G.onlyQuestions then
+    local lost = false
+    for g in pairs(G.unquestioned) do
+      if G.where[g] and (G.tries["question " .. g] or 0) < 2 then add(G.where[g], "question", g)
+      elseif not G.where[g] then lost = true end
+    end
+    if lost then
+      for r in pairs(G.EXITS) do
+        if not G.visited[r] and r ~= "Front Steps" and G.path(G.room, r) then add(r, "visit") end
+      end
+    end
+    return t
+  end
   for r in pairs(G.unsearched) do
     if not G.searched[r] and G.EXITS[r] and (G.tries["search " .. r] or 0) < 2 then add(r, "search"); searches = searches + 1 end
   end
@@ -1104,10 +1155,10 @@ function G.done(r)
   G.result = G.report(r)
 end
 
-function G.run()
+function G.run(onlyQuestions)
   G.gen = G.gen + 1
-  G.running, G.reread = true, false
-  info("green", "On the case. gum stop stops; everything found so far is kept.")
+  G.running, G.reread, G.onlyQuestions = true, false, onlyQuestions
+  info("green", onlyQuestions and "Questioning everyone left. gum stop stops." or "On the case. gum stop stops; everything found so far is kept.")
   seq({
     function(nxt) cmd("look", { { "@arrived", "ok" } }, G.stepTimeout, function() nxt() end) end,
     function(nxt) cmd("notebook guests", { { "@guests", "ok" } }, G.stepTimeout, function() nxt() end) end,
@@ -1128,6 +1179,7 @@ end
 -- ---------------------------------------------------------------- `gum` alias
 G.HELP = {
   { "gum run",          "Do the legwork: search, question, inspect, door log, sealed rooms, confront, then solve" },
+  { "gum question",     "Only question everyone not questioned yet (walking to find them), then solve" },
   { "gum stop",         "Stop walking (everything found is kept)" },
   { "gum solve",        "Show the evidence, every suspect's alibi and the accusation it points to" },
   { "gum accuse",       "Send the suggested accusation (you still type accuse yes)" },
@@ -1185,6 +1237,7 @@ end
 function G.command(c, arg)
   if c == nil or c == "help" then G.help()
   elseif c == "run" or c == "start" then G.run()
+  elseif c == "question" then G.run(true)
   elseif c == "stop" then G.stop()
   elseif c == "solve" then G.result = G.report()
   elseif c == "accuse" then

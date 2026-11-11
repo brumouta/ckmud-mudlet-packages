@@ -161,3 +161,47 @@ Example:  accuse yajirobe stash kitchen at ten
 Short:    accuse yajirobe kitchen 10
 Then accuse yes makes the arrest.
 Findings: 11 of 4. Three wrong and the case goes cold.
+## questioned
+inspect cradle
+The radar's cradle logs that the Dragon Radar left it between nine and ten.
+question gohan
+Gohan tells you, 'Oh! Sure, I can help. Here is where I was.'
+At nine: "In the Grand Hall, with Emperor Pilaf. Just being polite, like I was told."
+At ten: "In the Family Lounge, with Videl and Chi-Chi. Studying a little. Please do not tell anyone."
+At eleven: "In the Robot Workshop, with Videl and Puar. I was talking to people, honest!"
+At midnight: "In the Menagerie Yard, with Tien and Puar. Is it that late already?"
+question pilaf
+Emperor Pilaf tells you, 'The great Emperor Pilaf does not answer questions. Fine. Just this once.'
+At nine: "In the Grand Hall, with Gohan. As befits an emperor!"
+At ten: "In the Dining Room, with Yajirobe and Mai. Plotting nothing. Nothing at all!"
+At eleven: "In the Conservatory, with Piccolo. Nobody can prove otherwise. Probably."
+At midnight: "In the Family Lounge, with Yajirobe and Krillin. Do not question your emperor! Oh. Right."
+## notebook-questioned
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: the Dragon Radar stolen, Study
+Status: OPEN, 46 minutes left
+Difficulty: Normal
+Kind: Theft. Name who took the radar, the room it is stashed in, and when.
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [x] 1. When: taken between nine and ten; the party log says the radar was still in its cradle at nine.
+ [x] 2. Stash: all 3 of 3 capsules found, in the Kitchen, the Menagerie Yard and the Conservatory. The radar is in the one in a room the thief went to after the theft; notebook <time> shows where everyone went.
+ [ ] 3. Physical evidence: 5 of 6 found. search the rooms; analyze <number> one in the lab (1 left). notebook guests shows who looks like what.
+      #1 [unverified] a patch of air so still your ki sense slides off it
+      #2 [unverified] an untouched slice of cake, the fork never lifted
+      #4 [unverified] a tuft of something that is not dark hair
+      #5 [unverified] fresh scorch marks, the wallpaper still smoking
+      #6 [unverified] a trail of light, quick footprints through spilled punch
+      Searched: every open room.
+ [ ] 4. Statements: 2 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw when it was taken, then where they went after.
+      Not questioned yet: Oolong, Yajirobe, Mai, Tien, Piccolo, Videl, Krillin, Android 18, Chi-Chi, Puar.
+ [x] 5. Secrets: Yajirobe (confronted); Piccolo (confronted); Videl (confronted), a phrase on the back
+      Scribbled on the back: "chop chop".
+ [ ] 6. Sealed rooms: the lab locked (study portraits in the Portrait Gallery, then press <code> in the Lab Vestibule); the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 12 of 4 findings. Anywhere in the house: accuse <suspect> stash <room> at <time>, then accuse yes. accuse alone shows the words.
+Rooms: Grand Hall, Dining Room, Family Lounge, Kitchen, Robot Workshop, Menagerie Yard, Conservatory.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================

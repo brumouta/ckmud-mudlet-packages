@@ -9,6 +9,7 @@ Solves Jaco's party cases at the Briefs house (`help mansion`). Open a case with
 | Command | Effect |
 |---|---|
 | `gum run` | Do the whole case: search, question, inspect, door log, sealed rooms, confront, then solve |
+| `gum question` | Only question everyone not questioned yet: walks to where it last saw each guest (looking in unseen rooms for the rest), then solves |
 | `gum stop` | Stop walking. Everything found so far is kept |
 | `gum solve` | Show the evidence, each suspect's alibi and the accusation it points to |
 | `gum accuse` | Send the suggested accusation. You still type `accuse yes` |
@@ -21,7 +22,7 @@ Solves Jaco's party cases at the Briefs house (`help mansion`). Open a case with
 It walks to the nearest room with something left to do, does it, and repeats:
 
 - **Search** every room the notebook lists until the game says *This room is done for now*. It searches again after every find, and waits whenever the game says *You are still turning this room over*.
-- **Question** every guest, in whatever room it last saw them.
+- **Question** every guest, witnesses included, in whatever room it last saw them. Each answer goes straight into the alibis.
 - **Inspect** where the case says: `inspect remains` at the scene of a murder (the time window and the two possible weapons), `inspect cradle` in the Study for a theft (when the loot was taken).
 - **Read Garter's door log** for all four chimes in the Inner Hall.
 - **Open the sealed rooms:**
@@ -53,6 +54,6 @@ It walks to the nearest room with something left to do, does it, and repeats:
 
 ## Limits
 
-- **Case types:** murder and theft are solved. For delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case's notebook; the line `inspect cradle` prints hasn't been seen yet, so the time window comes from the notebook once it ticks lead 1.
+- **Case types:** murder and theft are solved. For delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case (*the radar's cradle logs that the Dragon Radar left it between nine and ten*).
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
 - **Monthly twists** other than November's feast (the seating chart) haven't been seen yet.

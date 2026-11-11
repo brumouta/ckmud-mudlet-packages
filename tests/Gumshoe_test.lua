@@ -391,4 +391,39 @@ ok(r.line == "accuse pilaf stash kitchen at ten", "the accusation: " .. tostring
 sent = {}; G.command("accuse")
 ok(sent[1] == "accuse pilaf stash kitchen at ten", "gum accuse sends the stash accusation")
 
+-- The same theft, questioned by hand: the cradle's time and the answers themselves
+G.newCase(); G.room = nil
+feed(T.intro); feed(T.guests); feed(T["notebook-start"])
+feed(T.questioned)
+ok(G.window[9] and G.window[10] and not G.window[11], "the cradle: taken between nine and ten")
+ok(G.statements[9].Gohan.room == "Grand Hall" and G.statements[9].Gohan.with[1] == "Emperor Pilaf",
+  "question gohan: at nine, Grand Hall with Emperor Pilaf")
+ok(#G.statements[10].Gohan.with == 2 and G.statements[10].Gohan.with[2] == "Chi-Chi", "...at ten with Videl and Chi-Chi")
+ok(G.statements[12]["Emperor Pilaf"].room == "Family Lounge" and #G.statements[12]["Emperor Pilaf"].with == 2,
+  "question pilaf: at midnight, Family Lounge with Yajirobe and Krillin")
+ok(G.questioned.Gohan and G.questioned["Emperor Pilaf"] and not G.unquestioned.Gohan, "both marked questioned")
+feed(T["notebook-questioned"])
+ok(G.quiet[9] and #G.crimeTimes() == 1 and G.crimeTimes()[1] == 10, "notebook: between nine and ten, still in the cradle at nine, so ten")
+nq2 = 0 for _ in pairs(G.unquestioned) do nq2 = nq2 + 1 end
+ok(nq2 == 10 and G.unquestioned.Videl and not G.unquestioned.Gohan, "the ten still to question")
+ok(G.parseAnswer("In the Dining Room, with Launch, Mr. Satan and Mr. Popo. Keeping an eye.").with[3] == "Mr. Popo",
+  "answers with Mr. names split right")
+local alone = G.parseAnswer("In the Kitchen, alone. Honest.")
+ok(alone.room == "Kitchen" and #alone.with == 0, "an answer with nobody else: no companions")
+
+-- gum question: only the questioning
+G.room = "Dr. Briefs' Study"; G.visited = {}
+for r2 in pairs(G.EXITS) do G.visited[r2] = true end
+G.where = { Oolong = "Dining Room", Videl = "Menagerie Yard" }
+G.onlyQuestions = true
+local q = G.todo()
+G.onlyQuestions = nil
+ok(q["Dining Room"] and q["Dining Room"][1].kind == "question" and q["Menagerie Yard"] and not q["Inner Hall"],
+  "gum question: walks only to the guests, nothing else")
+G.visited = { ["Dr. Briefs' Study"] = true }
+G.onlyQuestions = true
+q = G.todo()
+G.onlyQuestions = nil
+ok(q["Inner Hall"] and q["Inner Hall"][1].kind == "visit", "...and looks in rooms not seen yet for the guests it hasn't found")
+
 print("gum: ALL PASSED")
