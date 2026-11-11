@@ -19,9 +19,9 @@ ck:define_feature("learning.use_zeta", false)
 ck:define_constant("learning.return_to_target", "")
 ck:define_constant("learning.recall_isolation", "")
 
--- The way back to the target, worked out from the path you start with: learning.recall_isolation takes you
--- to the isolation tank, then the path backwards gets you to the target. Steps that undo each other cancel:
--- recall_isolation "crecall;w" + `autolearn elder n;n;n;n;w` -> crecall;w;e;s;s;s;s -> "crecall;s;s;s;s"
+-- The way back to the target, worked out from the path you start with: crecall, then the path
+-- backwards with every step reversed. `autolearn elder n;n;n;n;w` -> "crecall;e;s;s;s;s"
+local RECALL = "crecall"
 local OPPOSITE = { n = "s", s = "n", e = "w", w = "e", u = "d", d = "u",
     ne = "sw", sw = "ne", nw = "se", se = "nw", ["in"] = "out", out = "in" }
 local LONG = { north = "n", south = "s", east = "e", west = "w", up = "u", down = "d",
@@ -41,30 +41,11 @@ function learn.parse_path(path)
     return dirs
 end
 
--- The command that starts the walk back: the first one of learning.recall_isolation (crecall, recall...)
-function learn.recall_command()
-    local iso = ck:constant("learning.recall_isolation") or ""
-    return iso:match("^%s*([^;%s][^;]*)")
-end
-
--- Only with learning.recall_isolation set: without it the path is the old speedwalk to the rest spot.
 function learn.return_from(path)
-    if not learn.recall_command() then return nil end
     local dirs = learn.parse_path(path)
     if not dirs then return nil end
-    local back = {}
-    for cmd in (ck:constant("learning.recall_isolation") or ""):gmatch("[^;]+") do
-        cmd = cmd:match("^%s*(.-)%s*$")
-        if cmd ~= "" then
-            -- a step that undoes the one before it cancels out (w then e); anything else stays
-            local top = back[#back]
-            if top and OPPOSITE[top] == cmd then back[#back] = nil else back[#back + 1] = cmd end
-        end
-    end
-    for i = #dirs, 1, -1 do
-        local step, top = OPPOSITE[dirs[i]], back[#back]
-        if top and OPPOSITE[top] == step and #back > 1 then back[#back] = nil else back[#back + 1] = step end
-    end
+    local back = { RECALL }
+    for i = #dirs, 1, -1 do back[#back + 1] = OPPOSITE[dirs[i]] end
     return table.concat(back, ";")
 end
 
@@ -463,7 +444,7 @@ function learn:toggle(target, path)
     self.speedwalk = path
     if not Mode:is(Mode.Learning) then
         self.derived_return = path and learn.return_from(path) or nil
-        if path and not self.derived_return and learn.recall_command() then
+        if path and not self.derived_return then
             cecho("<yellow>[ Autolearn ] - Can't walk '" .. path .. "' backwards (only directions can be): " ..
                 "using learning.return_to_target to get back.\n")
         end

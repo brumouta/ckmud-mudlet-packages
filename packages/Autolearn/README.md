@@ -32,12 +32,9 @@ The following constants should be used by organics
 
 Set them with e.g. `AL constant learning.recall_isolation="crecall;w"`
 
-**The way back is worked out from the path you start with.** With
-`learning.recall_isolation` set, the bot goes back to the tank that way, then
-walks your path backwards, every step reversed, and steps that undo each other
-cancel out. With `recall_isolation` = `crecall;w` (crecall lands in the HQ, the
-tank is west of it), `autolearn elder n;n;n;n;w` gives `crecall;w` + `e;s;s;s;s`
-= `crecall;s;s;s;s`. The path takes `;`, commas,
+**The way back is worked out from the path you start with:** `crecall`, then
+your path backwards with every step reversed. `autolearn elder n;n;n;n;w`
+walks back with `crecall;e;s;s;s;s`. The path takes `;`, commas,
 spaces or counts (`n;n;n;n;w`, `n n n n w`, `4n w`). Type it with a single `;`:
 Mudlet splits what you type at `;;` before the alias sees it, so
 `autolearn elder n;;n;;w` would send the `n`s as moves.
@@ -46,8 +43,8 @@ It's used to walk back after resting, after training portal/instant
 transmission (they teleport you to king kai), and when the target isn't
 there. If you start without a path, `learning.return_to_target` is used
 instead (e.g. `AL constant learning.return_to_target="crecall;s;s;s;s"`).
-Without `recall_isolation` the bot rests by speedwalking the path you gave and
-walking it back, which assumes it's standing at the target.
+`learning.recall_isolation` is only for getting to the tank to rest; without it
+the bot rests by speedwalking the path you gave and walking it back.
 
 The bot needs to know your skills and race: it sends `learn` and `score` when
 it sees the MOTD, and again when you toggle `autolearn` on. If your race shows
