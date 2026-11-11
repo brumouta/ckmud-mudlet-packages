@@ -644,6 +644,9 @@ function G.line(l)
     G.unsearched["Gravity Chamber"] = true
   end
   if l:find("^You take a flashlight") then G.flashlight = true end
+  -- the lights are out and we can't see: get a light before searching on
+  if l:find("^It is pitch dark%. You feel around") then G.gravityShut, G.flashlight = true, false end
+  if l:find("lights? .*come back on") or l:find("^You reset the breaker") then G.gravityShut = false end
   if l:find("^The voice lock chimes green") then G.open.suite = true; G.unsearched["Bulma's Suite"] = true end
 
   -- questioning and confronting: the answers go straight into the alibis
@@ -708,6 +711,7 @@ function G.line(l)
   -- the Phantom's calling cards: kept when the case is solved, three summon him
   if l:find("^Tucked out of sight: a black calling card") then
     G.card = G.room or "house"
+    send("get card", false)
     info("magenta", "A Phantom calling card" .. (G.room and (" in the " .. G.room) or "") .. ". Solve the case in time and it's yours"
       .. (G.cards and (" (" .. (G.cards + 1) .. " of 3)") or ""))
   end
@@ -970,7 +974,10 @@ function G.todo()
     t[room][#t[room] + 1] = { kind = kind, arg = arg }
   end
   if G.gravityShut and not G.flashlight then
-    add("Hangar", "flashlight")
+    -- the game's two ways to see: a flashlight from the Hangar, or the breaker in the Robot Charging Bay
+    if (G.tries.flashlight or 0) < 2 then add("Hangar", "flashlight")
+    elseif (G.tries.breaker or 0) < 2 then add("Robot Charging Bay", "breaker")
+    else return t end
     return t
   end
   if G.onlyQuestions then
@@ -1038,8 +1045,12 @@ function DO.search(_, cb)
   local function go()
     cmd("search", { { "%(evidence #%d+%)", "found" }, { "^Tucked out of sight:", "found" }, { "^The seating chart", "found" },
                     { "still turning this room over", "busy" }, { "This room is done for now", "done" },
-                    { "^Nothing is ever hidden in", "done" } }, 5, function(k)
-      if k == "found" then misses = 0; later(G.searchDelay, go)
+                    { "^Nothing is ever hidden in", "done" }, { "^It is pitch dark", "dark" } }, 5, function(k)
+      if k == "dark" then
+        -- not a real try: fetch a light, then this room comes up again
+        G.tries["search " .. room] = (G.tries["search " .. room] or 1) - 1
+        return cb()
+      elseif k == "found" then misses = 0; later(G.searchDelay, go)
       elseif k == "busy" then
         busy = busy + 1
         if busy > 15 then return cb() end
@@ -1113,7 +1124,19 @@ function DO.shut(_, cb)
 end
 
 function DO.flashlight(_, cb)
-  cmd("take flashlight", { { "^You take a flashlight", "ok" } }, G.stepTimeout, function() G.flashlight = true; cb() end)
+  tried("flashlight")
+  cmd("take flashlight", { { "^You take a flashlight", "ok" }, { "already .*flashlight", "ok" } }, G.stepTimeout, function(k)
+    if k == "ok" then G.flashlight = true end
+    cb()
+  end)
+end
+
+function DO.breaker(_, cb)
+  tried("breaker")
+  cmd("reset breaker", { { "^You .*breaker", "ok" }, { "lights? .*come back on", "ok" } }, G.stepTimeout, function(k)
+    if k == "ok" then G.gravityShut = false end
+    cb()
+  end)
 end
 
 function DO.confront(g, cb)

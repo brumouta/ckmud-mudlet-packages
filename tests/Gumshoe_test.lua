@@ -531,4 +531,16 @@ ok(G.cards == 3 and not G.card and LOG:find("summon the Phantom", 1, true), "sol
 G.newCase(); G.room = "Attic"; feed({ card }); feed({ "Case closed: gone cold." })
 ok(G.cards == 3, "a cold case keeps no card")
 
+-- Searching in the dark: get a light first ---------------------------------------------------
+G.newCase(); G.room = "Kitchen"; G.flashlight = true
+feed({ "It is pitch dark. You feel around and find nothing but furniture edges. take flashlight in the Hangar, or reset breaker in the Robot Charging Bay, then search again." })
+local td = G.todo()
+ok(G.gravityShut and not G.flashlight and td.Hangar and td.Hangar[1].kind == "flashlight" and next(td, next(td)) == nil,
+  "pitch dark: the flashlight in the Hangar comes before anything else")
+G.tries.flashlight = 2
+td = G.todo()
+ok(td["Robot Charging Bay"] and td["Robot Charging Bay"][1].kind == "breaker", "no flashlight after two tries: reset the breaker in the Robot Charging Bay")
+sent = {}; G.room = "Attic"; feed({ card })
+ok(sent[#sent] == "get card", "a calling card is picked up")
+
 print("gum: ALL PASSED")

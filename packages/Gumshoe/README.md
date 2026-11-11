@@ -29,6 +29,7 @@ It walks to the nearest room with something left to do, does it, and repeats:
   - The lab: `study portraits`, work the code out from the plaque (left to right, right to left, alphabetical, oldest to youngest or youngest to oldest), `press` it in the Lab Vestibule, then go down.
   - Bulma's Suite: `say` the phrase written on the back of a secret, on the Upper Landing East.
   - The Gravity Chamber: `shut gravity` in the Robot Charging Bay. The lights go out, so it fetches the flashlight from the Hangar first, then searches the chamber.
+- **Pitch dark?** If a search ever says *It is pitch dark*, it stops, fetches the flashlight from the Hangar (or, if that fails twice, does `reset breaker` in the Robot Charging Bay) and comes back to search that room again.
 - **Confront** every secret, once every room has been searched.
 - **Re-read** `notebook 9` to `notebook 12` (confessions change stories), `notebook guests` and `accuse`, then solve.
 - If the cake clues disagree, it **plates** the top suspect in the Kitchen. If one clue is the only thing against the top suspect, it **analyzes** that clue in the Underground Lab. Then it solves again.
@@ -37,7 +38,7 @@ It walks to the nearest room with something left to do, does it, and repeats:
 
 Sometimes a search turns up one of the Phantom's black calling cards. It isn't a finding and has nothing to do with the case, but you keep it if you solve the case in time, and three of them summon a secret boss. Gumshoe:
 
-- says when it finds one, and `gum status` and the solve report remind you there's one on this case;
+- picks it up (`get card`) and says when it finds one, and `gum status` and the solve report remind you there's one on this case;
 - counts it when the case closes solved (not when it goes cold) and says when you have three;
 - reads the count from `casebook` (*Calling cards: 1*), so type `casebook` once after installing to start from your real count.
 
