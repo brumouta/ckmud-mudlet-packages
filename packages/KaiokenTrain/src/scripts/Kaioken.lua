@@ -47,6 +47,11 @@ local function do_kaioken()
         local mkaioken = Player.MKaioken or 0
         local goal = kaio.max - 8
         local target = math.min(kaio.max, mkaioken + room())
+        -- the last stretch: once the room reaches the ceiling, train at the ceiling itself
+        -- (getmax says the game allows it) until mastery is 8 below it
+        local extra = math.max(0, math.floor(tonumber(ck:constant("kaioken.extra_room")) or 0))
+        local atCeiling = mkaioken + 9 + extra >= kaio.max
+        if atCeiling then target = kaio.max end
 
         if Player.Kaioken >= target then kaio.asked = nil end
 
@@ -71,7 +76,7 @@ local function do_kaioken()
         elseif Player.Kaioken < target then
             -- Raise the kaioken. Asked for this level three times and still
             -- not there: the game won't allow it, so ask for one less next time.
-            if kaio.asked == target and (kaio.misses or 0) >= 2 and target > mkaioken + 9 then
+            if not atCeiling and kaio.asked == target and (kaio.misses or 0) >= 2 and target > mkaioken + 9 then
                 kaio.room_cap = target - mkaioken - 10
                 kaio.asked, kaio.misses = nil, 0
                 echo(f "Kaioken {target} didn't hold, training {target - 1} instead.\n")

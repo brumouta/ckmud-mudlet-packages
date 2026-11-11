@@ -551,6 +551,30 @@ require(PKG):set_constant("kaioken.extra_room", 2)
 pcall(toggle_fn)
 check(KT.API.Mode:is(KT.API.Mode.Interactive), "toggled off")
 
+-- the last stretch: max 128, train at 128 until mastery reaches 120, never stepping down
+realprint("=== PHASE: last stretch ===")
+KT.Player.MKaioken = 117
+KT.Player.Kaioken = 0
+KT.Player.Fatigue = 1000
+pcall(toggle_fn)
+matches = { "Syntax: Kaioken 1-128", "128" }
+pcall(TEMP_TRIGGERS[#TEMP_TRIGGERS].func)
+KT.API.Kaioken.room_cap = 0   -- an earlier step-down must not hold it back now
+local seen = {}
+for _ = 1, 5 do SENT = {}; tick(); for _, c in ipairs(SENT) do seen[c] = true end end
+check(seen["kaioken 128"] and not seen["kaioken 127"] and not seen["kaioken 125"],
+  "near the ceiling: trains at kaioken 128 and never steps down")
+KT.Player.MKaioken = 119
+SENT = {}; tick()
+check(table.contains(SENT, "kaioken 128"), "mastery 119: still kaioken 128")
+KT.Player.MKaioken = 120
+SENT = {}; tick()
+check(table.contains(SENT, "kaioken getmax"), "mastery 120 (128 - 8): checks the ceiling before stopping")
+matches = { "Syntax: Kaioken 1-128", "128" }
+pcall(TEMP_TRIGGERS[#TEMP_TRIGGERS].func)
+SENT = {}; tick()
+check(table.contains(SENT, "kaioken 120") and KT.API.Mode:is(KT.API.Mode.Interactive), "mastered at 120: stops")
+
 ---------------------------------------------------------------------------
 -- 7. Config aliases
 ---------------------------------------------------------------------------

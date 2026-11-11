@@ -40,6 +40,10 @@ behaviour with `KT constant kaioken.extra_room=0`.
 If the game won't hold the level it asks for (it asks three times), it steps
 down one level for the rest of the session and says so.
 
+The last stretch is different: once mastery + 9 + `kaioken.extra_room` reaches
+your ceiling (`kaioken getmax`, e.g. 128), it trains at the ceiling itself and
+never steps down, until mastery is 8 below it (120), then stops.
+
 ## Aliases
 
 `kaioken train` - toggle kaioken auto training
