@@ -108,6 +108,7 @@ function G.newCase()
   G.gravityShut, G.flashlight = false, false
   G.portraits, G.plaque, G.code = {}, nil, nil
   G.inspected, G.logsRead, G.plated, G.analyzed = false, {}, nil, nil
+  G.plateTried, G.analyzeTried = false, false
   G.akw = { suspects = {}, weapons = {}, rooms = {}, format = nil }  -- keywords from `accuse`
   G.tries = {}
 end
@@ -434,6 +435,14 @@ local function guestsLine(l)
     addGuest(name)
     return
   end
+  -- after a plate the table says "Cake: Yajirobe ate cake. Nobody else's plate is known."
+  local cp, cw = l:match("^Cake: (.-) (ate) cake")
+  if not cp then cp, cw = l:match("^Cake: (.-) (refused) ") end
+  if cp and cp ~= "only Mrs. Briefs' stand-in knows." then
+    G.traits[cp] = G.traits[cp] or {}
+    G.traits[cp].cake = cw
+    G.plated = cp
+  end
   local wit = l:match("^Witnesses: (.-)%. Never")
   if wit then
     G.witnesses = setOf(split(wit))
@@ -661,12 +670,16 @@ function G.line(l)
   end
 
   -- the cake and the analyzer
-  local plated, how = l:match("checks her list: (.-) (%a+) the cake")
+  -- "Yamcha refused the cake." / "Yajirobe ate a slice of cake."
+  local plated, how = l:match("checks her list: (.-) (refused) ")
+  if not plated then plated, how = l:match("checks her list: (.-) (ate) ") end
   if plated then
     G.traits[plated] = G.traits[plated] or {}
-    G.traits[plated].cake = how == "refused" and "refused" or "ate"
+    G.traits[plated].cake = how
     G.plated = plated
   end
+  -- the one peek is used up, whatever this script knows
+  if l:find("One peek at my list per party") then G.plated = G.plated or true end
   local an, verdict = l:match("over evidence #(%d+): (%u+)")
   if an then
     local e = G.evidence[tonumber(an)]
@@ -1147,13 +1160,18 @@ finish = function()
     function(nxt) cmd("accuse", { { "@accuse", "ok" } }, G.stepTimeout, function() nxt() end) end,
   }, function()
     local r = G.solve()
+    -- each check at most once a case, so an answer this script misreads can't loop
+    if r.plate and G.plateTried then r.plate = nil end
+    if r.analyze and G.analyzeTried then r.analyze = nil end
     if r.plate then
+      G.plateTried = true
       return G.walk("Kitchen", function(ok)
         if not ok then return G.done(r) end
-        cmd("plate " .. guestKw(r.plate), { { "checks her list", "ok" } }, G.stepTimeout, function() finish() end)
+        cmd("plate " .. guestKw(r.plate), { { "checks her list", "ok" }, { "One peek at my list", "ok" } }, G.stepTimeout, function() finish() end)
       end)
     end
     if r.analyze and G.open.lab then
+      G.analyzeTried = true
       return G.walk("Underground Lab", function(ok)
         if not ok then return G.done(r) end
         cmd("analyze " .. r.analyze, { { "over evidence #", "ok" } }, G.stepTimeout, function() finish() end)
@@ -1162,6 +1180,8 @@ finish = function()
     G.done(r)
   end)
 end
+
+G.finish = function() return finish() end
 
 function G.done(r)
   G.running = false

@@ -480,4 +480,42 @@ ok(G.capsules.Conservatory and G.result and G.result.line == "accuse piccolo sta
   "...and solves from what it just read: " .. tostring(G.result and G.result.line))
 respond = nil
 
+-- The plate, as other cases word it, and a plate that's already used up ---------------------------
+G.newCase(); G.room = nil
+feed({ "Mrs. Briefs' stand-in checks her list: Yajirobe ate a slice of cake." })
+ok(G.traits.Yajirobe.cake == "ate" and G.plated == "Yajirobe", "\"Yajirobe ate a slice of cake\" is read as a plate")
+G.newCase()
+feed({ "========================================", "THE GUESTS, AS ANYONE CAN SEE THEM", "========================================",
+  "  Yajirobe       flaring heavy dark", "Cake: Yajirobe ate cake. Nobody else's plate is known." })
+ok(G.traits.Yajirobe.cake == "ate" and G.plated == "Yajirobe", "...and so is the guest table's Cake line after a plate")
+G.newCase()
+feed({ "A stand-in of Mrs. Briefs tells you, 'One peek at my list per party, dear. I am a hostess, not a tattletale.'" })
+ok(G.plated, "\"One peek at my list per party\": the plate is used up")
+
+-- The Yamcha case just before the plate, with a Mrs. Briefs who won't answer: it must plate once, not loop
+G.newCase(); G.room = "Kitchen"
+for _, k in ipairs({ "intro", "notebook-start", "guests", "first-statements", "chart", "logs", "found", "inspect",
+  "portraits", "confront", "final-statements", "notebook-end", "accuse" }) do feed(S[k]) end
+G.analyses = 0
+respond = function(c)
+  local t = tonumber(c:match("^notebook (%d+)$") or "")
+  if t then
+    local block, which = {}, 0
+    for _, l in ipairs(S["final-statements"]) do
+      if l:find("^STATEMENTS ABOUT") then which = which + 1 end
+      if which == t - 8 then block[#block + 1] = l end
+    end
+    return later(block)
+  end
+  if c == "notebook guests" then return later(S.guests) end
+  if c == "accuse" then return later(S.accuse) end
+  if c:find("^plate") then return later({ "A stand-in of Mrs. Briefs tells you, 'One peek at my list per party, dear. I am a hostess, not a tattletale.'" }) end
+end
+sent = {}; G.running = true; G.gen = G.gen + 1
+G.finish()
+wait(120)
+local plates = 0 for _, c in ipairs(sent) do if c:find("^plate") then plates = plates + 1 end end
+ok(plates == 1 and not G.running and G.result and G.result.line, ("plates once, then names it (%d plates, %d commands)"):format(plates, #sent))
+respond = nil
+
 print("gum: ALL PASSED")
