@@ -12,6 +12,19 @@ local State = ck:get_table("API.State")
 local Mode = ck:get_table("API.Mode")
 
 ck:define_constant("kaioken.drink_cmd", "drink tears")
+-- Mastery can only climb to 8 below the kaioken level in use, so training at
+-- mastery + 9 leaves room for exactly one point. Accelerated Mastery (pshop
+-- mastery) can land 2 or 3 points in one gain; this many extra levels of
+-- kaioken keep room for them. 0 = the old mastery + 9.
+ck:define_constant("kaioken.extra_room", 2)
+
+-- How far above mastery to train: 9, plus the extra room. If the game won't
+-- hold a level that high, the room shrinks for the rest of the session.
+local function room()
+    local extra = tonumber(ck:constant("kaioken.extra_room")) or 0
+    if kaio.room_cap then extra = math.min(extra, kaio.room_cap) end
+    return 9 + math.max(0, math.floor(extra))
+end
 
 local function exit()
     -- Delete timer
@@ -33,7 +46,9 @@ local function do_kaioken()
     if State:is(State.NORMAL) then
         local mkaioken = Player.MKaioken or 0
         local goal = kaio.max - 8
-        local target = math.min(kaio.max, mkaioken + 9)
+        local target = math.min(kaio.max, mkaioken + room())
+
+        if Player.Kaioken >= target then kaio.asked = nil end
 
         if mkaioken >= goal then
             -- The usable kaioken ceiling grows as the character progresses,
@@ -49,11 +64,23 @@ local function do_kaioken()
             end
         elseif Player.Fatigue / Player.MaxFatigue < 0.20 then
             State:set(State.REST)
+            kaio.asked = nil
             send("kaioken")
             send("land") -- can't sleep while flying
             send("sleep")
         elseif Player.Kaioken < target then
-            -- Raise the kaioken
+            -- Raise the kaioken. Asked for this level three times and still
+            -- not there: the game won't allow it, so ask for one less next time.
+            if kaio.asked == target and (kaio.misses or 0) >= 2 and target > mkaioken + 9 then
+                kaio.room_cap = target - mkaioken - 10
+                kaio.asked, kaio.misses = nil, 0
+                echo(f "Kaioken {target} didn't hold, training {target - 1} instead.\n")
+                target = target - 1
+            elseif kaio.asked == target then
+                kaio.misses = (kaio.misses or 0) + 1
+            else
+                kaio.asked, kaio.misses = target, 0
+            end
             send(f "kaioken {target}")
         elseif Player.Thirst < 40 then
             send(ck:constant("kaioken.drink_cmd"))
@@ -71,6 +98,7 @@ local function enter()
     -- whole training session (killed in exit) because the ceiling grows as
     -- the character progresses and gets re-checked whenever the goal is hit.
     kaio.confirmed_done = nil
+    kaio.room_cap, kaio.asked, kaio.misses = nil, nil, 0
     table.insert(kaio.triggers, tempRegexTrigger("^Syntax: Kaioken 1-([0-9]+)$",
         function()
             kaio.max = tonumber(matches[2])

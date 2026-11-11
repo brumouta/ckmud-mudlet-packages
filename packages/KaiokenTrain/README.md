@@ -28,6 +28,18 @@ isolation chamber, and keep a drink source in your inventory (it sends
 `KT constant kaioken.drink_cmd="drink flask"`). Run it again to
 turn it off.
 
+### Room for Accelerated Mastery
+
+Kaioken mastery can only climb to 8 below the kaioken level you're using, so
+the old mastery + 9 left room for one point per gain. With Accelerated Mastery
+(`pshop mastery`) one gain can land 2 or 3 points, so the bot now trains at
+mastery + 9 + `kaioken.extra_room` (default 2, i.e. mastery + 11). A higher
+level drains fatigue faster, so without the perk set it back to the old
+behaviour with `KT constant kaioken.extra_room=0`.
+
+If the game won't hold the level it asks for (it asks three times), it steps
+down one level for the rest of the session and says so.
+
 ## Aliases
 
 `kaioken train` - toggle kaioken auto training

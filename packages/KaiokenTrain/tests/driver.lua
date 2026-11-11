@@ -373,10 +373,10 @@ KT.Player.Kaioken = 5
 SENT = {}
 ok, err = tick()
 check(ok, "tick raise" .. (ok and "" or (" -- " .. tostring(err))))
-check(table.contains(SENT, "kaioken 19"), "raised kaioken toward MKaioken+9 (sent: " .. table.concat(SENT, " | ") .. ")")
+check(table.contains(SENT, "kaioken 21"), "raised kaioken toward MKaioken+11 (sent: " .. table.concat(SENT, " | ") .. ")")
 
 -- at target, thirsty -> drink
-KT.Player.Kaioken = 19
+KT.Player.Kaioken = 21
 KT.Player.Thirst = 20
 SENT = {}
 ok, err = tick()
@@ -449,8 +449,8 @@ check(KT.API.Kaioken.max == 40, "kaio.max captured as 40")
 
 SENT = {}
 ok, err = tick()
-check(ok, "tick raise toward 33" .. (ok and "" or (" -- " .. tostring(err))))
-check(table.contains(SENT, "kaioken 33"), "raised kaioken to MKaioken+9 under cap 40")
+check(ok, "tick raise toward 35" .. (ok and "" or (" -- " .. tostring(err))))
+check(table.contains(SENT, "kaioken 35"), "raised kaioken to MKaioken+11 under cap 40")
 
 -- mastery reaches the stale goal (40-8=32) but the ceiling has grown since
 KT.Player.Kaioken = 33
@@ -471,7 +471,7 @@ check(KT.API.Kaioken.max == 48, "kaio.max refreshed to 48")
 SENT = {}
 ok, err = tick()
 check(ok, "tick continue past 32" .. (ok and "" or (" -- " .. tostring(err))))
-check(table.contains(SENT, "kaioken 41"), "training continues toward the new ceiling (sent: " .. table.concat(SENT, " | ") .. ")")
+check(table.contains(SENT, "kaioken 43"), "training continues toward the new ceiling (sent: " .. table.concat(SENT, " | ") .. ")")
 
 -- mastery reaches the new goal (48-8=40) and this time the ceiling is confirmed
 KT.Player.Kaioken = 41
@@ -504,6 +504,52 @@ ok, err = tick()
 check(ok, "tick when maxed" .. (ok and "" or (" -- " .. tostring(err))))
 check(KT.API.Mode:is(KT.API.Mode.Interactive), "exits to Interactive when already maxed")
 check(TIMERS["KT:Kaioken"] == nil, "no timer left when already maxed")
+
+
+---------------------------------------------------------------------------
+-- 8. Room for Accelerated Mastery: extra_room and the fallback
+---------------------------------------------------------------------------
+realprint("=== PHASE: extra room ===")
+check(require(PKG):constant("kaioken.extra_room") == 2, "extra_room defaults to 2")
+KT.Player.MKaioken = 20
+KT.Player.Kaioken = 0
+KT.Player.Fatigue = 1000
+SENT = {}
+ok, err = pcall(toggle_fn); check(ok, "toggle on for room" .. (ok and "" or (" -- " .. tostring(err))))
+matches = { "Syntax: Kaioken 1-120", "120" }
+ok, err = pcall(TEMP_TRIGGERS[#TEMP_TRIGGERS].func)
+SENT = {}
+ok, err = tick(); check(ok, "tick room" .. (ok and "" or (" -- " .. tostring(err))))
+check(table.contains(SENT, "kaioken 31"), "trains at mastery + 11 by default")
+
+require(PKG):set_constant("kaioken.extra_room", 0)
+SENT = {}
+ok, err = tick(); check(ok, "tick room 0" .. (ok and "" or (" -- " .. tostring(err))))
+check(table.contains(SENT, "kaioken 29"), "extra_room 0 is the old mastery + 9")
+
+require(PKG):set_constant("kaioken.extra_room", 3)
+-- the game won't hold 32: three asks, then it steps down to 31
+for _ = 1, 3 do SENT = {}; tick() end
+check(table.contains(SENT, "kaioken 32"), "asked for mastery + 12 three times")
+SENT = {}
+ok, err = tick(); check(ok, "tick fallback" .. (ok and "" or (" -- " .. tostring(err))))
+check(table.contains(SENT, "kaioken 31"), "steps down when the level doesn't hold (sent: " .. table.concat(SENT, " | ") .. ")")
+KT.Player.Kaioken = 31
+SENT = {}
+tick()
+check(not table.contains(SENT, "kaioken 32"), "remembers the lower room")
+-- mastery gains 3 at once: the room keeps up
+KT.Player.MKaioken = 23
+SENT = {}
+tick()
+check(table.contains(SENT, "kaioken 34"), "follows a 3-point gain with the same room")
+-- a lagging prompt doesn't count as a refusal once the level is reached
+KT.Player.Kaioken = 34
+tick()
+check(KT.API.Kaioken.asked == nil, "reaching the level clears the pending ask")
+require(PKG):set_constant("kaioken.extra_room", 2)
+pcall(toggle_fn)
+check(KT.API.Mode:is(KT.API.Mode.Interactive), "toggled off")
 
 ---------------------------------------------------------------------------
 -- 7. Config aliases
