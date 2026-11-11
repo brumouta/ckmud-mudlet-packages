@@ -16,7 +16,8 @@ local Room = ck:get_table("Room")
 local Target = ck:get_table("Target")
 
 ck:define_feature("learning.use_zeta", false)
-ck:define_constant("learning.return_to_target", "")
+-- learning.return_to_target is gone: the way back comes from the path autolearn is started with
+ck:get_table("Constants")["learning.return_to_target"] = nil
 ck:define_constant("learning.recall_isolation", "")
 
 -- The way back to the target, worked out from the path you start with: crecall, then the path
@@ -49,9 +50,9 @@ function learn.return_from(path)
     return table.concat(back, ";")
 end
 
--- The path back to the target: from the path you started with, else the constant
+-- The path back to the target, from the path autolearn was started with ("" when there's none)
 function learn:return_path()
-    return self.derived_return or ck:constant("learning.return_to_target") or ""
+    return self.derived_return or ""
 end
 
 local function aoe_ok()
@@ -255,7 +256,7 @@ local function enter()
     learn.gravity = 0
     learn.warned_no_return = nil
     learn.teleported = nil
-    -- Always armed: find_target no-ops while return_to_target is unset, and
+    -- Always armed: find_target no-ops while there's no way back, and
     -- this keeps the return flow working if the constant is set mid-session.
     enableTrigger("autolearn no target")
 
@@ -331,14 +332,14 @@ end
 
 function learn:use_recall_rest()
     -- Rest by recalling to an isolation tank: learning.recall_isolation gets
-    -- there from any room, learning.return_to_target gets back afterwards.
+    -- there from any room, the way back (from the start path) gets back afterwards.
     -- Both are needed, since a recall path cannot be walked in reverse.
     return ck:constant("learning.recall_isolation") ~= "" and learn:return_path() ~= ""
 end
 
 function learn:can_return()
     -- Portal/instant training teleports the character to king kai; the way
-    -- back is the 'autolearn no target' trigger sending return_to_target.
+    -- back is the 'autolearn no target' trigger walking the way back.
     -- Only attempt those skills when that path is configured, otherwise the
     -- character ends up stranded in a room with no mobs.
     local ok = self:return_path() ~= ""
@@ -446,7 +447,7 @@ function learn:toggle(target, path)
         self.derived_return = path and learn.return_from(path) or nil
         if path and not self.derived_return then
             cecho("<yellow>[ Autolearn ] - Can't walk '" .. path .. "' backwards (only directions can be): " ..
-                "using learning.return_to_target to get back.\n")
+                "no way back, so no portal/instant training and no walking back.\n")
         end
     end
     if Mode:is(Mode.Learning) then
@@ -458,8 +459,8 @@ function learn:toggle(target, path)
             if is_android then
                 print("Learning mode requires a target argument!")
             else
-                print("Learning mode requires target and a speedwalk to rest" ..
-                    " (or set learning.recall_isolation and learning.return_to_target)")
+                print("Learning mode requires a target and the path from it to your rest spot," ..
+                    " e.g. autolearn elder n;n;n;n;w")
             end
         else
             print("Learning Mode Enabled!!!")

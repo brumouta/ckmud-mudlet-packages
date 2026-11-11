@@ -21,30 +21,26 @@ there disable MSSP and GMCP.
 
 ## Usage
 
-`autolearn <target> <speedwalk_to_isolation>` - Start the auto learn process using
-<target> to train every skill until its mastered. Androids can ignore the
-speedwalk argument. Run `autolearn` again to turn it off.
+`autolearn <target> <path>` - Start the auto learn process using <target> to
+train every skill until it's mastered. `<path>` is the walk from the target to
+your rest spot (an isolation tank), e.g. `autolearn elder n;n;n;n;w`. Androids
+can leave it out. Run `autolearn` again to turn it off.
 
-The following constants should be used by organics
+**The way back comes from that path:** `crecall`, then the path backwards with
+every step reversed. `autolearn elder n;n;n;n;w` walks back with
+`crecall;e;s;s;s;s`, and prints it when it starts. It's used after resting,
+after training portal/instant transmission (they teleport you to king kai), and
+when the target isn't there. A path with a step that isn't a direction
+(`enter vort`) can't be walked back, so then portal/instant aren't trained.
 
-1. `learning.recall_isolation` this will get you to an isolation tank from any location on the mud. Mine is "crecall;w"
-2. `learning.return_to_target` is only needed if you start without a path (see below)
+The path takes `;`, commas, spaces or counts (`n;n;n;n;w`, `n n n n w`,
+`4n w`). Type it with a single `;`: Mudlet splits what you type at `;;` before
+the alias sees it, so `autolearn elder n;;n;;w` would send the `n`s as moves.
 
-Set them with e.g. `AL constant learning.recall_isolation="crecall;w"`
-
-**The way back is worked out from the path you start with:** `crecall`, then
-your path backwards with every step reversed. `autolearn elder n;n;n;n;w`
-walks back with `crecall;e;s;s;s;s`. The path takes `;`, commas,
-spaces or counts (`n;n;n;n;w`, `n n n n w`, `4n w`). Type it with a single `;`:
-Mudlet splits what you type at `;;` before the alias sees it, so
-`autolearn elder n;;n;;w` would send the `n`s as moves.
-
-It's used to walk back after resting, after training portal/instant
-transmission (they teleport you to king kai), and when the target isn't
-there. If you start without a path, `learning.return_to_target` is used
-instead (e.g. `AL constant learning.return_to_target="crecall;s;s;s;s"`).
-`learning.recall_isolation` is only for getting to the tank to rest; without it
-the bot rests by speedwalking the path you gave and walking it back.
+To rest, the bot walks the path to the tank and back. Or set
+`learning.recall_isolation` to a way to the tank that works from any room
+(mine is `crecall;w`) and it uses that instead:
+`AL constant learning.recall_isolation="crecall;w"`.
 
 The bot needs to know your skills and race: it sends `learn` and `score` when
 it sees the MOTD, and again when you toggle `autolearn` on. If your race shows

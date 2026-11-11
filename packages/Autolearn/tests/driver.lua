@@ -580,12 +580,11 @@ end
 realprint("=== PHASE: no-target + toggle off ===")
 ok = pcall(function() AL.ck = nil end)
 local set_const = require(PKG)
-set_const:set_constant("learning.return_to_target", "crecall;n;n")
 SENT = {}
 multimatches = { {}, { "learn troll who?", "learn troll" } }
 local nt_fn = load("AL.API.Learning:find_target(multimatches[2][2])")
 ok, err = pcall(nt_fn); check(ok, "no-target trigger script" .. (ok and "" or (" -- " .. tostring(err))))
-check(table.contains(SENT, "crecall"), "return_to_target commands sent (sent: " .. table.concat(SENT, " | ") .. ")")
+check(table.contains(SENT, "crecall"), "the way back (from the start path) sent (sent: " .. table.concat(SENT, " | ") .. ")")
 
 matches = { "autolearn", nil, nil }
 ok, err = pcall(alias_fn); check(ok, "autolearn toggle off" .. (ok and "" or (" -- " .. tostring(err))))
@@ -675,7 +674,6 @@ AL.Player.GK = 500
 AL.Player.Ki = 1000
 
 local ck_mod = require(PKG)
-ck_mod:set_constant("learning.return_to_target", "")
 
 local function sent_instant()
   for _, c in ipairs(SENT) do
@@ -708,8 +706,11 @@ check(ok, "tick instant unconfigured again" .. (ok and "" or (" -- " .. tostring
 check(not sent_instant(), "still no instant teleport without return path")
 check(warnings_logged() == 1, "skip warning printed only once")
 
--- configure the way back mid-session -> training may proceed
-ck_mod:set_constant("learning.return_to_target", "crecall;n;n")
+-- start again with a path that can be walked back -> training may proceed
+matches = { "autolearn", nil, nil }
+pcall(alias_fn)
+matches = { "autolearn troll n;n;e", "troll", "n;n;e" }
+ok, err = pcall(alias_fn); check(ok, "autolearn again with a reversible path" .. (ok and "" or (" -- " .. tostring(err))))
 SENT = {}
 ok, err = pcall(TIMERS["AL:Learning"].func)
 check(ok, "tick instant configured" .. (ok and "" or (" -- " .. tostring(err))))
@@ -763,18 +764,21 @@ AL.Player.Skills.Learned["warp"] = true
 AL.Player.Skills.Mastered["warp"] = true
 local ck_mod2 = require(PKG)
 ck_mod2:set_constant("learning.recall_isolation", "")
-ck_mod2:set_constant("learning.return_to_target", "")
 
--- organic with no speedwalk and no recall config: refused
+-- organic with no path: refused
 matches = { "autolearn troll", "troll", nil }
 ok, err = pcall(alias_fn); check(ok, "toggle without path, unconfigured" .. (ok and "" or (" -- " .. tostring(err))))
 check(AL.API.Mode:is(AL.API.Mode.Interactive), "refused without speedwalk or recall config")
 
--- both constants set: the speedwalk argument becomes optional
+-- recall_isolation set but still no path: refused, there'd be no way back
 ck_mod2:set_constant("learning.recall_isolation", "recall;s;w")
-ck_mod2:set_constant("learning.return_to_target", "crecall;n;n")
-ok, err = pcall(alias_fn); check(ok, "toggle without path, configured" .. (ok and "" or (" -- " .. tostring(err))))
-check(AL.API.Mode:is(AL.API.Mode.Learning), "learning mode on without speedwalk argument")
+ok, err = pcall(alias_fn); check(ok, "toggle without path, recall set" .. (ok and "" or (" -- " .. tostring(err))))
+check(AL.API.Mode:is(AL.API.Mode.Interactive), "still refused without a path: no way back")
+
+-- with a path: rests through recall_isolation, walks back by the path
+matches = { "autolearn troll n;n", "troll", "n;n" }
+ok, err = pcall(alias_fn); check(ok, "toggle with path, recall set" .. (ok and "" or (" -- " .. tostring(err))))
+check(AL.API.Mode:is(AL.API.Mode.Learning), "learning mode on")
 
 -- nothing left to train and not rested -> recall to isolation and sleep
 AL.Player.Ki = 500
@@ -787,13 +791,13 @@ check(table.contains(SENT, "recall") and table.contains(SENT, "w") and table.con
 check(#SPEEDWALKS == 0, "no speedwalk used for recall rest")
 check(AL.API.State:is(AL.API.State.REST), "state is REST after recall rest")
 
--- rested -> wake and walk back via return_to_target
+-- rested -> wake and walk back by the path
 AL.Player.Ki = 1000
 SENT = {}
 ok, err = pcall(TIMERS["AL:Learning"].func)
 check(ok, "tick recall wake" .. (ok and "" or (" -- " .. tostring(err))))
 check(table.contains(SENT, "wake") and table.contains(SENT, "crecall"),
-  "woke and returned via return_to_target (sent: " .. table.concat(SENT, " | ") .. ")")
+  "woke and walked back by the path (sent: " .. table.concat(SENT, " | ") .. ")")
 check(AL.API.State:is(AL.API.State.NORMAL), "state NORMAL after recall wake")
 
 matches = { "autolearn", nil, nil }
@@ -819,8 +823,7 @@ do
   check(L.return_from("n;n;n;n;w") == "crecall;e;s;s;s;s", "learning.recall_isolation plays no part")
   ck_mod2:set_constant("learning.recall_isolation", "crecall;w")
 
-  -- started with a path and no return_to_target constant: rests by recall, walks back by the path
-  ck_mod2:set_constant("learning.return_to_target", "")
+  -- started with a path: rests by recall, walks back by the path
   matches = { "autolearn troll n;n;n;n;w", "troll", "n;n;n;n;w" }
   ok, err = pcall(alias_fn); check(ok, "toggle with a path" .. (ok and "" or (" -- " .. tostring(err))))
   check(AL.API.Mode:is(AL.API.Mode.Learning), "learning on")
@@ -835,17 +838,14 @@ do
   check(ok and table.concat(SENT, ";"):find("wake;crecall;e;s;s;s;s", 1, true),
     "wakes and walks back crecall;e;s;s;s;s (sent: " .. table.concat(SENT, " | ") .. ")")
 
-  -- the constant isn't used while a derived path exists
-  ck_mod2:set_constant("learning.return_to_target", "crecall;n;n")
-  check(L:return_path() == "crecall;e;s;s;s;s", "the derived path beats the constant")
   matches = { "autolearn", nil, nil }
   ok, err = pcall(alias_fn); check(ok, "toggle off" .. (ok and "" or (" -- " .. tostring(err))))
-  -- started without a path: the constant again
+  -- started without a path: there's no way back, so it doesn't start
   matches = { "autolearn troll", "troll", nil }
   ok, err = pcall(alias_fn)
-  check(ok and L:return_path() == "crecall;n;n", "no path given: falls back to learning.return_to_target")
-  matches = { "autolearn", nil, nil }
-  pcall(alias_fn)
+  check(ok and AL.API.Mode:is(AL.API.Mode.Interactive) and L:return_path() == "", "no path given: refused, no way back")
+  local names = table.concat(require(PKG):constant_names(), ",")
+  check(not names:find("return_to_target", 1, true), "learning.return_to_target is gone from AL constants")
 end
 
 ---------------------------------------------------------------------------
