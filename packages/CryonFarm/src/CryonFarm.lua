@@ -36,7 +36,7 @@ local function walk(list) for _, m in ipairs(moves(list)) do add(m) end end
 
 add({ send = "it innkeeper", title = "Blizzards Edge Inn", label = "the Inn" })
 walk({ { "s", CW }, { "e", CW }, { "e", CW }, { "s", CW }, { "s", CW }, { "e", CW }, { "e", CW }, { "e", FP }, { "e", FP },
-       { "n", "snow covered path" }, { "n", "Zero Nexus Research Facility" }, { "n", RA }, { "n", RA }, { "n", RA }, { "n", RA } })
+       { "n", "snow covered path" }, { "n", "Zero Nexus Research Facility" }, { "n", RA }, { "n", RA }, { "n", RA }, { "n", RA }, { "n", RA } })
 add({ title = HH, label = "the access card opens the Hidden Hallway" })        -- no command: it moves you
 walk({ { "e", HH }, { "e", HH }, { "e", HH }, { "e", HL }, { "s", HL }, { "s", HL }, { "e", HL }, { "e", HL }, { "e", HL },
        { "n", HL }, { "n", HL }, { "e", "Incubation Chamber" } })
@@ -100,13 +100,17 @@ end
 
 -- ---------------------------------------------------------------- reading the game
 local prev
+C.arrivals = {}
 function C.line(l)
   l = l:gsub("%s+$", "")
   -- a room: its title is the line before "Status:"
   if l:find("^Status:  ") and prev and prev ~= "" then
     C.room = prev:gsub("^%s+", "")
     C.fieldHere = false
+    C.arrivals[#C.arrivals + 1] = C.room
+    C.roomSeq = (C.roomSeq or 0) + 1
     tempTimer(0.3, function() check("room", true) end)
+    if C.batchN and #C.arrivals == C.batchN then tempTimer(0.3, function() check("batch", true) end) end
   end
   if l:find("^An Electromagnetic Field is blocking the path") then C.fieldHere = true end
   if l:find("gives you Confession of Cryon Frigidus") then C.got = true end
@@ -125,20 +129,50 @@ end
 local BLOCKED = "^Alas, you cannot go that way"
 
 local nextStep
-local function arrive(step)
+local function arrive(step, since)
+  since = since or C.roomSeq or 0     -- only a room shown after this counts (not one from the last batch)
   local pats = { { "@room", "room" }, { BLOCKED, "blocked" }, { "^You can't do that while fighting", "fighting" },
                  { "^You are fighting", "fighting" } }
   expect(pats, C.stepTimeout, function(k)
+    if k == "room" and (C.roomSeq or 0) <= since then return arrive(step, since) end
     if k == "room" and C.room == step.title then return nextStep() end
     if k == "room" then return stop("Expected " .. step.title .. " but ended up in " .. tostring(C.room)) end
     stop("Couldn't reach " .. step.title .. " (" .. k .. ")")
   end)
 end
 
+-- A run of moves goes out at once (like n;;n;;e); every room that comes back is checked
+local function walkBatch()
+  local from, dirs, titles = C.step, {}, {}
+  while C.ROUTE[from + #dirs] and C.ROUTE[from + #dirs].dir do
+    local m = C.ROUTE[from + #dirs]
+    dirs[#dirs + 1], titles[#titles + 1] = m.dir, m.title
+  end
+  C.arrivals, C.batchN = {}, #dirs
+  local args = {}
+  for _, d in ipairs(dirs) do args[#args + 1] = d end
+  args[#args + 1] = false
+  local unpackArgs = unpack or table.unpack
+  sendAll(unpackArgs(args))
+  expect({ { "@batch", "done" }, { BLOCKED, "blocked" }, { "^You can't do that while fighting", "fighting" },
+           { "^You are fighting", "fighting" } }, C.stepTimeout + #dirs * 0.5, function(k)
+    C.batchN = nil
+    for i, want in ipairs(titles) do
+      if C.arrivals[i] ~= want then
+        C.step = from + i - 1
+        if k ~= "done" and not C.arrivals[i] then return stop("Couldn't reach " .. want .. " (" .. k .. ")") end
+        return stop("Expected " .. want .. " but ended up in " .. tostring(C.arrivals[i]))
+      end
+    end
+    C.step = from + #dirs - 1
+    nextStep()
+  end)
+end
+
 local function runStep(step)
   if step.label then info("cyan", step.label) end
   if step.send then send(step.send, false); return arrive(step) end
-  if step.dir then send(step.dir, false); return arrive(step) end
+  if step.dir then return walkBatch() end
   if step.title then return arrive(step) end
 
   if step.field then

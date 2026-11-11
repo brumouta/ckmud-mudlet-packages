@@ -7,12 +7,21 @@ function tempTimer(d, f) nextId = nextId + 1; timers[nextId] = { at = now + d, f
 function killTimer(i) timers[i] = nil end
 local respond
 function send(c) sent[#sent + 1] = c; if respond then respond(c) end end
+local batches = 0
+function sendAll(...)
+  local args = { ... }
+  batches = batches + 1
+  for _, c in ipairs(args) do if type(c) == "string" then send(c) end end
+end
 local function ok(cond, what) assert(cond, what); print("OK  " .. what) end
 local function wait(secs)
   local target = now + secs
   while true do
     local best, id
-    for i, t in pairs(timers) do if t.at <= target and (not best or t.at < best.at) then best, id = t, i end end
+    -- earliest first; timers set for the same moment run in the order they were set, like the server's lines
+    for i, t in pairs(timers) do
+      if t.at <= target and (not best or t.at < best.at or (t.at == best.at and i < id)) then best, id = t, i end
+    end
     if not best then break end
     timers[id] = nil; now = best.at; best.f()
   end
@@ -28,7 +37,7 @@ local UP = {
   { "s", "Commerce Way" }, { "e", "Commerce Way" }, { "e", "Commerce Way" }, { "s", "Commerce Way" }, { "s", "Commerce Way" },
   { "e", "Commerce Way" }, { "e", "Commerce Way" }, { "e", "Frost Plaza" }, { "e", "Frost Plaza" }, { "n", "snow covered path" },
   { "n", "Zero Nexus Research Facility" }, { "n", "Research Facility Atrium" }, { "n", "Research Facility Atrium" },
-  { "n", "Research Facility Atrium" }, { "n", "Research Facility Atrium" },
+  { "n", "Research Facility Atrium" }, { "n", "Research Facility Atrium" }, { "n", "Research Facility Atrium" },
   { "e", "Hidden Hallway" }, { "e", "Hidden Hallway" }, { "e", "Hidden Hallway" }, { "e", "Hidden Laboratory" },
   { "s", "Hidden Laboratory" }, { "s", "Hidden Laboratory" }, { "e", "Hidden Laboratory" }, { "e", "Hidden Laboratory" },
   { "e", "Hidden Laboratory" }, { "n", "Hidden Laboratory" }, { "n", "Hidden Laboratory" }, { "e", "Incubation Chamber" },
@@ -100,14 +109,14 @@ respond = function(c)
     if not nxt or nxt[1] ~= c then W.walls = W.walls + 1; return out({ "Alas, you cannot go that way..." }) end
     W.up = W.up + 1
     show(nxt[2])
-    if W.up == 15 then
+    if W.up == 16 then
       out({ "You swipe the Hidden Laboratory Access Card through the reader, and a faint click echoes through the Atrium." }, 0.5)
       tempTimer(1, function() show("Hidden Hallway") end)
-    elseif W.up == 27 then
+    elseif W.up == 28 then
       out({ "A chill runs down your spine as you step forward." }, 0.5)
       tempTimer(1, function() C.line("You slip into a trapdoor and the air gets thicker."); show("Hidden Laboratory") end)
     end
-    if W.up == 31 then W.x, W.y = "lab", 0 end
+    if W.up == 32 then W.x, W.y = "lab", 0 end
     return
   end
   if W.x == "lab" and c == "d" then W.x, W.y = 0, 0; return showCell() end
@@ -155,6 +164,8 @@ C.start()
 for _ = 1, 200 do if not C.active then break end wait(5) end
 ok(not C.active, "the run ends")
 ok(W.walls == 0, "never walked into a wall or the field (" .. #sent .. " commands)")
+ok(W.up >= 16, "five norths into the Atrium: the access card's dead end")
+ok(batches <= 16, "moves go out in batches (" .. batches .. " batches for " .. #sent .. " commands)")
 ok(W.samples == 4 and W.confessions == 1 and C.runs == 1, "four samples and the confession")
 ok(not next(W.fields), "all four Electromagnetic Fields killed before the centre")
 local said = table.concat(sent, ",")
