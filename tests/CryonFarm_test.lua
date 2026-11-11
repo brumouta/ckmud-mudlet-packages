@@ -1,6 +1,7 @@
 -- cryon: a whole confession run in a fake Iceria. The lower lab is a grid built from the exits in
 -- the log, so a wrong turn walks into a wall. Run from the repo root: lua tests/CryonFarm_test.lua
 local now, timers, nextId, sent = 0, {}, 0, {}
+function getEpoch() return now end
 function cecho(s) LOG = (LOG or "") .. s end
 function tempTimer(d, f) nextId = nextId + 1; timers[nextId] = { at = now + d, f = f }; return nextId end
 function killTimer(i) timers[i] = nil end
@@ -150,7 +151,7 @@ respond = function(c)
   end
 end
 
-C.start(1)
+C.start()
 for _ = 1, 200 do if not C.active then break end wait(5) end
 ok(not C.active, "the run ends")
 ok(W.walls == 0, "never walked into a wall or the field (" .. #sent .. " commands)")
@@ -160,19 +161,29 @@ local said = table.concat(sent, ",")
 ok(said:find("say kidnapped,smack citizen", 1, true), "say kidnapped, then smack citizen")
 ok(LOG:find("Confession #1. Done", 1, true), "reports it")
 
--- Twice in a row
+-- One run per respawn: BossTimer knows when that is
 local function reset() W.up, W.x, W.walls, W.samples, W.confessions = 0, nil, 0, 0, 0
   W.fields = { ["3,-2"] = true, ["4,-3"] = true, ["3,-4"] = true, ["2,-3"] = true }; sent = {} end
+ok(LOG:find("next run after the respawn (uptime)", 1, true), "without BossTimer: says to wait for the respawn")
+BossTimer = { remaining = function() return BossTimer.at - now end, at = now + 600 }
 reset(); LOG = ""
-C.start(2)
-for _ = 1, 400 do if not C.active then break end wait(5) end
-ok(W.confessions == 2 and W.walls == 0 and C.runs == 3, "cryon start 2: two confessions back to back")
-ok(LOG:find("1 more to go", 1, true), "says how many are left")
+C.start(true)
+for _ = 1, 200 do if not C.active then break end wait(5) end
+ok(W.confessions == 1 and LOG:find("next run after the respawn, in", 1, true), "with BossTimer: says how long until the next run")
+sent = {}; LOG = ""
+C.command("start")
+ok(#sent == 0 and LOG:find("Already farmed this respawn", 1, true), "cryon start again before the respawn: refuses")
+wait(600)
+reset(); LOG = ""
+C.command("start")
+for _ = 1, 200 do if not C.active then break end wait(5) end
+ok(W.confessions == 1, "after the respawn it runs again")
+BossTimer = nil
 
 -- A wrong attack stops at the first field, and resume carries on
 reset(); LOG = ""
 C.command("attack", "kick f")
-C.start(1)
+C.start(true)
 for _ = 1, 200 do if not C.active then break end wait(5) end
 ok(not C.active and LOG:find("didn't go down", 1, true) and W.x == 3 and W.y == -2, "wrong attack: stops in the first field room")
 C.command("attack", "fg f")

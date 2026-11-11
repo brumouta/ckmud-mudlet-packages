@@ -7,7 +7,8 @@
 --   Electromagnetic (SE)  kill the four Electromagnetic Fields round the centre, then extract
 --   Cryogenic (SW)        extract (it frees the citizen first)
 --   Genetic (NW)          wait for "How..did...I..get here?", say kidnapped, smack citizen
--- and Cryon Frigidus hands over the confession.
+-- and Cryon Frigidus hands over the confession. The citizens only come back with the respawn
+-- (`uptime`), so it's one run per respawn; with the BossTimer package it says when the next one is.
 cryon = cryon or {}
 local C = cryon
 
@@ -65,7 +66,7 @@ add({ genetic = true, label = "the last citizen and the confession" })
 -- ---------------------------------------------------------------- state
 C.active = false
 C.step = C.step or 1
-C.left = C.left or 0         -- runs still to do after this one
+C.doneUntil = C.doneUntil or nil   -- epoch of the respawn after the last confession
 C.gen = C.gen or 0
 
 -- ---------------------------------------------------------------- waiting
@@ -154,7 +155,7 @@ local function runStep(step)
   if step.extract then
     send("extract", false)
     return expect({ { "collects a sample", "ok" } }, 30, function(k)
-      if k ~= "ok" then return stop("No sample collected") end
+      if k ~= "ok" then return stop("No sample collected - the citizens come back with the respawn") end
       later(0.5, nextStep)
     end)
   end
@@ -182,23 +183,35 @@ nextStep = function()
   local step = C.ROUTE[C.step]
   if step then return runStep(step) end
   C.runs = C.runs + 1
-  if C.left > 0 then
-    C.left = C.left - 1
-    info("green", ("Confession #%d. %d more to go"):format(C.runs, C.left + 1))
-    C.step = 0
-    return later(2, nextStep)
-  end
   C.active = false
-  info("green", ("Confession #%d. Done"):format(C.runs))
+  local left = C.respawnIn()
+  C.doneUntil = left and (getEpoch() + left) or nil
+  info("green", ("Confession #%d. Done"):format(C.runs) ..
+    (left and (" - next run after the respawn, in " .. C.fmt(left)) or " - next run after the respawn (uptime)"))
 end
 
-function C.start(times, from)
+-- Seconds to the next respawn, from the BossTimer package when it's installed
+function C.respawnIn()
+  local bt = rawget(_G, "BossTimer")
+  local left = bt and bt.remaining and bt.remaining()
+  if left and left > 0 then return left end
+end
+
+function C.fmt(secs)
+  secs = math.floor(secs)
+  return secs >= 60 and (math.floor(secs / 60) .. "m " .. (secs % 60) .. "s") or (secs .. "s")
+end
+
+function C.start(force, from)
   if C.active then return info("yellow", "Already running (cryon stop to stop)") end
-  C.left = math.max((times or 1) - 1, 0)
+  if not force and not from and C.doneUntil and getEpoch() < C.doneUntil then
+    return info("yellow", "Already farmed this respawn: the citizens are back in " .. C.fmt(C.doneUntil - getEpoch()) ..
+      ". cryon start force to go anyway")
+  end
   C.active = true
   C.gen = C.gen + 1
   C.step = (from or 1) - 1
-  info("green", "Farming the confession" .. (times and times > 1 and (" x" .. times) or "") .. ". cryon stop stops")
+  info("green", "Farming the confession. cryon stop stops")
   nextStep()
 end
 
@@ -206,7 +219,7 @@ function C.stop() if C.active then stop("Stopped", "yellow") else info("white", 
 
 -- ---------------------------------------------------------------- `cryon` alias
 C.HELP = {
-  { "cryon start [n]",      "From anywhere: it innkeeper, walk to the lab, take the four samples, get the confession (n times)" },
+  { "cryon start [force]",  "From anywhere: it innkeeper, the lab, the four samples, the confession (force: even if done this respawn)" },
   { "cryon stop",           "Stop" },
   { "cryon resume",         "Carry on from where it stopped (fix things by hand first, then resume)" },
   { "cryon attack <cmd>",   "What kills an Electromagnetic Field (now: " .. C.attack .. ")" },
@@ -220,15 +233,16 @@ end
 
 function C.command(c, arg)
   if c == nil or c == "help" then C.help()
-  elseif c == "start" then C.start(tonumber(arg or "") or 1)
+  elseif c == "start" then C.start(arg == "force")
   elseif c == "stop" then C.stop()
   elseif c == "resume" then
     if C.active then return info("yellow", "Already running") end
-    C.start(C.left + 1, math.max(C.step, 1))
+    C.start(true, math.max(C.step, 1))
   elseif c == "attack" and arg then C.attack = arg; info("white", "Fields are attacked with: " .. arg)
   elseif c == "status" then
     local s = C.ROUTE[C.step]
     info("white", (C.active and "Running" or "Stopped") .. ", step " .. C.step .. "/" .. #C.ROUTE ..
       (s and s.title and (" (" .. s.title .. ")") or "") .. ", " .. C.runs .. " confession(s) this session, attack: " .. C.attack)
+    if C.doneUntil and getEpoch() < C.doneUntil then info("white", "Citizens back in " .. C.fmt(C.doneUntil - getEpoch())) end
   else info("yellow", "Unknown command '" .. tostring(c) .. "'. Type cryon help") end
 end

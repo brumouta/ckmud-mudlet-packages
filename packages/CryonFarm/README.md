@@ -8,7 +8,7 @@ Farms the **Confession of Cryon Frigidus** from the hidden lab under the Zero Ne
 
 | Command | Effect |
 |---|---|
-| `cryon start [n]` | Do the whole run, n times in a row (default 1) |
+| `cryon start` | Do the whole run. Refuses if you already farmed since the last respawn; `cryon start force` goes anyway |
 | `cryon stop` | Stop |
 | `cryon resume` | Carry on from the step it stopped at. Sort things out by hand first |
 | `cryon attack <cmd>` | What kills an Electromagnetic Field (default `fg f`) |
@@ -23,5 +23,7 @@ Farms the **Confession of Cryon Frigidus** from the hidden lab under the Zero Ne
 5. **Electromagnetic chamber** (south-east): kill the **Electromagnetic Field** in each of the four rooms around the centre. An Elite Icerian Mercenary charges in each time, and auto-combat kills it. The fourth field shatters the barrier; then `extract` in the centre.
 6. **Cryogenic chamber** (south-west): `extract` frees the citizen from stasis, then takes the sample.
 7. **Genetic Amplification chamber** (north-west): wait for *How..did...I..get here?*, `say kidnapped`, wait for *"SMACK" him awake*, `smack citizen`. Cryon Frigidus hands over the confession.
+
+The citizens only come back with the respawn (the one `uptime` counts down to), so it's one confession per respawn. With the [BossTimer](../BossTimer) package installed it tells you after each confession how long until the next one. The Mad Scientist in the Control Room is a different quest (it uses the samples) and is ignored.
 
 Each step waits for the room it expects (or the game's answer) and stops with a message if it doesn't come. The route is fixed, from one run in the log. If a move ends up somewhere unexpected, the room list in `C.ROUTE` needs updating.
