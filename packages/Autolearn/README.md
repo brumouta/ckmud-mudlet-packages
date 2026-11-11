@@ -27,18 +27,25 @@ speedwalk argument. Run `autolearn` again to turn it off.
 
 The following constants should be used by organics
 
-1. `learning.recall_isolation` this will get you to an isolation tank from any location on the mud. Mine is "recall;s;w;enter vort;s"
-2. `learning.return_to_target` this will get you back to the original target from anywhere (it should start from your recall point). Mine is "crecall;n;n;n;e;n" this will change based on target
+1. `learning.recall_isolation` this will get you to an isolation tank from any location on the mud. Mine is "crecall;w"
+2. `learning.return_to_target` is only needed if you start without a path (see below)
 
-Set them with e.g. `AL constant learning.return_to_target="crecall;n;n;n;e;n"`
+Set them with e.g. `AL constant learning.recall_isolation="crecall;w"`
 
-When BOTH constants are set, the bot rests by running the recall_isolation
-path (which works from any room) and walks back with return_to_target — and
-the `<speedwalk_to_isolation>` argument becomes optional. Without them it
-falls back to speedwalking the path you gave and reversing it, which assumes
-the bot is standing at the target. Training `portal`/`instant transmission`
-teleports you to king kai and is only attempted when `return_to_target` is
-set, so the failed-attack trigger can walk you back.
+**The way back is worked out from the path you start with.** With
+`learning.recall_isolation` set, `autolearn elder n;n;n;n;w` walks back to the
+elder with `crecall;e;s;s;s;s`: the first command of `recall_isolation`, then
+your path backwards with every step reversed. The path takes `;`, commas,
+spaces or counts (`n;n;n;n;w`, `n n n n w`, `4n w`). Type it with a single `;`:
+Mudlet splits what you type at `;;` before the alias sees it, so
+`autolearn elder n;;n;;w` would send the `n`s as moves.
+
+It's used to walk back after resting, after training portal/instant
+transmission (they teleport you to king kai), and when the target isn't
+there. If you start without a path, `learning.return_to_target` is used
+instead (e.g. `AL constant learning.return_to_target="crecall;s;s;s;s"`).
+Without `recall_isolation` the bot rests by speedwalking the path you gave and
+walking it back, which assumes it's standing at the target.
 
 The bot needs to know your skills and race: it sends `learn` and `score` when
 it sees the MOTD, and again when you toggle `autolearn` on. If your race shows

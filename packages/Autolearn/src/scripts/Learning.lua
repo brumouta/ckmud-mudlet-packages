@@ -19,6 +19,50 @@ ck:define_feature("learning.use_zeta", false)
 ck:define_constant("learning.return_to_target", "")
 ck:define_constant("learning.recall_isolation", "")
 
+-- The way back to the target, worked out from the path you start with:
+-- `autolearn elder n;n;n;n;w` -> "crecall;e;s;s;s;s" (recall, then the path backwards, each step reversed)
+local OPPOSITE = { n = "s", s = "n", e = "w", w = "e", u = "d", d = "u",
+    ne = "sw", sw = "ne", nw = "se", se = "nw", ["in"] = "out", out = "in" }
+local LONG = { north = "n", south = "s", east = "e", west = "w", up = "u", down = "d",
+    northeast = "ne", northwest = "nw", southeast = "se", southwest = "sw" }
+
+-- "n;;n;;n;;n;;w", "n;n;n;n;w", "n n n n w", "4n w", "n,n,w" -> { "n", "n", "n", "n", "w" }
+-- nil if a step isn't a direction (e.g. "enter vortex"): that can't be walked backwards.
+function learn.parse_path(path)
+    local dirs = {}
+    for token in (path or ""):lower():gmatch("[^;,%s]+") do
+        local count, dir = token:match("^(%d*)(%a+)$")
+        dir = dir and (LONG[dir] or dir)
+        if not dir or not OPPOSITE[dir] then return nil end
+        for _ = 1, tonumber(count) or 1 do dirs[#dirs + 1] = dir end
+    end
+    if #dirs == 0 then return nil end
+    return dirs
+end
+
+-- The command that starts the walk back: the first one of learning.recall_isolation (crecall, recall...)
+function learn.recall_command()
+    local iso = ck:constant("learning.recall_isolation") or ""
+    return iso:match("^%s*([^;%s][^;]*)")
+end
+
+-- Only with learning.recall_isolation set: that's where the recall comes from, and without it the path
+-- is the old speedwalk to the rest spot, which a recall needn't end at.
+function learn.return_from(path)
+    local recall = learn.recall_command()
+    if not recall then return nil end
+    local dirs = learn.parse_path(path)
+    if not dirs then return nil end
+    local back = { recall }
+    for i = #dirs, 1, -1 do back[#back + 1] = OPPOSITE[dirs[i]] end
+    return table.concat(back, ";")
+end
+
+-- The path back to the target: from the path you started with, else the constant
+function learn:return_path()
+    return self.derived_return or ck:constant("learning.return_to_target") or ""
+end
+
 local function aoe_ok()
     return API:status_ok()
 end
@@ -183,7 +227,7 @@ local function do_learning()
             if learn:use_recall_rest() then
                 State:set(State.NORMAL)
                 send("wake")
-                API:send_multi(ck:constant("learning.return_to_target"))
+                API:send_multi(learn:return_path())
             elseif speedwalk_path then
                 State:set(State.SPEEDWALK)
                 send("wake")
@@ -231,7 +275,7 @@ end
 function learn:return_home()
     -- Walk back to the training target and forget any pending teleport
     self.teleported = nil
-    local path = ck:constant("learning.return_to_target")
+    local path = self:return_path()
     if path ~= "" then
         API:send_multi(path)
     end
@@ -298,7 +342,7 @@ function learn:use_recall_rest()
     -- Rest by recalling to an isolation tank: learning.recall_isolation gets
     -- there from any room, learning.return_to_target gets back afterwards.
     -- Both are needed, since a recall path cannot be walked in reverse.
-    return ck:constant("learning.recall_isolation") ~= "" and ck:constant("learning.return_to_target") ~= ""
+    return ck:constant("learning.recall_isolation") ~= "" and learn:return_path() ~= ""
 end
 
 function learn:can_return()
@@ -306,11 +350,11 @@ function learn:can_return()
     -- back is the 'autolearn no target' trigger sending return_to_target.
     -- Only attempt those skills when that path is configured, otherwise the
     -- character ends up stranded in a room with no mobs.
-    local ok = ck:constant("learning.return_to_target") ~= ""
+    local ok = self:return_path() ~= ""
     if not ok and not self.warned_no_return then
         self.warned_no_return = true
         cecho("<yellow>[ Autolearn ] - Skipping portal/instant training: they teleport you to king kai." ..
-            " Set `AL constant learning.return_to_target=\"<path from recall to your target>\"` to enable them.\n")
+            " Start with the path to your rest spot (autolearn <target> n;n;w) so it can walk back.\n")
     end
     return ok
 end
@@ -338,8 +382,7 @@ function learn:find_target(ability)
         disableTrigger("autolearn no target")
         return
     end
-    local return_to_target = ck:constant("learning.return_to_target")
-    if State:is(State.NORMAL) and return_to_target ~= "" then
+    if State:is(State.NORMAL) and self:return_path() ~= "" then
         self:return_home()
     end
 end
@@ -408,6 +451,13 @@ end
 function learn:toggle(target, path)
     self.target = target
     self.speedwalk = path
+    if not Mode:is(Mode.Learning) then
+        self.derived_return = path and learn.return_from(path) or nil
+        if path and not self.derived_return and learn.recall_command() then
+            cecho("<yellow>[ Autolearn ] - Can't walk '" .. path .. "' backwards (only directions can be): " ..
+                "using learning.return_to_target to get back.\n")
+        end
+    end
     if Mode:is(Mode.Learning) then
         Mode:switch(Mode.Interactive)
         print("Learning Mode Disabled!!!")
@@ -422,6 +472,9 @@ function learn:toggle(target, path)
             end
         else
             print("Learning Mode Enabled!!!")
+            if self:return_path() ~= "" then
+                print("Way back to the target: " .. self:return_path())
+            end
             -- Change Mode
             enter()
         end

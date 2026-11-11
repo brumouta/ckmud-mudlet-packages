@@ -799,6 +799,52 @@ matches = { "autolearn", nil, nil }
 ok, err = pcall(alias_fn); check(ok, "toggle off after recall rest phase" .. (ok and "" or (" -- " .. tostring(err))))
 
 ---------------------------------------------------------------------------
+-- 13b. The way back comes from the path you start with
+---------------------------------------------------------------------------
+realprint("=== PHASE: derived return path ===")
+do
+  local L = AL.API.Learning
+  local function dirs(p) local d = L.parse_path(p) return d and table.concat(d, ",") or "nil" end
+  check(dirs("n;;n;;n;;n;;w") == "n,n,n,n,w", "parse n;;n;;n;;n;;w")
+  check(dirs("n;n;n;n;w") == "n,n,n,n,w", "parse n;n;n;n;w")
+  check(dirs("4n w") == "n,n,n,n,w", "parse 4n w")
+  check(dirs("north, west") == "n,w", "parse north, west")
+  check(dirs("n;enter vortex") == "nil", "a step that isn't a direction can't be reversed")
+  ck_mod2:set_constant("learning.recall_isolation", "crecall;w")
+  check(L.return_from("n;;n;;n;;n;;w") == "crecall;e;s;s;s;s", "n;;n;;n;;n;;w -> crecall;e;s;s;s;s (got " ..
+    tostring(L.return_from("n;;n;;n;;n;;w")) .. ")")
+  check(L.return_from("2ne;u") == "crecall;d;sw;sw", "2ne;u -> crecall;d;sw;sw")
+
+  -- started with a path and no return_to_target constant: rests by recall, walks back by the path
+  ck_mod2:set_constant("learning.return_to_target", "")
+  matches = { "autolearn troll n;n;n;n;w", "troll", "n;n;n;n;w" }
+  ok, err = pcall(alias_fn); check(ok, "toggle with a path" .. (ok and "" or (" -- " .. tostring(err))))
+  check(AL.API.Mode:is(AL.API.Mode.Learning), "learning on")
+  check(L:return_path() == "crecall;e;s;s;s;s", "way back derived from the path: " .. tostring(L:return_path()))
+  AL.Player.Ki = 500
+  SENT = {}
+  ok, err = pcall(TIMERS["AL:Learning"].func)
+  check(ok and table.contains(SENT, "sleep"), "rests (sent: " .. table.concat(SENT, " | ") .. ")")
+  AL.Player.Ki = 1000
+  SENT = {}
+  ok, err = pcall(TIMERS["AL:Learning"].func)
+  check(ok and table.concat(SENT, ";"):find("wake;crecall;e;s;s;s;s", 1, true),
+    "wakes and walks back crecall;e;s;s;s;s (sent: " .. table.concat(SENT, " | ") .. ")")
+
+  -- the constant isn't used while a derived path exists
+  ck_mod2:set_constant("learning.return_to_target", "crecall;n;n")
+  check(L:return_path() == "crecall;e;s;s;s;s", "the derived path beats the constant")
+  matches = { "autolearn", nil, nil }
+  ok, err = pcall(alias_fn); check(ok, "toggle off" .. (ok and "" or (" -- " .. tostring(err))))
+  -- started without a path: the constant again
+  matches = { "autolearn troll", "troll", nil }
+  ok, err = pcall(alias_fn)
+  check(ok and L:return_path() == "crecall;n;n", "no path given: falls back to learning.return_to_target")
+  matches = { "autolearn", nil, nil }
+  pcall(alias_fn)
+end
+
+---------------------------------------------------------------------------
 -- 14. Config aliases
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
