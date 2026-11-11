@@ -46,7 +46,7 @@ It walks to the nearest room with something left to do, does it, and repeats:
   | **alone** | Only suspects back the story, and no log count can check it (sensor broken) |
 
   A confession is checked the same way. In the first case it was mapped from, Yamcha "confessed" to being in the Family Lounge at midnight, but Krillin and Dende were there and never named him.
-- **Evidence** is matched against the guest table by keyword: footprints for tread, a hair for hair colour, scorch marks or still air for ki, frosting or an untouched slice for the cake. When two clues disagree, one of them is planted, so neither counts until `analyze` or `plate` settles it. A clue that doesn't match a suspect rules them out.
+- **Evidence** is matched against the guest table by keyword: footprints for tread, a hair for hair colour, scorch marks or still air for ki, frosting or an untouched slice for the cake. When two clues disagree, one of them is planted, so neither counts until `analyze` or `plate` settles it. The alibi comes first (*find the one nobody saw*); a clue that doesn't fit only costs points, because a clue can be planted. When one doesn't fit the top suspect, it suggests analyzing that clue.
 - **The time** is the window from the remains or the cradle, minus any hour the notebook or the party log rules out (*the radar was still in its cradle at nine*).
 - **Murder:** the weapon is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
 - **Theft:** three Hoi Poi capsules are hidden in party rooms. The stash is the capsule room the thief says they went to *after* the theft; the two decoys are in rooms they never went to afterwards. A suspect who went to exactly one capsule room afterwards scores higher. The accusation is `accuse <suspect> stash <room> at <time>`.
@@ -57,3 +57,4 @@ It walks to the nearest room with something left to do, does it, and repeats:
 - **Case types:** murder and theft are solved. For delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case (*the radar's cradle logs that the Dragon Radar left it between nine and ten*).
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
 - **Monthly twists** other than November's feast (the seating chart) haven't been seen yet.
+- **Upgrading mid-case** keeps what the case has found so far and adds anything the new version needs, so you can install a fix without starting over.

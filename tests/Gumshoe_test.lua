@@ -426,4 +426,32 @@ q = G.todo()
 G.onlyQuestions = nil
 ok(q["Inner Hall"] and q["Inner Hall"][1].kind == "visit", "...and looks in rooms not seen yet for the guests it hasn't found")
 
+-- The whole theft, as it really went: Piccolo is the one nobody saw at ten -----------------------
+G.newCase(); G.room = nil
+for _, k in ipairs({ "intro", "guests", "notebook-start" }) do feed(T[k]) end
+feed({ "The seating chart, every place card signed at the feast:", "At nine: Yajirobe, Krillin.", "At ten: Yajirobe, Emperor Pilaf, Mai.",
+       "At eleven: Oolong, Tien.", "At midnight: Piccolo, Videl, Android 18." })
+feed({ "Garter's door log for ten, heads per room:", "  Grand Hall       0", "  Dining Room      3", "  Family Lounge    3",
+       "  Kitchen          sensor broken", "  Study            sensor broken", "  Robot Workshop   0", "  Menagerie Yard   3", "  Conservatory     2" })
+for _, k in ipairs({ "kitchen", "questioned", "notebook-questioned", "answers", "final-statements", "accuse" }) do feed(T[k]) end
+local rank3, tag3, why3 = G.alibi("Piccolo", 10)
+ok(tag3 == "LIED" and why3:find("Android 18", 1, true), "Piccolo at ten: Android 18 was in the Conservatory and didn't see him")
+ok(select(2, G.alibi("Emperor Pilaf", 10)) == "seen", "Pilaf at ten: on the seating chart")
+r = G.solve()
+ok(r.suspect == "Piccolo" and r.time == 10 and r.stash == "Conservatory", "solve: Piccolo at ten, and he went on to the Conservatory")
+ok(r.line == "accuse piccolo stash conservatory at ten", "the accusation: " .. tostring(r.line))
+ok(r.analyze == 6, "the light footprints don't fit him: analyze 6 to see if they were planted")
+ok(not r.sure, "with a clue against him it's a best guess, not solved")
+
+-- Installed mid-case over an older version: the case is kept, the new fields are added
+G.newCase()
+feed(T.intro)
+G.questioned, G.capsules, G.partyRooms, G.akw.rooms, G.case.kind = nil, nil, nil, nil, nil
+dofile("packages/Gumshoe/src/Gumshoe.lua")
+G = gum
+ok(G.questioned and G.capsules and G.akw.rooms and G.case.kind == "murder" and #G.guests == 12,
+  "reinstalled mid-case: the guests are kept and the new fields exist")
+local okLine = pcall(G.line, 'Yajirobe tells you, \'Fine, here.\'') and pcall(G.line, 'At midnight: "In the Family Lounge, with Krillin. Napping."')
+ok(okLine and G.questioned.Yajirobe, "and answers are read without an error")
+
 print("gum: ALL PASSED")

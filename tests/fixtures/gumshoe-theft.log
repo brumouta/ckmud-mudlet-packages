@@ -205,3 +205,99 @@ Leads:
 Rooms: Grand Hall, Dining Room, Family Lounge, Kitchen, Robot Workshop, Menagerie Yard, Conservatory.
 Times: nine, ten, eleven, midnight (or 9 to 12).
 ========================================
+## answers
+Oolong tells you, 'Oolong is an honest pig. Write this down exactly.'
+At nine: "In the Menagerie Yard, with Puar. Minding my own business, for once."
+At ten: "In the Menagerie Yard, with Krillin and Puar. I was not peeking at anything!"
+At eleven: "In the Dining Room, with Tien. Pigs have alibis too, you know."
+At midnight: "In the Kitchen, with Mai and Chi-Chi. I was eating. Pigs eat."
+Over dinner you overhear Yajirobe and Emperor Pilaf: "Videl was never in the Dining Room with us at ten, whatever they say." "Not once. We would have noticed."
+Android 18 tells you, 'I was wherever I say I was.'
+At nine: "In the Robot Workshop, with Mai. Bored."
+At ten: "In the Conservatory, with Tien. Do not make me repeat it."
+At eleven: "In the Family Lounge, with Yajirobe and Krillin. Watching the party embarrass itself."
+At midnight: "In the Dining Room, with Piccolo and Videl. Write it down. I will not say it twice."
+## final-statements
+========================================
+STATEMENTS ABOUT NINE (in the window)
+========================================
+Grand Hall, 2 say so:
+   Emperor Pilaf, with Gohan.
+   Gohan, with Emperor Pilaf.
+Dining Room, 2 say so:
+   Yajirobe, with Krillin.
+   Krillin, with Yajirobe.
+Family Lounge, 2 say so:
+   Tien, with Piccolo.
+   Piccolo, with Tien.
+Kitchen, 2 say so:
+   Videl, with Chi-Chi.
+   Chi-Chi, with Videl.
+Robot Workshop, 2 say so:
+   Mai, with Android 18.
+   Android 18, with Mai.
+Menagerie Yard, 2 say so:
+   Oolong, with Puar.
+   Puar, with Oolong.
+========================================
+========================================
+STATEMENTS ABOUT TEN (in the window)
+========================================
+Dining Room, 3 say so:
+   Yajirobe, with Emperor Pilaf and Mai.
+   Emperor Pilaf, with Yajirobe and Mai.
+   Mai, with Yajirobe and Emperor Pilaf.
+Family Lounge, 3 say so:
+   Gohan, with Videl and Chi-Chi.
+   Videl, with Gohan and Chi-Chi (first said the Dining Room).
+   Chi-Chi, with Gohan and Videl.
+Menagerie Yard, 3 say so:
+   Oolong, with Krillin and Puar.
+   Krillin, with Oolong and Puar.
+   Puar, with Oolong and Krillin.
+Conservatory, 3 say so:
+   Tien, with Android 18.
+   Piccolo, with Tien and Android 18 (first said the Dining Room).
+   Android 18, with Tien.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN
+========================================
+Dining Room, 2 say so:
+   Oolong, with Tien.
+   Tien, with Oolong.
+Family Lounge, 3 say so:
+   Yajirobe, with Krillin and Android 18.
+   Krillin, with Yajirobe and Android 18.
+   Android 18, with Yajirobe and Krillin.
+Kitchen, 2 say so:
+   Mai, with Chi-Chi.
+   Chi-Chi, with Mai.
+Robot Workshop, 3 say so:
+   Gohan, with Videl and Puar.
+   Videl, with Gohan and Puar.
+   Puar, with Gohan and Videl.
+Conservatory, 2 say so:
+   Emperor Pilaf, with Piccolo.
+   Piccolo, with Emperor Pilaf.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT
+========================================
+Dining Room, 3 say so:
+   Piccolo, with Videl and Android 18.
+   Videl, with Piccolo and Android 18.
+   Android 18, with Piccolo and Videl.
+Family Lounge, 3 say so:
+   Yajirobe, with Emperor Pilaf and Krillin (first said the Dining Room).
+   Emperor Pilaf, with Yajirobe and Krillin.
+   Krillin, with Yajirobe and Emperor Pilaf.
+Kitchen, 3 say so:
+   Oolong, with Mai and Chi-Chi.
+   Mai, with Oolong and Chi-Chi.
+   Chi-Chi, with Oolong and Mai.
+Menagerie Yard, 3 say so:
+   Tien, with Gohan and Puar.
+   Gohan, with Tien and Puar.
+   Puar, with Tien and Gohan.
+========================================

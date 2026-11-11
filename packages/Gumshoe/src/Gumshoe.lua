@@ -111,7 +111,19 @@ function G.newCase()
   G.akw = { suspects = {}, weapons = {}, rooms = {}, format = nil }  -- keywords from `accuse`
   G.tries = {}
 end
-if not G.case then G.newCase() end
+-- Installing a newer version mid-case keeps the case but must add any field it didn't have
+function G.upgrade()
+  local old = {}
+  for k, v in pairs(G) do if type(v) ~= "function" then old[k] = v end end
+  local oldCase, oldAkw, oldOpen = G.case, G.akw, G.open
+  G.newCase()
+  for k, v in pairs(old) do G[k] = v end
+  local fresh = { case = { kind = "murder", wrong = 0 }, akw = { suspects = {}, weapons = {}, rooms = {} }, open = {} }
+  G.case, G.akw, G.open = oldCase or fresh.case, oldAkw or fresh.akw, oldOpen or fresh.open
+  for k, v in pairs(fresh.case) do if G.case[k] == nil then G.case[k] = v end end
+  for k, v in pairs(fresh.akw) do if G.akw[k] == nil then G.akw[k] = v end end
+end
+if not G.case then G.newCase() else G.upgrade() end
 G.room = G.room
 G.gen = G.gen or 0
 
@@ -807,11 +819,11 @@ function G.solve()
   local rows = {}
   for _, s in ipairs(G.suspects()) do
     local tr = G.traits[s] or {}
-    local row = { name = s, matches = 0, misses = {}, alibis = {} }
+    local row = { name = s, matches = 0, misses = {}, missN = {}, alibis = {} }
     for n, e in pairs(G.evidence) do
       if (e.state == "ok" or e.state == "genuine") and tr[e.cat] then
         if tr[e.cat] == e.val then row.matches = row.matches + 1
-        else row.misses[#row.misses + 1] = "#" .. n .. " " .. e.val .. " " .. e.cat end
+        else row.misses[#row.misses + 1] = "#" .. n .. " " .. e.val .. " " .. e.cat; row.missN[#row.missN + 1] = n end
       end
     end
     row.rank = -1
@@ -820,7 +832,8 @@ function G.solve()
       row.alibis[t] = { rank = rank, tag = tag, why = why }
       if rank > row.rank then row.rank, row.time = rank, t end
     end
-    row.score = (#row.misses == 0 and 100 or 0) + row.rank * 10 + row.matches
+    -- "find the one nobody saw" first; a clue that doesn't fit may be planted, so it only costs points
+    row.score = row.rank * 100 + row.matches * 10 - #row.misses * 15
     if theft and next(G.capsules) and row.time then
       -- the thief went to exactly one of the capsule rooms afterwards; the decoys are where they never went
       local n = #G.stashFor(s, row.time)
@@ -834,7 +847,7 @@ function G.solve()
   local top = rows[1]
   if not top then return r end
   r.suspect, r.time = top.name, top.time
-  r.sure = #top.misses == 0 and top.rank == 3 and (not rows[2] or rows[2].score < top.score)
+  r.sure = #top.misses == 0 and top.rank == 3 and (not rows[2] or rows[2].rank < 3)
 
   -- theft: the stash is the capsule room the thief went to after the theft
   if theft then
@@ -856,11 +869,12 @@ function G.solve()
     end
   end
 
-  -- what would settle it
+  -- what would settle it: first a clue against the one nobody saw (the lab says if it was planted)
+  if #top.missN > 0 and (G.analyses or 0) > 0 then r.analyze = top.missN[1] end
   local tr = G.traits[top.name] or {}
   for n, e in pairs(G.evidence) do
     if e.state == "contested" and e.cat == "cake" and not tr.cake and not G.plated then r.plate = top.name end
-    if e.state == "contested" and e.cat ~= "cake" and tr[e.cat] and tr[e.cat] ~= e.val and (G.analyses or 0) > 0 then
+    if not r.analyze and e.state == "contested" and e.cat ~= "cake" and tr[e.cat] and tr[e.cat] ~= e.val and (G.analyses or 0) > 0 then
       r.analyze = n
     end
   end
@@ -902,12 +916,12 @@ function G.report(r)
     local col = i == 1 and "green" or "white"
     local a = row.time and row.alibis[row.time]
     cecho(("  <%s>%-13s <grey>%d clue%s%s  %s %s\n"):format(col, row.name, row.matches, row.matches == 1 and "" or "s",
-      #row.misses > 0 and (", rules out: " .. table.concat(row.misses, ", ")) or "",
+      #row.misses > 0 and (", doesn't fit: " .. table.concat(row.misses, ", ")) or "",
       row.time and TIME_WORD[row.time] or "", a and (a.tag .. ", " .. a.why) or ""))
   end
   if r.noStatements then info("red", "Nobody has been questioned yet: the alibis are empty, so this is only a guess") end
   if r.plate then info("yellow", "The cake clues disagree: plate " .. guestKw(r.plate) .. " in the Kitchen settles it") end
-  if r.analyze then info("yellow", "Evidence #" .. r.analyze .. " is the one against " .. r.suspect .. ": analyze " .. r.analyze .. " in the Underground Lab") end
+  if r.analyze then info("yellow", "Evidence #" .. r.analyze .. " doesn't fit " .. r.suspect .. " - it may be planted: analyze " .. r.analyze .. " in the Underground Lab") end
   if r.line then
     info(r.sure and "green" or "yellow", (r.sure and "Solved: " or "Best guess: ") .. r.line .. "   (gum accuse sends it, then accuse yes)")
   else
