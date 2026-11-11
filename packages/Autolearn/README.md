@@ -33,9 +33,11 @@ The following constants should be used by organics
 Set them with e.g. `AL constant learning.recall_isolation="crecall;w"`
 
 **The way back is worked out from the path you start with.** With
-`learning.recall_isolation` set, `autolearn elder n;n;n;n;w` walks back to the
-elder with `crecall;e;s;s;s;s`: the first command of `recall_isolation`, then
-your path backwards with every step reversed. The path takes `;`, commas,
+`learning.recall_isolation` set, the bot goes back to the tank that way, then
+walks your path backwards, every step reversed, and steps that undo each other
+cancel out. With `recall_isolation` = `crecall;w` (crecall lands in the HQ, the
+tank is west of it), `autolearn elder n;n;n;n;w` gives `crecall;w` + `e;s;s;s;s`
+= `crecall;s;s;s;s`. The path takes `;`, commas,
 spaces or counts (`n;n;n;n;w`, `n n n n w`, `4n w`). Type it with a single `;`:
 Mudlet splits what you type at `;;` before the alias sees it, so
 `autolearn elder n;;n;;w` would send the `n`s as moves.

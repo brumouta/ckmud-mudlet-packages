@@ -811,16 +811,23 @@ do
   check(dirs("north, west") == "n,w", "parse north, west")
   check(dirs("n;enter vortex") == "nil", "a step that isn't a direction can't be reversed")
   ck_mod2:set_constant("learning.recall_isolation", "crecall;w")
-  check(L.return_from("n;;n;;n;;n;;w") == "crecall;e;s;s;s;s", "n;;n;;n;;n;;w -> crecall;e;s;s;s;s (got " ..
+  -- crecall lands in the HQ and the isolation chamber is west of it: back is crecall;w then e;s;s;s;s,
+  -- and the w/e cancel
+  check(L.return_from("n;;n;;n;;n;;w") == "crecall;s;s;s;s", "n;;n;;n;;n;;w -> crecall;s;s;s;s (got " ..
     tostring(L.return_from("n;;n;;n;;n;;w")) .. ")")
-  check(L.return_from("2ne;u") == "crecall;d;sw;sw", "2ne;u -> crecall;d;sw;sw")
+  check(L.return_from("n;n;e") == "crecall;w;w;s;s", "a path that doesn't end with recall_isolation's steps: through the tank (got " ..
+    tostring(L.return_from("n;n;e")) .. ")")
+  ck_mod2:set_constant("learning.recall_isolation", "recall;s;w;enter vort;s")
+  check(L.return_from("e;n") == "recall;s;w;enter vort;s;s;w", "steps don't cancel across enter vort (got " ..
+    tostring(L.return_from("e;n")) .. ")")
+  ck_mod2:set_constant("learning.recall_isolation", "crecall;w")
 
   -- started with a path and no return_to_target constant: rests by recall, walks back by the path
   ck_mod2:set_constant("learning.return_to_target", "")
   matches = { "autolearn troll n;n;n;n;w", "troll", "n;n;n;n;w" }
   ok, err = pcall(alias_fn); check(ok, "toggle with a path" .. (ok and "" or (" -- " .. tostring(err))))
   check(AL.API.Mode:is(AL.API.Mode.Learning), "learning on")
-  check(L:return_path() == "crecall;e;s;s;s;s", "way back derived from the path: " .. tostring(L:return_path()))
+  check(L:return_path() == "crecall;s;s;s;s", "way back derived from the path: " .. tostring(L:return_path()))
   AL.Player.Ki = 500
   SENT = {}
   ok, err = pcall(TIMERS["AL:Learning"].func)
@@ -828,12 +835,12 @@ do
   AL.Player.Ki = 1000
   SENT = {}
   ok, err = pcall(TIMERS["AL:Learning"].func)
-  check(ok and table.concat(SENT, ";"):find("wake;crecall;e;s;s;s;s", 1, true),
-    "wakes and walks back crecall;e;s;s;s;s (sent: " .. table.concat(SENT, " | ") .. ")")
+  check(ok and table.concat(SENT, ";"):find("wake;crecall;s;s;s;s", 1, true),
+    "wakes and walks back crecall;s;s;s;s (sent: " .. table.concat(SENT, " | ") .. ")")
 
   -- the constant isn't used while a derived path exists
   ck_mod2:set_constant("learning.return_to_target", "crecall;n;n")
-  check(L:return_path() == "crecall;e;s;s;s;s", "the derived path beats the constant")
+  check(L:return_path() == "crecall;s;s;s;s", "the derived path beats the constant")
   matches = { "autolearn", nil, nil }
   ok, err = pcall(alias_fn); check(ok, "toggle off" .. (ok and "" or (" -- " .. tostring(err))))
   -- started without a path: the constant again
