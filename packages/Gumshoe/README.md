@@ -11,7 +11,7 @@ Solves Jaco's party cases at the Briefs house (`help mansion`). Open a case with
 | `gum run` | Do the whole case: search, question, inspect, door log, sealed rooms, confront, then solve |
 | `gum question` | Only question everyone not questioned yet: walks to where it last saw each guest (looking in unseen rooms for the rest), then solves |
 | `gum stop` | Stop walking. Everything found so far is kept |
-| `gum solve` | Show the evidence, each suspect's alibi and the accusation it points to |
+| `gum solve` | Re-read the notebook, the four statement tables and `accuse`, then show the evidence, each suspect's alibi and the accusation it points to |
 | `gum accuse` | Send the suggested accusation. You still type `accuse yes` |
 | `gum status` | What's left: rooms to search, guests to question, sealed rooms, secrets |
 | `gum go <room>` | Walk to a room, e.g. `gum go kitchen` or `gum go lab` |

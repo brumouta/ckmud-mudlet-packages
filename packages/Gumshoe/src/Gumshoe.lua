@@ -1183,6 +1183,18 @@ function G.run(onlyQuestions)
   end)
 end
 
+-- `gum solve`: read the notebook, the statements and the accuse words fresh, then solve
+function G.refreshAndSolve()
+  G.gen = G.gen + 1
+  G.running = true
+  local steps = { readNotebook, readStatements }
+  if next(G.traits) == nil then
+    steps[#steps + 1] = function(nxt) cmd("notebook guests", { { "@guests", "ok" } }, G.stepTimeout, function() nxt() end) end
+  end
+  steps[#steps + 1] = function(nxt) cmd("accuse", { { "@accuse", "ok" } }, G.stepTimeout, function() nxt() end) end
+  seq(steps, function() G.done(G.solve()) end)
+end
+
 function G.stop()
   G.gen = G.gen + 1
   G.running = false
@@ -1195,7 +1207,7 @@ G.HELP = {
   { "gum run",          "Do the legwork: search, question, inspect, door log, sealed rooms, confront, then solve" },
   { "gum question",     "Only question everyone not questioned yet (walking to find them), then solve" },
   { "gum stop",         "Stop walking (everything found is kept)" },
-  { "gum solve",        "Show the evidence, every suspect's alibi and the accusation it points to" },
+  { "gum solve",        "Re-read the notebook and statements, then show the evidence, the alibis and the accusation" },
   { "gum accuse",       "Send the suggested accusation (you still type accuse yes)" },
   { "gum status",       "What's left: rooms to search, guests to question, sealed rooms, secrets" },
   { "gum go <room>",    "Walk to a room in the house, e.g. gum go kitchen" },
@@ -1253,7 +1265,8 @@ function G.command(c, arg)
   elseif c == "run" or c == "start" then G.run()
   elseif c == "question" then G.run(true)
   elseif c == "stop" then G.stop()
-  elseif c == "solve" then G.result = G.report()
+  elseif c == "solve" then
+    if G.running then G.result = G.report() else G.refreshAndSolve() end
   elseif c == "accuse" then
     local r = G.solve()
     if not r.line then return info("yellow", "Not enough to accuse anyone yet: gum solve") end

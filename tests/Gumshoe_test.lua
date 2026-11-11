@@ -454,4 +454,30 @@ ok(G.questioned and G.capsules and G.akw.rooms and G.case.kind == "murder" and #
 local okLine = pcall(G.line, 'Yajirobe tells you, \'Fine, here.\'') and pcall(G.line, 'At midnight: "In the Family Lounge, with Krillin. Napping."')
 ok(okLine and G.questioned.Yajirobe, "and answers are read without an error")
 
+-- gum solve re-reads the notebook first: an upgrade (or anything else) can't leave it with stale data
+G.newCase(); G.room = nil
+for _, k in ipairs({ "intro", "guests" }) do feed(T[k]) end
+G.capsules = {}
+local later = function(lines) tempTimer(0.1, function() feed(lines) end) end
+respond = function(c)
+  if c == "notebook" then return later(T["notebook-questioned"]) end
+  local t = tonumber(c:match("^notebook (%d+)$") or "")
+  if t then
+    local block, which = { "========================================" }, 0
+    for _, l in ipairs(T["final-statements"]) do
+      if l:find("^STATEMENTS ABOUT") then which = which + 1 end
+      if which == t - 8 then block[#block + 1] = l end
+    end
+    return later(block)
+  end
+  if c == "accuse" then return later(T.accuse) end
+end
+sent = {}; LOG = ""
+G.command("solve")
+wait(10)
+ok(table.concat(sent, ",") == "notebook,notebook 9,notebook 10,notebook 11,notebook 12,accuse", "gum solve reads notebook, the four times and accuse: " .. table.concat(sent, ","))
+ok(G.capsules.Conservatory and G.result and G.result.line == "accuse piccolo stash conservatory at ten",
+  "...and solves from what it just read: " .. tostring(G.result and G.result.line))
+respond = nil
+
 print("gum: ALL PASSED")
