@@ -80,6 +80,7 @@ function G.newCase()
   G.case = { title = nil, scene = nil, difficulty = nil, minutes = nil, wrong = 0, kind = "murder" }
   G.inspectCmd, G.inspectRoom = nil, nil   -- "inspect remains" at the scene, "inspect cradle" in the Study...
   G.capsules = {}          -- theft: rooms with a Hoi Poi capsule (one holds the loot)
+  G.card = nil             -- the room a Phantom calling card turned up in (G.cards, the casebook count, outlives cases)
   G.partyRooms = {}        -- theft: the rooms a stash can be in
   G.questioned = {}        -- guests this script questioned
   G.guests = {}            -- every guest's name, in the intro's order
@@ -704,10 +705,26 @@ function G.line(l)
     if l:find("^Findings:") then B.accuse = nil; G.emit("accuse") end
   end
 
+  -- the Phantom's calling cards: kept when the case is solved, three summon him
+  if l:find("^Tucked out of sight: a black calling card") then
+    G.card = G.room or "house"
+    info("magenta", "A Phantom calling card" .. (G.room and (" in the " .. G.room) or "") .. ". Solve the case in time and it's yours"
+      .. (G.cards and (" (" .. (G.cards + 1) .. " of 3)") or ""))
+  end
+  local cards = l:match("^%s*Calling cards:%s+(%d+)")
+  if cards then G.cards = tonumber(cards) end
+
   -- the end
   local verdict2 = l:match("^Case closed: (.+)$")
   if verdict2 then
     info("green", "Case closed: " .. verdict2)
+    local lost = verdict2:lower():find("cold") or verdict2:lower():find("fail") or verdict2:lower():find("lost")
+    if G.card and not lost then
+      G.cards = (G.cards or 0) + 1
+      info("magenta", "The Phantom's calling card is yours: " .. G.cards .. " of 3"
+        .. (G.cards >= 3 and ". Enough to summon the Phantom!" or ""))
+      G.card = nil
+    end
     G.running = false
     clearWait()
   end
@@ -940,6 +957,7 @@ function G.report(r)
   else
     info("yellow", "Not enough to name anyone yet")
   end
+  if G.card then info("magenta", "A Phantom calling card is waiting on this case: solve it in time and it's yours") end
   return r
 end
 
@@ -1262,6 +1280,8 @@ function G.status()
   local sec = {}
   for g, s in pairs(G.secrets) do sec[g .. (s.confronted and " (confronted)" or (" in the " .. tostring(s.room)))] = true end
   cecho("  <white>Secrets: " .. list(sec) .. "\n")
+  cecho("  <white>Calling card: " .. (G.card and ("found in the " .. G.card .. ", yours if you solve it") or "none this case")
+    .. (G.cards and ("   cards held: " .. G.cards .. " of 3" .. (G.cards >= 3 and " (enough to summon the Phantom)" or "")) or "") .. "\n")
 end
 
 function G.go(where)

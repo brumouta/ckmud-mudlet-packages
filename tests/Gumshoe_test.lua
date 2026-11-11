@@ -518,4 +518,17 @@ local plates = 0 for _, c in ipairs(sent) do if c:find("^plate") then plates = p
 ok(plates == 1 and not G.running and G.result and G.result.line, ("plates once, then names it (%d plates, %d commands)"):format(plates, #sent))
 respond = nil
 
+-- The Phantom's calling cards ------------------------------------------------------------------
+G.newCase(); G.room = "Attic"; G.cards = nil
+feed({ " Calling cards:   2" })
+ok(G.cards == 2, "casebook: two calling cards held")
+local card
+for _, l in ipairs(T.attic) do if l:find("calling card") then card = l end end
+LOG = ""; feed({ card })
+ok(G.card == "Attic" and not next(G.secrets) and LOG:find("3 of 3", 1, true), "a calling card in the Attic is spotted, not taken for a secret")
+LOG = ""; feed(S.closed)
+ok(G.cards == 3 and not G.card and LOG:find("summon the Phantom", 1, true), "solved in time: the card is kept, three of three")
+G.newCase(); G.room = "Attic"; feed({ card }); feed({ "Case closed: gone cold." })
+ok(G.cards == 3, "a cold case keeps no card")
+
 print("gum: ALL PASSED")

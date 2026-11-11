@@ -33,6 +33,14 @@ It walks to the nearest room with something left to do, does it, and repeats:
 - **Re-read** `notebook 9` to `notebook 12` (confessions change stories), `notebook guests` and `accuse`, then solve.
 - If the cake clues disagree, it **plates** the top suspect in the Kitchen. If one clue is the only thing against the top suspect, it **analyzes** that clue in the Underground Lab. Then it solves again.
 
+## The Phantom's calling cards
+
+Sometimes a search turns up one of the Phantom's black calling cards. It isn't a finding and has nothing to do with the case, but you keep it if you solve the case in time, and three of them summon a secret boss. Gumshoe:
+
+- says when it finds one, and `gum status` and the solve report remind you there's one on this case;
+- counts it when the case closes solved (not when it goes cold) and says when you have three;
+- reads the count from `casebook` (*Calling cards: 1*), so type `casebook` once after installing to start from your real count.
+
 ## How it decides
 
 - **Witnesses** (from `notebook guests`) never lie, and nor does the seating chart, which is who sat in the Dining Room.
