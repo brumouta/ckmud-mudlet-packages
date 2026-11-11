@@ -15,8 +15,9 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [BossTimer](packages/BossTimer) | `boss help` | Counts down to the **boss respawn** (from `uptime`), warns 5 and 1 minutes before, and re-checks by itself after each respawn. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 | [Gumshoe](packages/Gumshoe) | `gum help` | Solves Jaco's **Briefs mansion** party cases: walks the house, searches, questions, opens the sealed rooms and names who did it. |
+| [CryonFarm](packages/CryonFarm) | `cryon help` | Farms the **Confession of Cryon Frigidus** in Iceria's hidden lab: the four DNA samples, the fields and the smack. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer and Gumshoe work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer, Gumshoe and CryonFarm work without it.
 
 ## Installing
 
@@ -38,9 +39,9 @@ packages/
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler JSON + .lua files
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  BossTimer/ Casino/ DataLords2/ FriezaQuest/ Gumshoe/ MSDP/ YamoshiSpawn/  single-script packages
+  BossTimer/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gumshoe/ MSDP/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases, scripts
-    src/<Package>.lua     the logic, in one Lua table named after its command (boss, dl2, fq, gum, msdp, ys)
+    src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gum, msdp, ys)
     Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
 tests/                    Lua tests for the single-script packages + run.sh for everything
 docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
@@ -74,7 +75,7 @@ sh tests/run.sh
 
 Needs Lua 5.1+, Python 3 and Node (Node is only used for the muddler packages; their tests are skipped without it). What it covers:
 
-- **Blackjack, DataLords2, FriezaQuest, Gumshoe, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test. Gumshoe reads a real case and runs a whole one in a fake Briefs house.
+- **Blackjack, CryonFarm, DataLords2, FriezaQuest, Gumshoe, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test. Gumshoe reads a real case and runs a whole one in a fake Briefs house. CryonFarm does a whole run in a fake lab built from the log's exits.
 - **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted, because muddler silently ships an empty script if a trigger's `.lua` file is missing. Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
 
 ## Versioning
