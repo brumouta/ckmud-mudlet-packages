@@ -109,7 +109,7 @@ function G.newCase()
   G.gravityShut, G.flashlight = false, false
   G.portraits, G.plaque, G.code = {}, nil, nil
   G.inspected, G.logsRead, G.plated, G.analyzed = false, {}, nil, nil
-  G.plateTried, G.analyzeTried = false, false
+  G.plateTried, G.analyzeTried, G.darkWarned = false, false, false
   G.akw = { suspects = {}, weapons = {}, rooms = {}, format = nil }  -- keywords from `accuse`
   G.tries = {}
 end
@@ -646,7 +646,7 @@ function G.line(l)
   if l:find("^You take a flashlight") then G.flashlight = true end
   -- the lights are out and we can't see: get a light before searching on
   if l:find("^It is pitch dark%. You feel around") then G.gravityShut, G.flashlight = true, false end
-  if l:find("lights? .*come back on") or l:find("^You reset the breaker") then G.gravityShut = false end
+  if l:find("lights? .*come back on") or l:find("^You reset the breaker") then G.gravityShut = false; G.open.gravity = false end
   if l:find("^The voice lock chimes green") then G.open.suite = true; G.unsearched["Bulma's Suite"] = true end
 
   -- questioning and confronting: the answers go straight into the alibis
@@ -975,9 +975,14 @@ function G.todo()
   end
   if G.gravityShut and not G.flashlight then
     -- the game's two ways to see: a flashlight from the Hangar, or the breaker in the Robot Charging Bay
+    -- resetting the breaker re-seals the Gravity Chamber, so only once that room is searched
+    local chamberDone = G.searched["Gravity Chamber"] or not G.unsearched["Gravity Chamber"]
     if (G.tries.flashlight or 0) < 2 then add("Hangar", "flashlight")
-    elseif (G.tries.breaker or 0) < 2 then add("Robot Charging Bay", "breaker")
-    else return t end
+    elseif chamberDone and (G.tries.breaker or 0) < 2 then add("Robot Charging Bay", "breaker")
+    elseif not G.darkWarned then
+      G.darkWarned = true
+      info("yellow", "It's dark and the flashlight won't come: take flashlight in the Hangar by hand, then gum run")
+    end
     return t
   end
   if G.onlyQuestions then
@@ -1134,7 +1139,8 @@ end
 function DO.breaker(_, cb)
   tried("breaker")
   cmd("reset breaker", { { "^You .*breaker", "ok" }, { "lights? .*come back on", "ok" } }, G.stepTimeout, function(k)
-    if k == "ok" then G.gravityShut = false end
+    -- the lights come back and the Gravity Chamber seals again
+    if k == "ok" then G.gravityShut = false; G.open.gravity = false end
     cb()
   end)
 end

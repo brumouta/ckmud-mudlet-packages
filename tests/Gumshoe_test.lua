@@ -538,6 +538,10 @@ local td = G.todo()
 ok(G.gravityShut and not G.flashlight and td.Hangar and td.Hangar[1].kind == "flashlight" and next(td, next(td)) == nil,
   "pitch dark: the flashlight in the Hangar comes before anything else")
 G.tries.flashlight = 2
+G.unsearched["Gravity Chamber"] = true
+td = G.todo()
+ok(next(td) == nil, "no flashlight and the Gravity Chamber unsearched: no breaker, which would re-seal it")
+G.searched["Gravity Chamber"] = true
 td = G.todo()
 ok(td["Robot Charging Bay"] and td["Robot Charging Bay"][1].kind == "breaker", "no flashlight after two tries: reset the breaker in the Robot Charging Bay")
 sent = {}; G.room = "Attic"; feed({ card })
