@@ -194,7 +194,7 @@ local function notebook()
   local nq = {}
   for _, g in ipairs(G.guests) do if not H.questioned[g] then nq[#nq + 1] = g end end
   L[#L + 1] = " [ ] 4. Statements: " .. (12 - #nq) .. " of 12."
-  if #nq > 0 then L[#L + 1] = "      Not questioned yet: " .. table.concat(nq, ", ") .. "." end
+  if #nq > 0 and #nq < 12 then L[#L + 1] = "      Not questioned yet: " .. table.concat(nq, ", ") .. "." end
   L[#L + 1] = sealedText()
   L[#L + 1] = " [ ] 7. Accuse: 9 of 4 findings."
   L[#L + 1] = "Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser."
@@ -323,5 +323,72 @@ ok(has.analyze and has.plate, "analyzed #3 and plated Yamcha before naming him")
 ok(G.result and G.result.line == "accuse yamcha with dream at midnight" and G.result.sure, "and names him: " .. tostring(G.result and G.result.line))
 local busy = 0 for _, c in ipairs(sent) do if c == "search" then busy = busy + 1 end end
 ok(busy > 30, "searched again after every find and every 'still turning this room over'")
+
+
+-- A theft case: the real lines from one --------------------------------------------------------
+local T, tcur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe-theft.log") do
+  local name = l:match("^## (.+)$")
+  if name then tcur = name; T[tcur] = {} elseif tcur then table.insert(T[tcur], l) end
+end
+G.newCase(); G.room = nil
+feed(T.intro)
+ok(G.case.kind == "theft" and G.inspectCmd == "inspect cradle" and G.inspectRoom == "Dr. Briefs' Study" and G.case.scene == "Dr. Briefs' Study",
+  "theft intro: inspect cradle in the Study")
+feed(T.guests); feed(T["notebook-start"])
+local nq2 = 0 for _ in pairs(G.unquestioned) do nq2 = nq2 + 1 end
+ok(nq2 == 12, "Statements 0 of 12 lists nobody: all twelve still to question (it questioned none before)")
+ok(#G.partyRooms == 7 and G.partyRooms[5] == "Robot Workshop", "the party rooms a stash can be in")
+G.room = "Front Steps"
+local todo = G.todo()
+ok(todo["Dr. Briefs' Study"] and todo["Dr. Briefs' Study"][1].kind ~= nil, "the Study is on the list (search and inspect cradle)")
+local hasInspect = false
+for _, task in ipairs(todo["Dr. Briefs' Study"]) do if task.kind == "inspect" then hasInspect = true end end
+ok(hasInspect, "inspect goes to the Study, not the Front Steps")
+feed(T.study)
+ok(G.case.kind == "theft" and G.evidence[6], "the Study: a clue, and the reminder to inspect cradle")
+feed(T.hangar)
+ok(G.quiet[9], "party log: the radar was still in its cradle at nine, so not nine")
+feed(T.kitchen)
+ok(G.capsules.Kitchen, "a capsule in the Kitchen")
+feed(T.portraits)
+ok(G.code == "4852", "alphabetical plaque: Bulma, Dr. Briefs, Mrs. Briefs, Trunks = 4852")
+feed(T.gravity); feed(T.attic)
+ok(G.classify(G.evidence[4].text) == "hair" and select(2, G.classify(G.evidence[4].text)) == "not dark",
+  "'a tuft of something that is not dark hair' is not dark")
+ok(not G.secrets["a black calling card"] and next(G.secrets) == nil, "the Phantom's calling card is no secret")
+feed(T["notebook-later"])
+ok(G.capsules.Kitchen and G.capsules["Menagerie Yard"] and G.capsules.Conservatory, "notebook: capsules in the Kitchen, Menagerie Yard and Conservatory")
+nq2 = 0 for _ in pairs(G.unquestioned) do nq2 = nq2 + 1 end
+ok(nq2 == 12, "still nobody questioned: all twelve on the list")
+feed(T["statements-empty"]); feed(T.accuse)
+ok(G.akw.format == "accuse <suspect> stash <room> at <time>" and table.concat(G.akw.rooms, " ") == "grand dining family kitchen workshop menagerie conservatory",
+  "accuse: stash format and the room words")
+LOG = ""
+local r = G.report()
+ok(LOG:find("Nobody has been questioned yet", 1, true) and not r.sure and LOG:find("Stash:", 1, true), "without statements it says so, and never claims to be sure")
+
+-- the stash, with statements: Pilaf slipped off at ten (Krillin was in the Grand Hall and didn't see him),
+-- then went to the Kitchen; everyone else is seen by a witness
+local function st(room, ...) return { room = room, with = { ... } } end
+G.statements = {}
+for t = 9, 12 do G.statements[t] = {} end
+G.window = { [10] = true, [11] = true }
+local others = { "Oolong", "Yajirobe", "Mai", "Tien", "Gohan", "Piccolo", "Videl" }
+for t = 9, 12 do
+  G.statements[t]["Android 18"] = st("Dining Room", table.unpack and table.unpack(others) or unpack(others))
+  for _, o in ipairs(others) do G.statements[t][o] = st("Dining Room", "Android 18") end
+end
+G.statements[10]["Emperor Pilaf"] = st("Grand Hall", "Krillin")
+G.statements[10].Krillin = st("Grand Hall")
+G.statements[11]["Emperor Pilaf"] = st("Kitchen", "Yajirobe")
+G.statements[12]["Emperor Pilaf"] = st("Grand Hall")
+G.chart = {}
+r = G.solve()
+ok(r.suspect == "Emperor Pilaf" and r.time == 10 and r.stash == "Kitchen" and not r.stashGuess,
+  "theft: Pilaf at ten, and the Kitchen is the capsule room he went to after")
+ok(r.line == "accuse pilaf stash kitchen at ten", "the accusation: " .. tostring(r.line))
+sent = {}; G.command("accuse")
+ok(sent[1] == "accuse pilaf stash kitchen at ten", "gum accuse sends the stash accusation")
 
 print("gum: ALL PASSED")

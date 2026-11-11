@@ -22,10 +22,10 @@ It walks to the nearest room with something left to do, does it, and repeats:
 
 - **Search** every room the notebook lists until the game says *This room is done for now*. It searches again after every find, and waits whenever the game says *You are still turning this room over*.
 - **Question** every guest, in whatever room it last saw them.
-- **Inspect the remains** at the scene, for the time window and the two possible weapons.
+- **Inspect** where the case says: `inspect remains` at the scene of a murder (the time window and the two possible weapons), `inspect cradle` in the Study for a theft (when the loot was taken).
 - **Read Garter's door log** for all four chimes in the Inner Hall.
 - **Open the sealed rooms:**
-  - The lab: `study portraits`, work the code out from the plaque (left to right, right to left, oldest to youngest or youngest to oldest), `press` it in the Lab Vestibule, then go down.
+  - The lab: `study portraits`, work the code out from the plaque (left to right, right to left, alphabetical, oldest to youngest or youngest to oldest), `press` it in the Lab Vestibule, then go down.
   - Bulma's Suite: `say` the phrase written on the back of a secret, on the Upper Landing East.
   - The Gravity Chamber: `shut gravity` in the Robot Charging Bay. The lights go out, so it fetches the flashlight from the Hangar first, then searches the chamber.
 - **Confront** every secret, once every room has been searched.
@@ -46,10 +46,13 @@ It walks to the nearest room with something left to do, does it, and repeats:
 
   A confession is checked the same way. In the first case it was mapped from, Yamcha "confessed" to being in the Family Lounge at midnight, but Krillin and Dende were there and never named him.
 - **Evidence** is matched against the guest table by keyword: footprints for tread, a hair for hair colour, scorch marks or still air for ki, frosting or an untouched slice for the cake. When two clues disagree, one of them is planted, so neither counts until `analyze` or `plate` settles it. A clue that doesn't match a suspect rules them out.
-- **The time** is the window from the remains, minus any hour the notebook says was quiet. **The weapon** is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
+- **The time** is the window from the remains or the cradle, minus any hour the notebook or the party log rules out (*the radar was still in its cradle at nine*).
+- **Murder:** the weapon is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
+- **Theft:** three Hoi Poi capsules are hidden in party rooms. The stash is the capsule room the thief says they went to *after* the theft; the two decoys are in rooms they never went to afterwards. A suspect who went to exactly one capsule room afterwards scores higher. The accusation is `accuse <suspect> stash <room> at <time>`.
+- Until guests are questioned there are no alibis: `gum solve` says so and never calls it solved.
 
 ## Limits
 
-- **Case types:** it's built from a murder case. For theft, delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ).
+- **Case types:** murder and theft are solved. For delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case's notebook; the line `inspect cradle` prints hasn't been seen yet, so the time window comes from the notebook once it ticks lead 1.
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
 - **Monthly twists** other than November's feast (the seating chart) haven't been seen yet.

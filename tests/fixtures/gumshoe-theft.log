@@ -1,0 +1,163 @@
+## intro
+Tonight is the Thanksgiving party.
+Difficulty: Normal.
+The case: the Dragon Radar is gone from Dr. Briefs' desk in the Study. Nobody was hurt, and the thief is still at the party.
+Theft: later in the night the thief hid the radar in a Hoi Poi capsule, in a party room they went to after taking it. Three capsules that look exactly alike are hidden in the party rooms: the other two are decoys, in rooms the thief never went to after the theft, and only Jaco can open them. Jaco wants who took it, the room it is stashed in, and when it was taken.
+You have one hour before the case closes itself. Leaving the house or quitting closes it too.
+Twelve people were at the party: Oolong, Yajirobe, Emperor Pilaf, Mai, Tien, Gohan, Piccolo, Videl, Krillin, Android 18, Chi-Chi and Puar.
+The house clock chimed four times that night, at nine, ten, eleven and midnight. Every story is told by those times.
+The feast filled the Dining Room. Somewhere there is a seating chart.
+Where to start:
+ 1. Read your tablet: notebook. It lists every lead and where to go next.
+ 2. inspect cradle in the Study for when the radar was taken.
+ 3. Walk the house: question <guest> wherever they stand, search every room. You see only the guests at your own party; what they tell you is about your case only.
+ 4. At four findings (your notebook counts them), name who took it, the room it is stashed in and when it was taken: accuse <suspect> stash <room> at <time>, anywhere in the house, then accuse yes. accuse alone shows the words.
+## guests
+========================================
+THE GUESTS, AS ANYONE CAN SEE THEM
+========================================
+  Guest          Ki      Tread Hair
+  Oolong         quiet   light not dark
+  Yajirobe       flaring heavy dark
+  Emperor Pilaf  quiet   light not dark
+  Mai            quiet   light dark
+  Tien           flaring heavy not dark
+  Gohan          flaring heavy dark
+  Piccolo        flaring heavy not dark
+  Videl          flaring light dark
+Cake: only Mrs. Briefs' stand-in knows. plate <suspect> in the Kitchen, once per case.
+Witnesses: Krillin, Android 18, Chi-Chi and Puar. Never the culprit, never liars.
+Match these against your evidence: notebook lists what you found.
+========================================
+## notebook-start
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: the Dragon Radar stolen, Study
+Status: OPEN, 60 minutes left
+Difficulty: Normal
+Kind: Theft. Name who took the radar, the room it is stashed in, and when.
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [ ] 1. When: inspect cradle in the Study for when the radar was taken.
+ [ ] 2. Stash: three Hoi Poi capsules that look alike are hidden in the party rooms, and the radar is in the one in a room the thief went to after the theft. search the party rooms.
+ [ ] 3. Physical evidence: 0 of 6 found. search the rooms; analyze <number> one in the lab (1 left). notebook guests shows who looks like what.
+      Not searched yet (23), go there and search:
+      Grand Hall, Portrait Gallery, Garden Hall,
+      Cloakroom, Sun Porch, Dining Room,
+      Family Lounge, Kitchen, Study,
+      Covered Walkway, Robot Workshop,
+      Service Yard, Menagerie Yard,
+      East Corridor, West Corridor,
+      Robot Charging Bay, Conservatory, Hangar,
+      Pond and Aviary, Dinosaur Paddock,
+      Infirmary, Master Bedroom, Attic.
+ [ ] 4. Statements: 0 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw when it was taken, then where they went after.
+ [ ] 5. Secrets: none yet. Guests who lie are hiding something embarrassing; search for it.
+ [ ] 6. Sealed rooms: the lab locked (study portraits in the Portrait Gallery, then press <code> in the Lab Vestibule); the Gravity Chamber at 300G (shut gravity in the Robot Charging Bay); Bulma's Suite voice locked (a lying guest's secret has the phrase; say it on the Upper Landing East).
+ [ ] 7. Accuse: 0 of 4 findings. Anywhere in the house: accuse <suspect> stash <room> at <time>, then accuse yes. accuse alone shows the words.
+Rooms: Grand Hall, Dining Room, Family Lounge, Kitchen, Robot Workshop, Menagerie Yard, Conservatory.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## study
+Dr. Briefs' Study
+Status:  NoQuit, NoRecall, NoPortal
+Obvious exits:
+South -  Family Lounge
+West  -  Inner Hall
+Gohan tugs at the collar of a borrowed suit, looking for somewhere quiet to read.
+Emperor Pilaf mutters about a plan, a drawing of a plan.
+You find a trail of light, quick footprints through spilled punch. (evidence #6)
+Only dust and party streamers.
+This room is done for now. Your notebook lists the rest.
+Nobody was hurt tonight: the Dragon Radar was stolen. inspect cradle in the Study.
+## hangar
+Hangar
+Status:  NoQuit, NoRecall, NoPortal
+Obvious exits:
+South -  Robot Workshop
+Puar floats near the ceiling, nervous.
+The stand-ins' party log: at nine, the Dragon Radar was still in its cradle in the Study.
+Four findings: Jaco will hear an accusation now. accuse alone shows the words.
+## kitchen
+Kitchen
+Status:  NoQuit, NoRecall, NoPortal
+Obvious exits:
+East  -  Inner Hall
+South -  Dining Room
+Yajirobe is eating something he should not be.
+Tucked out of sight: a plain Hoi Poi capsule with no label, its button taped down. The thief hid the Dragon Radar in one just like it and left two more to fool you, and only Jaco can open them: name the room in your accusation. Capsules found: 1 of 3.
+A capsule wrapper, a lost earring, a crumb of cake. Nothing that matters.
+This room is done for now. Your notebook lists the rest.
+## portraits
+Four portraits hang here, left to right:
+  Dr. Briefs, capsule 8
+  Bulma, capsule 4
+  Mrs. Briefs, capsule 5
+  Trunks, capsule 2
+A brass plaque below: Alphabetical, by the name on each frame.
+The lab keypad takes the four numbers in that order, as one code: press 1234 style, in the Lab Vestibule.
+## gravity
+Gravity Chamber
+Status:  NoQuit, NoRecall, NoPortal
+Obvious exits:
+North -  Robot Workshop
+You find a tuft of something that is not dark hair. (evidence #4)
+You turn the room over twice. Whatever happened tonight, it left no mark here.
+This room is done for now. Your notebook lists the rest.
+## attic
+Attic
+Status:  NoQuit, NoRecall, NoPortal
+Obvious exits:
+Down  -  Upper Landing West
+Tucked out of sight: a black calling card stamped with a silver top hat, and on the back in neat script, With compliments, the Phantom. It has nothing to do with tonight's case and is no finding, but solve the case in time and the card is yours to keep. Your casebook counts them.
+You check under every cushion and behind every frame. Nothing new.
+This room is done for now. Your notebook lists the rest.
+## notebook-later
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: the Dragon Radar stolen, Study
+Status: OPEN, 59 minutes left
+Difficulty: Normal
+Kind: Theft. Name who took the radar, the room it is stashed in, and when.
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [ ] 1. When: inspect cradle in the Study for when the radar was taken.
+ [x] 2. Stash: all 3 of 3 capsules found, in the Kitchen, the Menagerie Yard and the Conservatory. The radar is in the one in a room the thief went to after the theft; notebook <time> shows where everyone went.
+ [ ] 3. Physical evidence: 5 of 6 found. search the rooms; analyze <number> one in the lab (1 left). notebook guests shows who looks like what.
+      #1 [unverified] a patch of air so still your ki sense slides off it
+      #2 [unverified] an untouched slice of cake, the fork never lifted
+      #4 [unverified] a tuft of something that is not dark hair
+      #5 [unverified] fresh scorch marks, the wallpaper still smoking
+      #6 [unverified] a trail of light, quick footprints through spilled punch
+      Searched: every open room.
+ [ ] 4. Statements: 0 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw when it was taken, then where they went after.
+ [x] 5. Secrets: Yajirobe (confronted); Piccolo (confronted); Videl (confronted), a phrase on the back
+      Scribbled on the back: "chop chop".
+ [ ] 6. Sealed rooms: the lab locked (study portraits in the Portrait Gallery, then press <code> in the Lab Vestibule); the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 11 of 4 findings. Anywhere in the house: accuse <suspect> stash <room> at <time>, then accuse yes. accuse alone shows the words.
+Rooms: Grand Hall, Dining Room, Family Lounge, Kitchen, Robot Workshop, Menagerie Yard, Conservatory.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## statements-empty
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Nobody questioned yet. question <guest> wherever they stand.
+========================================
+## accuse
+Accuse in one line, anywhere in the house:
+  accuse <suspect> stash <room> at <time>
+The room is where the radar is stashed: a party room the thief went to after the theft.
+Suspects: oolong yajirobe pilaf mai
+          tien gohan piccolo videl
+Rooms:    grand dining family kitchen
+          workshop menagerie conservatory
+Times:    nine ten eleven midnight (or 9 to 12)
+Example:  accuse yajirobe stash kitchen at ten
+Short:    accuse yajirobe kitchen 10
+Then accuse yes makes the arrest.
+Findings: 11 of 4. Three wrong and the case goes cold.

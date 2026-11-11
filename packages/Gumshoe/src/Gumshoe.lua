@@ -77,7 +77,11 @@ G.roomName = roomName
 
 -- ---------------------------------------------------------------- state
 function G.newCase()
-  G.case = { title = nil, scene = nil, difficulty = nil, minutes = nil, wrong = 0 }
+  G.case = { title = nil, scene = nil, difficulty = nil, minutes = nil, wrong = 0, kind = "murder" }
+  G.inspectCmd, G.inspectRoom = nil, nil   -- "inspect remains" at the scene, "inspect cradle" in the Study...
+  G.capsules = {}          -- theft: rooms with a Hoi Poi capsule (one holds the loot)
+  G.partyRooms = {}        -- theft: the rooms a stash can be in
+  G.questioned = {}        -- guests this script questioned
   G.guests = {}            -- every guest's name, in the intro's order
   G.witnesses = {}         -- name -> true: never the culprit, never lie
   G.traits = {}            -- name -> { ki, tread, hair, cake }
@@ -104,7 +108,7 @@ function G.newCase()
   G.gravityShut, G.flashlight = false, false
   G.portraits, G.plaque, G.code = {}, nil, nil
   G.inspected, G.logsRead, G.plated, G.analyzed = false, {}, nil, nil
-  G.akw = { suspects = {}, weapons = {}, format = nil }  -- keywords from `accuse`
+  G.akw = { suspects = {}, weapons = {}, rooms = {}, format = nil }  -- keywords from `accuse`
   G.tries = {}
 end
 if not G.case then G.newCase() end
@@ -197,6 +201,7 @@ function G.keyword(name, list)
   end
   if SPECIAL[name] then return SPECIAL[name] end
   if list == G.akw.weapons then return low:match("^(%w+)") end
+  if list == G.akw.rooms then return ({ ["robot workshop"] = "workshop" })[low] or low:match("^(%w+)") end
   return low:match("(%w+)$")
 end
 local function guestKw(name) return G.keyword(name, G.akw.suspects) end
@@ -263,24 +268,55 @@ local function parseStatement(t, text)
   addGuest(name)
 end
 
+-- Time words in a text, in the order they appear: "between ten and midnight" -> { 10, 12 }
+local function timesIn(text)
+  local out = {}
+  for w in text:lower():gmatch("%a+") do
+    if TIMES[w] and w ~= "twelve" then out[#out + 1] = TIMES[w] end
+  end
+  return out
+end
+G.timesIn = timesIn
+
+local function setWindow(text)
+  local ts = timesIn(text)
+  if #ts >= 2 and text:find("between") then
+    G.window = {}
+    for t = math.min(ts[1], ts[2]), math.max(ts[1], ts[2]) do G.window[t] = true end
+  elseif #ts == 1 then
+    G.window = { [ts[1]] = true }
+  end
+end
+
+-- "inspect cradle in the Study for when..." / "inspect remains at the scene for..."
+local function readInspect(text)
+  local c, room = text:match("(inspect %a+) in the (.-) for")
+  if not c then c, room = text:match("(inspect %a+) in the (.-)%.") end
+  if c then G.inspectCmd, G.inspectRoom = c, roomName(room); return true end
+  c = text:match("(inspect %a+) at the scene")
+  if c then G.inspectCmd = c; return true end
+end
+G.readInspect = readInspect
+
 local function parseLead(done, n, text)
   B.section = n
   if n == 1 then
     if done then
       G.inspected = true
-      local window = text:match("^When: between (%a+) and (%a+)")
-      if window then
-        local a, b = TIMES[window], TIMES[text:match("^When: between %a+ and (%a+)")]
-        G.window = {}
-        for t = a, b do G.window[t] = true end
-      end
-      local single = text:match("^When: at (%a+)")
-      if single and TIMES[single] then G.window = { [TIMES[single]] = true } end
+      setWindow((text:match("^When: ([^;]*)") or ""))
       for q in text:gmatch("quiet at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
+    else
+      readInspect(text)
     end
   elseif n == 2 then
     local w, r = text:match("^Weapon: the (.-), kept in the (.-)%.")
     if done and w then G.weapon = w; G.weaponCands = { { name = w, room = roomName(r) } } end
+    if text:find("^Stash:") then G.case.kind = "theft" end
+    local caps = text:match("capsules found, in (.-)%. ")
+    if caps then
+      caps = caps:gsub("the ", ""):gsub("Pond and Aviary", "Pond&Aviary")
+      for _, r2 in ipairs(split(caps)) do G.capsules[roomName((r2:gsub("&", " and ")))] = true end
+    end
   elseif n == 3 then
     local f, t = text:match("(%d+) of (%d+) found")
     if f then G.evFound, G.evTotal = tonumber(f), tonumber(t) end
@@ -288,7 +324,12 @@ local function parseLead(done, n, text)
     G.analyses = left and tonumber(left) or 0
     G.unsearched = {}
   elseif n == 4 then
+    -- "Statements: 0 of 12." lists nobody: everyone we haven't questioned is still to do
     G.unquestioned = {}
+    local a, b = text:match("(%d+) of (%d+)")
+    if a and tonumber(a) < tonumber(b) then
+      for _, g in ipairs(G.guests) do if not G.questioned[g] then G.unquestioned[g] = true end end
+    end
   elseif n == 5 then
     for part in (text:match("^Secrets: (.*)$") or ""):gmatch("[^;]+") do
       local who, state = part:match("^%s*(.-) %((%a[%a ]*)%)")
@@ -324,6 +365,14 @@ local function notebookLine(l)
   if mark then return parseLead(mark == "x", tonumber(n), text) end
   local weapons = l:match("^Weapons: (.+)$")
   if weapons then G.weaponsAll = split(weapons); return end
+  local kind = l:match("^Kind: (%a+)")
+  if kind then G.case.kind = kind:lower(); return end
+  local rooms = l:match("^Rooms: (.+)$")
+  if rooms then
+    G.partyRooms = {}
+    for _, r in ipairs(split(rooms, true)) do G.partyRooms[#G.partyRooms + 1] = roomName(r) end
+    return
+  end
   if B.section == 3 then
     local en, status, etext = l:match("^%s+#(%d+) %[(%a+)%] (.+)$")
     if en then
@@ -338,7 +387,7 @@ local function notebookLine(l)
     end
   elseif B.section == 4 then
     local list = l:match("Not questioned yet: (.+)$")
-    if list then B.list = "guests" end
+    if list then B.list = "guests"; G.unquestioned = {} end
     if B.list == "guests" then
       for _, g in ipairs(split(trim(list or l):gsub(",$", ""))) do G.unquestioned[g] = true; addGuest(g) end
       if l:find("%.%s*$") then B.list = nil end
@@ -371,6 +420,10 @@ function G.codeFromPortraits(portraits, plaque)
     for i = #portraits, 1, -1 do order[#order + 1] = portraits[i] end
   elseif p:find("left to right") then
     order = portraits
+  elseif p:find("alphabetical") then
+    for _, x in ipairs(portraits) do order[#order + 1] = x end
+    local rev = p:find("reverse") or p:find("z to a")
+    table.sort(order, function(a, b) if rev then return a.name > b.name end return a.name < b.name end)
   elseif p:find("old") or p:find("young") then
     local rank = {}
     for i, n in ipairs(G.AGE) do rank[n] = i end
@@ -422,7 +475,15 @@ function G.line(l)
   local diff = l:match("^Difficulty: (%a+)%.$")
   if diff then G.case.difficulty = diff end
   local caseText = l:match("^The case: (.+)$")
-  if caseText then G.case.title = caseText; G.case.scene = caseText:match("in the (.-)%.") end
+  if caseText then
+    G.case.title = caseText
+    local scene = caseText:match("in the (.-)%.")
+    G.case.scene = scene and roomName(scene) or nil
+  end
+  if l:find("^Theft: ") then G.case.kind = "theft" end
+  local start = l:match("^%s*%d+%. (inspect %a+ .*)$")
+  if start then readInspect(start) end
+  if l:find("^Nobody was hurt tonight") and readInspect(l) then G.case.kind = "theft"; G.inspected = false end
   local party = l:match("people were at the party: (.+)%.$")
   if party then for _, g in ipairs(split(party)) do addGuest(g); G.unquestioned[g] = true end end
 
@@ -497,6 +558,13 @@ function G.line(l)
     end
     if not l:find("^%[") then B.secret = nil end
   end
+  if l:find("^Tucked out of sight: a plain Hoi Poi capsule") and G.room then G.capsules[G.room] = true end
+  local stillAt = l:match("party log: at (%a+), ")
+  if stillAt and TIMES[stillAt] and l:find("still") then G.quiet[TIMES[stillAt]] = true end
+  if l:find("cradle") and not l:find("still in its cradle") and not l:find("inspect cradle") and #timesIn(l) > 0 then
+    setWindow(l)
+    G.inspected = true
+  end
   if l:find("This room is done for now") or l:find("^Nothing is ever hidden in") then
     if G.room then G.searched[G.room] = true; G.unsearched[G.room] = nil end
   end
@@ -525,7 +593,7 @@ function G.line(l)
     G.plaque = plaque
     G.code = G.codeFromPortraits(G.portraits, plaque)
     if G.code then info("green", "Lab code: " .. G.code .. " (press it in the Lab Vestibule)")
-    else info("yellow", "Couldn't read the plaque: " .. plaque) end
+    else info("yellow", "Couldn't read the plaque: " .. plaque .. " - open the lab by hand"); G.labWrong = true end
   end
   if l:find("^The keypad chimes") then G.open.lab = true; G.unsearched["Underground Lab"] = true end
   if l:find("^The keypad buzzes") then info("red", "Wrong lab code " .. tostring(G.code) .. " - check the plaque"); G.code = nil; G.labWrong = true end
@@ -558,15 +626,16 @@ function G.line(l)
   end
 
   -- `accuse` with no words
-  if l:find("^Accuse in one line") then B.accuse = "head"; G.akw.suspects, G.akw.weapons = {}, {} end
+  if l:find("^Accuse in one line") then B.accuse = "head"; G.akw.suspects, G.akw.weapons, G.akw.rooms = {}, {}, {} end
   if B.accuse then
     local fmt = l:match("^  (accuse <suspect>.*)$")
     if fmt then G.akw.format = fmt end
     local key, words = l:match("^(%a+):%s+(.+)$")
-    if key == "Suspects" or key == "Weapons" then B.accuse = key:lower()
+    if key == "Suspects" or key == "Weapons" or key == "Rooms" then B.accuse = key:lower()
     elseif key then B.accuse = "other" end
     if not key and B.accuse ~= "head" and B.accuse ~= "other" then words = trim(l) end
-    if (key == "Suspects" or key == "Weapons" or not key) and words and (B.accuse == "suspects" or B.accuse == "weapons") then
+    if key and key ~= "Suspects" and key ~= "Weapons" and key ~= "Rooms" then words = nil end
+    if words and (B.accuse == "suspects" or B.accuse == "weapons" or B.accuse == "rooms") then
       for word in words:gmatch("%S+") do table.insert(G.akw[B.accuse], word) end
     end
     if l:find("^Findings:") then B.accuse = nil; G.emit("accuse") end
@@ -595,6 +664,9 @@ function G.classify(text)
     if t:find("light") then return "tread", "light" end
   end
   if t:find("hair") then
+    if t:find("not dark") or t:find("fair") or t:find("blond") or t:find("pale") or t:find("grey") or t:find("white") then
+      return "hair", "not dark"
+    end
     if t:find("dark") or t:find("black") then return "hair", "dark" end
     return "hair", "not dark"
   end
@@ -680,8 +752,19 @@ function G.crimeTimes()
   return out
 end
 
+-- Theft: the capsule rooms `s` says they went to after taking it at `t`
+function G.stashFor(s, t)
+  local out, seen = {}, {}
+  for later = (t or 9) + 1, 12 do
+    local st = G.statements[later] and G.statements[later][s]
+    if st and G.capsules[st.room] and not seen[st.room] then seen[st.room] = true; out[#out + 1] = st.room end
+  end
+  return out
+end
+
 function G.solve()
   G.weighEvidence()
+  local theft = G.case.kind == "theft"
   local times = G.crimeTimes()
   local rows = {}
   for _, s in ipairs(G.suspects()) do
@@ -700,6 +783,12 @@ function G.solve()
       if rank > row.rank then row.rank, row.time = rank, t end
     end
     row.score = (#row.misses == 0 and 100 or 0) + row.rank * 10 + row.matches
+    if theft and next(G.capsules) and row.time then
+      -- the thief went to exactly one of the capsule rooms afterwards; the decoys are where they never went
+      local n = #G.stashFor(s, row.time)
+      row.stash = n
+      row.score = row.score + (n == 1 and 5 or (n == 0 and -5 or 0))
+    end
     rows[#rows + 1] = row
   end
   table.sort(rows, function(a, b) if a.score ~= b.score then return a.score > b.score end return a.name < b.name end)
@@ -709,8 +798,16 @@ function G.solve()
   r.suspect, r.time = top.name, top.time
   r.sure = #top.misses == 0 and top.rank == 3 and (not rows[2] or rows[2].score < top.score)
 
+  -- theft: the stash is the capsule room the thief went to after the theft
+  if theft then
+    local rooms = G.stashFor(top.name, top.time)
+    r.stash = rooms[1]
+    if #rooms ~= 1 then
+      r.stashGuess = true
+      if not r.stash then for room in pairs(G.capsules) do r.stash = r.stash or room end end
+    end
   -- the weapon: known, or the one kept where the suspect had been before the attack
-  if G.weapon then r.weapon = G.weapon
+  elseif G.weapon then r.weapon = G.weapon
   elseif #G.weaponCands > 0 then
     r.weapon, r.weaponGuess = G.weaponCands[1].name, true
     for _, w in ipairs(G.weaponCands) do
@@ -730,8 +827,12 @@ function G.solve()
     end
   end
 
-  r.sure = r.sure and not r.weaponGuess
-  if r.suspect and r.weapon and r.time then
+  r.sure = r.sure and not r.weaponGuess and not r.stashGuess
+  r.noStatements = next(G.statements[9] or {}) == nil and next(G.statements[12] or {}) == nil
+  if r.noStatements then r.sure = false end
+  if theft and r.suspect and r.stash and r.time then
+    r.line = ("accuse %s stash %s at %s"):format(guestKw(r.suspect), G.keyword(r.stash, G.akw.rooms), TIME_WORD[r.time])
+  elseif not theft and r.suspect and r.weapon and r.time then
     r.line = ("accuse %s with %s at %s"):format(guestKw(r.suspect), G.keyword(r.weapon, G.akw.weapons), TIME_WORD[r.time])
   end
   return r
@@ -747,8 +848,17 @@ function G.report(r)
   end
   local tw = {}
   for _, t in ipairs(r.times) do tw[#tw + 1] = TIME_WORD[t] end
-  cecho("  <white>When: " .. (#tw > 0 and table.concat(tw, " or ") or "?") ..
-        "   Weapon: " .. (r.weapon or "?") .. (r.weaponGuess and " (guess)" or "") .. "\n")
+  local what
+  if G.case.kind == "theft" then
+    local caps = {}
+    for room in pairs(G.capsules) do caps[#caps + 1] = room end
+    table.sort(caps)
+    what = "   Stash: " .. (r.stash or "?") .. (r.stashGuess and " (guess)" or "") ..
+      (#caps > 0 and ("  <grey>capsules in " .. table.concat(caps, ", ")) or "")
+  else
+    what = "   Weapon: " .. (r.weapon or "?") .. (r.weaponGuess and " (guess)" or "")
+  end
+  cecho("  <white>When: " .. (#tw > 0 and table.concat(tw, " or ") or "?") .. what .. "\n")
   for i, row in ipairs(r.rows) do
     if i > 4 then break end
     local col = i == 1 and "green" or "white"
@@ -757,6 +867,7 @@ function G.report(r)
       #row.misses > 0 and (", rules out: " .. table.concat(row.misses, ", ")) or "",
       row.time and TIME_WORD[row.time] or "", a and (a.tag .. ", " .. a.why) or ""))
   end
+  if r.noStatements then info("red", "Nobody has been questioned yet: the alibis are empty, so this is only a guess") end
   if r.plate then info("yellow", "The cake clues disagree: plate " .. guestKw(r.plate) .. " in the Kitchen settles it") end
   if r.analyze then info("yellow", "Evidence #" .. r.analyze .. " is the one against " .. r.suspect .. ": analyze " .. r.analyze .. " in the Underground Lab") end
   if r.line then
@@ -785,7 +896,8 @@ function G.todo()
   for g in pairs(G.unquestioned) do
     if G.where[g] and (G.tries["question " .. g] or 0) < 2 then add(G.where[g], "question", g) end
   end
-  if not G.inspected and G.case.scene and G.EXITS[G.case.scene] then add(G.case.scene, "inspect") end
+  local inspectAt = G.inspectRoom or G.case.scene
+  if not G.inspected and inspectAt and G.EXITS[inspectAt] and (G.tries.inspect or 0) < 2 then add(inspectAt, "inspect") end
   if count(G.logsRead) < 4 then add("Inner Hall", "logs") end
   if G.open.lab == false and not G.labWrong then
     if G.code then add("Lab Vestibule", "press") elseif not G.plaque then add("Portrait Gallery", "portraits") end
@@ -850,14 +962,18 @@ end
 function DO.question(g, cb)
   tried("question " .. g)
   cmd("question " .. guestKw(g), { { "^At midnight:", "ok" }, { "^Nobody by that name", "bad" } }, G.stepTimeout, function(k)
-    if k == "ok" then G.unquestioned[g] = nil
+    if k == "ok" then G.unquestioned[g] = nil; G.questioned[g] = true
     else info("yellow", "Couldn't question " .. g .. " (" .. k .. ")"); G.where[g] = nil end
     cb()
   end)
 end
 
 function DO.inspect(_, cb)
-  cmd("inspect remains", { { "heart capsule stopped", "ok" }, { "last telemetry", "ok" } }, G.stepTimeout, function()
+  tried("inspect")
+  local c = G.inspectCmd or "inspect remains"
+  cmd(c, { { "^Nobody was hurt tonight", "wrong" }, { "heart capsule stopped", "ok" }, { "last telemetry", "ok" }, { "cradle", "ok" } },
+    G.stepTimeout, function(k)
+    if k == "wrong" then return cb() end      -- the line named the right command and room: the next plan goes there
     G.inspected = true
     cb()
   end)
@@ -1074,8 +1190,9 @@ function G.command(c, arg)
   elseif c == "accuse" then
     local r = G.solve()
     if not r.line then return info("yellow", "Not enough to accuse anyone yet: gum solve") end
-    if G.akw.format and not G.akw.format:find("with <weapon> at <time>$") then
-      return info("yellow", "This case wants: " .. G.akw.format .. " - accuse by hand")
+    local fmt = G.akw.format
+    if fmt and not fmt:find("with <weapon> at <time>$") and not fmt:find("stash <room> at <time>$") then
+      return info("yellow", "This case wants: " .. fmt .. " - accuse by hand")
     end
     send(r.line, false)
   elseif c == "status" then G.status()
