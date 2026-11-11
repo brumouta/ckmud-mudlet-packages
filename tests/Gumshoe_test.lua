@@ -547,4 +547,29 @@ ok(td["Robot Charging Bay"] and td["Robot Charging Bay"][1].kind == "breaker", "
 sent = {}; G.room = "Attic"; feed({ card })
 ok(sent[#sent] == "get card", "a calling card is picked up")
 
+-- Accomplices: one did it, one covered (the real lines from one) ---------------------------------
+local A, acur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe-accomplices.log") do
+  local name = l:match("^## (.+)$")
+  if name then acur = name; A[acur] = {} elseif acur then table.insert(A[acur], l) end
+end
+local function accomplices(skipCover)
+  G.newCase(); G.room = nil
+  for _, k in ipairs({ "intro", "guests", "answers", "confront", "notebook-end", "final-statements", "accuse", "analyze" }) do
+    for _, l in ipairs(A[k]) do
+      if not (skipCover and l:find("I covered for them")) then gum.line(l) end
+    end
+  end
+  return G.solve()
+end
+r = accomplices()
+ok(G.case.kind == "accomplices" and G.cover and G.cover.culprit == "Emperor Pilaf" and G.cover.coverer == "Mai",
+  "Mai owns up: she covered for Emperor Pilaf")
+ok(r.line == "accuse pilaf and mai with taser at ten", "accomplices: both names: " .. tostring(r.line))
+r = accomplices(true)
+ok(r.line == "accuse pilaf and mai with taser at ten",
+  "...and without the confession, the two who first named each other in the Dining Room: " .. tostring(r.line))
+sent = {}; G.command("accuse")
+ok(sent[1] == "accuse pilaf and mai with taser at ten", "gum accuse sends the two-name accusation")
+
 print("gum: ALL PASSED")

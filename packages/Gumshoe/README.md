@@ -58,12 +58,13 @@ Sometimes a search turns up one of the Phantom's black calling cards. It isn't a
 - **Evidence** is matched against the guest table by keyword: footprints for tread, a hair for hair colour, scorch marks or still air for ki, frosting or an untouched slice for the cake. When two clues disagree, one of them is planted, so neither counts until `analyze` or `plate` settles it. The alibi comes first (*find the one nobody saw*); a clue that doesn't fit only costs points, because a clue can be planted. When one doesn't fit the top suspect, it suggests analyzing that clue.
 - **The time** is the window from the remains or the cradle, minus any hour the notebook or the party log rules out (*the radar was still in its cradle at nine*).
 - **Murder:** the weapon is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
+- **Accomplices:** one guest did it and another covered: the two swore they were together and each named the other. When the coverer is confronted they own up (*I was never in the Dining Room with Emperor Pilaf… I covered for them*), which names both. Before that, the partner is the suspect whose first story at that hour put them in the culprit's room, naming each other. The accusation is `accuse <culprit> and <partner> with <weapon> at <time>`.
 - **Theft:** three Hoi Poi capsules are hidden in party rooms. The stash is the capsule room the thief says they went to *after* the theft; the two decoys are in rooms they never went to afterwards. A suspect who went to exactly one capsule room afterwards scores higher. The accusation is `accuse <suspect> stash <room> at <time>`.
 - Until guests are questioned there are no alibis: `gum solve` says so and never calls it solved.
 
 ## Limits
 
-- **Case types:** murder and theft are solved. For delayed sabotage, accomplices and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case (*the radar's cradle logs that the Dragon Radar left it between nine and ten*).
+- **Case types:** murder, theft and accomplices are solved. For delayed sabotage and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case (*the radar's cradle logs that the Dragon Radar left it between nine and ten*).
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
 - **Monthly twists** other than November's feast (the seating chart) haven't been seen yet.
 - **Upgrading mid-case** keeps what the case has found so far and adds anything the new version needs, so you can install a fix without starting over.

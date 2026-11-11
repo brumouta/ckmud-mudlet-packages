@@ -80,6 +80,7 @@ function G.newCase()
   G.case = { title = nil, scene = nil, difficulty = nil, minutes = nil, wrong = 0, kind = "murder" }
   G.inspectCmd, G.inspectRoom = nil, nil   -- "inspect remains" at the scene, "inspect cradle" in the Study...
   G.capsules = {}          -- theft: rooms with a Hoi Poi capsule (one holds the loot)
+  G.cover = nil            -- accomplices: { culprit, coverer } once the coverer owns up
   G.card = nil             -- the room a Phantom calling card turned up in (G.cards, the casebook count, outlives cases)
   G.partyRooms = {}        -- theft: the rooms a stash can be in
   G.questioned = {}        -- guests this script questioned
@@ -278,7 +279,14 @@ local function parseStatement(t, text)
   local with = {}
   local list = rest:match("^with (.+)$")
   if list then with = split(list) end
-  G.statements[t][name] = { room = B.room, with = with, first = first and roomName(first) or nil }
+  local old = G.statements[t][name]
+  local st = { room = B.room, with = with, first = first and roomName(first) or nil }
+  -- keep who they first claimed to be with (the table only names the first room)
+  if st.first and old then
+    if old.firstWith then st.firstWith = old.firstWith
+    elseif old.room == st.first then st.firstWith = old.with end
+  end
+  G.statements[t][name] = st
   addGuest(name)
 end
 
@@ -521,6 +529,7 @@ function G.line(l)
     G.case.scene = scene and roomName(scene) or nil
   end
   if l:find("^Theft: ") then G.case.kind = "theft" end
+  if l:find("^Accomplices: ") then G.case.kind = "accomplices" end
   local start = l:match("^%s*%d+%. (inspect %a+ .*)$")
   if start then readInspect(start) end
   if l:find("^Nobody was hurt tonight") and readInspect(l) then G.case.kind = "theft"; G.inspected = false end
@@ -657,6 +666,13 @@ function G.line(l)
     if G.secrets[pale] then G.secrets[pale].confronted = true end
     if has(G.guests, pale) then B.answer, B.confession = pale, true end
   end
+  -- accomplices: the one who covered owns up when confronted
+  -- "I was never in the Dining Room with Emperor Pilaf. They asked me to say we were together, and I covered for them."
+  local _, covered = l:match("I was never in the (.-) with (.-)%. They asked me to say we were together")
+  if covered and B.answer then
+    G.cover = { culprit = covered, coverer = B.answer }
+    G.case.kind = "accomplices"
+  end
   local at, said = l:match('^At (%a+): "(.*)$')
   if at and TIMES[at] and B.answer then
     local st = G.parseAnswer(said)
@@ -664,12 +680,12 @@ function G.line(l)
       local t = TIMES[at]
       G.statements[t] = G.statements[t] or {}
       local old = G.statements[t][B.answer]
-      if B.confession and old and old.room ~= st.room then st.first = old.room end
+      if B.confession and old and old.room ~= st.room then st.first, st.firstWith = old.first or old.room, old.firstWith or old.with end
       -- a notebook table already read is the game's own summary; an answer only fills gaps or corrects a confession
       if not old or B.confession then G.statements[t][B.answer] = st end
       if t == 12 then G.questioned[B.answer] = true; G.unquestioned[B.answer] = nil end
     end
-  elseif not l:find("^So that is where I really was") and not l:find("^\"So that is where") and not teller and not pale then
+  elseif not covered and not l:find("^So that is where I really was") and not l:find("^\"So that is where") and not teller and not pale then
     B.answer = nil
   end
 
@@ -846,6 +862,27 @@ function G.stashFor(s, t)
   return out
 end
 
+-- Accomplices: the two swore they were together at the time, and each named the other.
+-- The partner is the suspect whose first story at that hour puts them in the culprit's room, naming each other.
+function G.partnerOf(culprit, t)
+  local st = G.statements[t] or {}
+  local mine = st[culprit]
+  if not mine then return nil end
+  local room, with = mine.first or mine.room, mine.firstWith or mine.with or {}
+  local best, bestScore
+  for _, s in ipairs(G.suspects()) do
+    local o = st[s]
+    if s ~= culprit and o and (o.first or o.room) == room then
+      local score = 0
+      if has(with, s) then score = score + 1 end
+      if has(o.firstWith or o.with or {}, culprit) then score = score + 1 end
+      if o.first then score = score + 1 end   -- changed their story: a confessed cover
+      if not bestScore or score > bestScore then best, bestScore = s, score end
+    end
+  end
+  return best
+end
+
 function G.solve()
   G.weighEvidence()
   local theft = G.case.kind == "theft"
@@ -913,11 +950,25 @@ function G.solve()
     end
   end
 
+  -- accomplices: who did it, and who covered for them
+  if G.case.kind == "accomplices" then
+    if G.cover and has(G.guests, G.cover.culprit) then
+      r.suspect, r.partner = G.cover.culprit, G.cover.coverer
+    elseif r.suspect and r.time then
+      r.partner = G.partnerOf(r.suspect, r.time)
+    end
+    if not r.partner then r.sure = false end
+  end
+
   r.sure = r.sure and not r.weaponGuess and not r.stashGuess
   r.noStatements = next(G.statements[9] or {}) == nil and next(G.statements[12] or {}) == nil
   if r.noStatements then r.sure = false end
   if theft and r.suspect and r.stash and r.time then
     r.line = ("accuse %s stash %s at %s"):format(guestKw(r.suspect), G.keyword(r.stash, G.akw.rooms), TIME_WORD[r.time])
+  elseif G.case.kind == "accomplices" then
+    if r.suspect and r.partner and r.weapon and r.time then
+      r.line = ("accuse %s and %s with %s at %s"):format(guestKw(r.suspect), guestKw(r.partner), G.keyword(r.weapon, G.akw.weapons), TIME_WORD[r.time])
+    end
   elseif not theft and r.suspect and r.weapon and r.time then
     r.line = ("accuse %s with %s at %s"):format(guestKw(r.suspect), G.keyword(r.weapon, G.akw.weapons), TIME_WORD[r.time])
   end
@@ -943,6 +994,9 @@ function G.report(r)
       (#caps > 0 and ("  <grey>capsules in " .. table.concat(caps, ", ")) or "")
   else
     what = "   Weapon: " .. (r.weapon or "?") .. (r.weaponGuess and " (guess)" or "")
+    if G.case.kind == "accomplices" then
+      what = what .. "   Covered by: " .. (r.partner or "?") .. (G.cover and " (confessed)" or "")
+    end
   end
   cecho("  <white>When: " .. (#tw > 0 and table.concat(tw, " or ") or "?") .. what .. "\n")
   for i, row in ipairs(r.rows) do
