@@ -1,0 +1,214 @@
+## intro
+Tonight is the Thanksgiving party.
+Difficulty: Hard. One more guest lies, the lab analyzer is off, and Garter's door log has a second broken sensor. Half again the pay, and a Good or Perfect solve earns a stronger boost.
+The case: a weapon rigged to go off on its own smashed Mrs. Briefs' stand-in in the Study. Whoever set it thought it was the real one.
+Inspect the remains in the Study for the damage and the stand-in's last telemetry.
+Delayed sabotage: someone rigged the weapon earlier in the night and was somewhere else when it went off. A delay timer at the scene says how long it waited: search the Study for it. Jaco wants the time it was rigged.
+Twelve people were at the party: Yamcha, Oolong, Launch, Yajirobe, Mr. Satan, Tien, Gohan, Piccolo, Krillin, Android 18, Dende and Mr. Popo.
+## guests
+========================================
+THE GUESTS, AS ANYONE CAN SEE THEM
+========================================
+  Guest          Ki      Tread Hair
+  Yamcha         flaring light dark
+  Oolong         quiet   light not dark
+  Launch         quiet   heavy not dark
+  Yajirobe       flaring heavy dark
+  Mr. Satan      quiet   heavy dark
+  Tien           flaring heavy not dark
+  Gohan          flaring heavy dark
+  Piccolo        flaring heavy not dark
+Cake: only Mrs. Briefs' stand-in knows. plate <suspect> in the Kitchen, once per case.
+Witnesses: Krillin, Android 18, Dende and Mr. Popo. Never the culprit, never liars.
+Match these against your evidence: notebook lists what you found.
+========================================
+## chart
+The seating chart, every place card signed at the feast:
+At nine: Android 18, Mr. Popo.
+At ten: Yajirobe, Krillin, Android 18.
+At eleven: Mr. Satan, Android 18.
+At midnight: nobody.
+(Finding 2 of the 4 Jaco needs.)
+## timer
+Taped out of sight, its wires still warm: a Capsule Corp delay timer that fed the weapon. Its dial reads set two chimes before it fired. Whoever rigged it stood here then, and was somewhere else when it went off.
+## remains
+The damage tells its own story: crushed, not struck, as if the room's gravity leaned on one spot. Either the Gravity Gauntlet from the Robot Workshop, or the Battle Jacket Mk.0 from the Grand Hall. Both are missing.
+The stand-in's last telemetry: its heart capsule stopped between eleven and midnight.
+## jacket
+Shoved out of sight: the empty case of the Battle Jacket Mk.0, its foam still shaped to it. Dr. Briefs keeps it in the Grand Hall, so whoever rigged it took it from there earlier in the night.
+## partylog
+The stand-ins' party log: at eleven, nothing had gone off yet in the Study.
+## logs
+Garter's door log for nine, heads per room:
+  Grand Hall       2
+  Dining Room      sensor broken
+  Family Lounge    2
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   2
+  Menagerie Yard   2
+  Conservatory     2
+Garter's door log for ten, heads per room:
+  Grand Hall       0
+  Dining Room      sensor broken
+  Family Lounge    3
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   3
+  Menagerie Yard   0
+  Conservatory     2
+Garter's door log for eleven, heads per room:
+  Grand Hall       0
+  Dining Room      sensor broken
+  Family Lounge    3
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   2
+  Menagerie Yard   2
+  Conservatory     0
+Garter's door log for midnight, heads per room:
+  Grand Hall       0
+  Dining Room      sensor broken
+  Family Lounge    3
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   3
+  Menagerie Yard   3
+  Conservatory     3
+## evidence
+You find an untouched slice of cake, the fork never lifted. (evidence #1)
+You find deep footprints pressed into the carpet pile. (evidence #2)
+You find a fork with a smear of birthday frosting. (evidence #3)
+You find a trail of light, quick footprints through spilled punch. (evidence #4)
+You find a tuft of something that is not dark hair. (evidence #5)
+You find a patch of air so still your ki sense slides off it. (evidence #6)
+## notebook-end
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: Mrs. Briefs' stand-in smashed by a rigged weapon, Study
+Status: OPEN, 58 minutes left
+Difficulty: Hard, one more liar, no lab analyzer, a second broken sensor
+Kind: Delayed sabotage. Name when it was rigged, not when it went off.
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [x] 1. When: it went off between eleven and midnight; the party log says nothing had gone off at eleven. The delay timer says it was set two chimes before it fired.
+ [x] 2. Weapon: the Battle Jacket Mk.0, kept in the Grand Hall. notebook <time> shows who claimed the Grand Hall before it was rigged.
+ [x] 3. Physical evidence: 6 of 6 found. search the rooms; the lab analyzer is off on a Hard case. notebook guests shows who looks like what.
+      #1 [unverified] an untouched slice of cake, the fork never lifted
+      #2 [unverified] deep footprints pressed into the carpet pile
+      #3 [unverified] a fork with a smear of birthday frosting
+      #4 [unverified] a trail of light, quick footprints through spilled punch
+      #5 [unverified] a tuft of something that is not dark hair
+      #6 [unverified] a patch of air so still your ki sense slides off it
+      Searched: every open room.
+ [x] 4. Statements: 12 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw when it was rigged.
+ [x] 5. Secrets: Launch (confronted); Yajirobe (confronted); Mr. Satan (confronted), a phrase on the back; Tien (confronted)
+      Scribbled on the back: "lights out dear".
+ [x] 6. Sealed rooms: the lab open; the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 15 of 4 findings. Anywhere in the house: accuse <suspect> with <weapon> rigged at <time>, then accuse yes. accuse alone shows the words.
+Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## final-statements
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Grand Hall, 2 say so:
+   Launch, with Yajirobe.
+   Yajirobe, with Launch.
+Dining Room, 2 say so:
+   Android 18, with Mr. Popo.
+   Mr. Popo, with Android 18.
+Family Lounge, 2 say so:
+   Oolong, with Mr. Satan.
+   Mr. Satan, with Oolong.
+Robot Workshop, 2 say so:
+   Tien, with Piccolo.
+   Piccolo, with Tien.
+Menagerie Yard, 2 say so:
+   Yamcha, with Dende.
+   Dende, with Yamcha.
+Conservatory, 2 say so:
+   Gohan, with Krillin.
+   Krillin, with Gohan.
+========================================
+========================================
+STATEMENTS ABOUT TEN
+========================================
+Dining Room, 3 say so:
+   Yajirobe, with Krillin and Android 18 (first said the Conservatory).
+   Krillin, with Yajirobe and Android 18.
+   Android 18, with Yajirobe and Krillin.
+Family Lounge, 4 say so:
+   Yamcha, with Oolong and Mr. Popo.
+   Oolong, with Yamcha and Mr. Popo.
+   Launch, with Yamcha, Oolong and Mr. Popo (first said the Dining Room).
+   Mr. Popo, with Yamcha and Oolong.
+Robot Workshop, 3 say so:
+   Tien, with Gohan and Piccolo (first said the Dining Room).
+   Gohan, with Tien and Piccolo.
+   Piccolo, with Tien and Gohan.
+Conservatory, 2 say so:
+   Mr. Satan, with Dende.
+   Dende, with Mr. Satan.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN (in the window)
+========================================
+Dining Room, 2 say so:
+   Mr. Satan, with Android 18.
+   Android 18, with Mr. Satan.
+Family Lounge, 3 say so:
+   Launch, with Yajirobe and Dende.
+   Yajirobe, with Launch and Dende.
+   Dende, with Launch and Yajirobe.
+Kitchen, 3 say so:
+   Yamcha, with Gohan and Piccolo.
+   Gohan, with Yamcha and Piccolo.
+   Piccolo, with Yamcha and Gohan.
+Robot Workshop, 2 say so:
+   Oolong, with Tien.
+   Tien, with Oolong.
+Menagerie Yard, 2 say so:
+   Krillin, with Mr. Popo.
+   Mr. Popo, with Krillin.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT (in the window)
+========================================
+Family Lounge, 3 say so:
+   Yajirobe, with Gohan and Piccolo.
+   Gohan, with Yajirobe and Piccolo.
+   Piccolo, with Yajirobe and Gohan.
+Robot Workshop, 3 say so:
+   Launch, with Mr. Satan and Krillin.
+   Mr. Satan, with Launch and Krillin (first said the Menagerie Yard).
+   Krillin, with Launch and Mr. Satan.
+Menagerie Yard, 3 say so:
+   Yamcha, with Dende and Mr. Popo.
+   Dende, with Yamcha and Mr. Popo.
+   Mr. Popo, with Yamcha and Dende.
+Conservatory, 3 say so:
+   Oolong, with Tien and Android 18.
+   Tien, with Oolong and Android 18.
+   Android 18, with Oolong and Tien.
+========================================
+## plate
+Mrs. Briefs' stand-in checks her list: Piccolo refused the cake.
+## accuse
+Accuse in one line, anywhere in the house:
+  accuse <suspect> with <weapon> rigged at <time>
+The time is when it was rigged, not when it went off.
+Suspects: yamcha oolong launch yajirobe
+          satan tien gohan piccolo
+Weapons:  gauntlet jacket lights
+          dream hornets taser
+Times:    nine ten eleven midnight (or 9 to 12)
+Example:  accuse oolong with dream rigged at ten
+Short:    accuse oolong dream 10
+Then accuse yes makes the arrest.
+Findings: 16 of 4. Three wrong and the case goes cold.
+## card
+Tucked out of sight: a black calling card stamped with a silver top hat, and on the back in neat script, With compliments, the Phantom. It has nothing to do with tonight's case and is no finding, but solve the case in time and the card is yours to keep. Your casebook counts them.

@@ -525,7 +525,7 @@ ok(G.cards == 2, "casebook: two calling cards held")
 local card
 for _, l in ipairs(T.attic) do if l:find("calling card") then card = l end end
 LOG = ""; feed({ card })
-ok(G.card == "Attic" and not next(G.secrets) and LOG:find("3 of 3", 1, true), "a calling card in the Attic is spotted, not taken for a secret")
+ok(G.card == "Attic" and not next(G.secrets) and LOG:find("that makes 3", 1, true), "a calling card in the Attic is spotted, not taken for a secret")
 LOG = ""; feed(S.closed)
 ok(G.cards == 3 and not G.card and LOG:find("summon the Phantom", 1, true), "solved in time: the card is kept, three of three")
 G.newCase(); G.room = "Attic"; feed({ card }); feed({ "Case closed: gone cold." })
@@ -545,7 +545,7 @@ G.searched["Gravity Chamber"] = true
 td = G.todo()
 ok(td["Robot Charging Bay"] and td["Robot Charging Bay"][1].kind == "breaker", "no flashlight after two tries: reset the breaker in the Robot Charging Bay")
 sent = {}; G.room = "Attic"; feed({ card })
-ok(sent[#sent] == "get card", "a calling card is picked up")
+ok(sent[#sent] ~= "get card", "a calling card isn't an object: no get card (the game says so)")
 
 -- Accomplices: one did it, one covered (the real lines from one) ---------------------------------
 local A, acur = {}, nil
@@ -594,5 +594,36 @@ local _, tagY = G.alibi("Yamcha", 11)
 ok(tagR == "unbacked" and tagY == "alone", "Roshi says he was with Yamcha and Pilaf, who name only each other")
 r = G.solve()
 ok(r.line == "accuse roshi stash family at eleven", "Hard theft: " .. tostring(r.line))
+
+-- Hard delayed sabotage: went off at midnight (nothing yet at eleven), timer two chimes -> rigged at ten.
+-- Launch confessed to the Family Lounge at ten, but Mr. Popo was there and doesn't name her, and the log counts 3 of 4.
+local S, scur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe-sabotage-hard.log") do
+  local name = l:match("^## (.+)$")
+  if name then scur = name; S[scur] = {} elseif scur then table.insert(S[scur], l) end
+end
+G.newCase(); G.room = nil
+feed(S.intro)
+ok(G.case.kind == "sabotage", "Delayed sabotage read from the intro")
+feed(S.guests); feed(S.chart); feed(S.remains)
+r = G.solve()
+ok(not r.sure, "no timer yet: not sure")
+feed(S.timer)
+ok(G.delay == 2, "timer: two chimes")
+feed(S.partylog); feed(S.jacket)
+ok(G.weapon == "Battle Jacket Mk.0", "the empty case names the weapon")
+ok(#G.crimeTimes() == 1 and G.crimeTimes()[1] == 10, "went off at midnight, rigged at ten")
+feed(S.logs); feed(S.evidence); feed(S["notebook-end"]); feed(S["final-statements"]); feed(S.plate); feed(S.accuse)
+local rank, tagL = G.alibi("Launch", 10)
+ok(tagL == "LIED", "Launch lied about ten")
+ok(G.tookWeapon("Launch", 10, "Grand Hall"), "Launch was in the Grand Hall at nine")
+r = G.solve()
+ok(r.line == "accuse launch with jacket rigged at ten", "Hard sabotage: " .. tostring(r.line))
+sent = {}
+G.cards = 4
+feed(S.card)
+local got = false
+for _, c in ipairs(sent) do if c == "get card" then got = true end end
+ok(not got and G.card, "calling card noted, not picked up")
 
 print("gum: ALL PASSED")

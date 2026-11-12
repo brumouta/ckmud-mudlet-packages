@@ -90,6 +90,7 @@ function G.newCase()
   G.statements = {}        -- [time][name] = { room, with = {...}, first = room they first claimed }
   G.window = nil           -- [time] = true: when the stand-in stopped
   G.quiet = {}             -- [time] = true: the log says all was quiet
+  G.delay = nil            -- delayed sabotage: chimes between rigging and going off
   G.time = nil             -- resolved time
   G.weapon = nil           -- resolved weapon name
   G.weaponCands = {}       -- { { name, room }, ... } from the damage
@@ -300,6 +301,13 @@ local function timesIn(text)
 end
 G.timesIn = timesIn
 
+local CHIMES = { one = 1, two = 2, three = 3 }
+-- "Its dial reads set two chimes before it fired" -> 2
+local function readDelay(text)
+  local n = text:match("set (%a+) chimes? before it fired")
+  if n and CHIMES[n:lower()] then G.delay = CHIMES[n:lower()]; G.case.kind = "sabotage"; return true end
+end
+
 local function setWindow(text)
   local ts = timesIn(text)
   if #ts >= 2 and text:find("between") then
@@ -347,6 +355,9 @@ local function parseLead(done, n, text)
       for q in text:gmatch("still in its cradle at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
       -- "the cradle was found empty by midnight": already gone at that chime, so it wasn't taken then
       for q in text:gmatch("found empty by (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
+      -- sabotage: "the party log says nothing had gone off at eleven. The delay timer says it was set two chimes before it fired."
+      for q in text:gmatch("nothing had gone off at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
+      readDelay(text)
     else
       readInspect(text)
     end
@@ -408,7 +419,11 @@ local function notebookLine(l)
   local weapons = l:match("^Weapons: (.+)$")
   if weapons then G.weaponsAll = split(weapons); return end
   local kind = l:match("^Kind: (%a+)")
-  if kind then G.case.kind = kind:lower(); return end
+  if kind then
+    kind = kind:lower()
+    G.case.kind = (kind == "delayed") and "sabotage" or kind
+    return
+  end
   local rooms = l:match("^Rooms: (.+)$")
   if rooms then
     G.partyRooms = {}
@@ -534,6 +549,7 @@ function G.line(l)
   end
   if l:find("^Theft: ") then G.case.kind = "theft" end
   if l:find("^Accomplices: ") then G.case.kind = "accomplices" end
+  if l:find("^Delayed sabotage: ") then G.case.kind = "sabotage" end
   local start = l:match("^%s*%d+%. (inspect %a+ .*)$")
   if start then readInspect(start) end
   if l:find("^Nobody was hurt tonight") and readInspect(l) then G.case.kind = "theft"; G.inspected = false end
@@ -613,7 +629,11 @@ function G.line(l)
   end
   if l:find("^Tucked out of sight: a plain Hoi Poi capsule") and G.room then G.capsules[G.room] = true end
   local stillAt = l:match("party log: at (%a+), ")
-  if stillAt and TIMES[stillAt] and l:find("still") then G.quiet[TIMES[stillAt]] = true end
+  if stillAt and TIMES[stillAt] and (l:find("still") or l:find("nothing had gone off")) then G.quiet[TIMES[stillAt]] = true end
+  -- delayed sabotage: the timer at the scene, and the weapon's empty case
+  if l:find("delay timer") then readDelay(l) end
+  local cw, cr = l:match("the empty case of the (.-), its foam.-keeps it in the (.-), so")
+  if cw then G.weapon = cw; G.weaponCands = { { name = cw, room = roomName(cr) } }; G.case.kind = "sabotage" end
   -- "The stand-ins' party log: by midnight, Dr. Briefs had found the cradle in the Study empty."
   local emptyBy = l:match("party log: by (%a+), .*cradle.* empty")
   if emptyBy and TIMES[emptyBy] then G.quiet[TIMES[emptyBy]] = true end
@@ -734,9 +754,8 @@ function G.line(l)
   -- the Phantom's calling cards: kept when the case is solved, three summon him
   if l:find("^Tucked out of sight: a black calling card") then
     G.card = G.room or "house"
-    send("get card", false)
     info("magenta", "A Phantom calling card" .. (G.room and (" in the " .. G.room) or "") .. ". Solve the case in time and it's yours"
-      .. (G.cards and (" (" .. (G.cards + 1) .. " of 3)") or ""))
+      .. (G.cards and (" (that makes " .. (G.cards + 1) .. ")") or ""))
   end
   local cards = l:match("^%s*Calling cards:%s+(%d+)")
   if cards then G.cards = tonumber(cards) end
@@ -748,8 +767,7 @@ function G.line(l)
     local lost = verdict2:lower():find("cold") or verdict2:lower():find("fail") or verdict2:lower():find("lost")
     if G.card and not lost then
       G.cards = (G.cards or 0) + 1
-      info("magenta", "The Phantom's calling card is yours: " .. G.cards .. " of 3"
-        .. (G.cards >= 3 and ". Enough to summon the Phantom!" or ""))
+      info("magenta", "The Phantom's calling card is yours: " .. G.cards .. (G.cards >= 3 and " held. Enough to summon the Phantom!" or " of 3"))
       G.card = nil
     end
     G.running = false
@@ -859,13 +877,40 @@ function G.suspects()
   return out
 end
 
--- Times the attack could have been at
-function G.crimeTimes()
+-- Times it could have gone off
+function G.fireTimes()
   local out = {}
   for t = 9, 12 do
     if (not G.window or G.window[t]) and not G.quiet[t] then out[#out + 1] = t end
   end
   return out
+end
+
+-- Times the culprit acted: when it happened, or for a delayed sabotage, when it was rigged
+-- (the timer's chimes before it went off; without the timer, any hour before it could have)
+function G.crimeTimes()
+  local fire = G.fireTimes()
+  if G.case.kind ~= "sabotage" then return fire end
+  local out, seen = {}, {}
+  if G.delay then
+    for _, t in ipairs(fire) do
+      local r = t - G.delay
+      if r >= 9 and not seen[r] then seen[r] = true; out[#out + 1] = r end
+    end
+  else
+    for t = 9, (fire[#fire] or 12) - 1 do out[#out + 1] = t end
+  end
+  table.sort(out)
+  return out
+end
+
+-- Sabotage: did `s` say they were in the weapon's room before rigging it at `t`?
+function G.tookWeapon(s, t, room)
+  for h = 9, t - 1 do
+    local st = G.statements[h] and G.statements[h][s]
+    if st and (st.room == room or st.first == room) then return true end
+  end
+  return false
 end
 
 -- Theft: the capsule rooms `s` says they went to after taking it at `t`
@@ -928,6 +973,12 @@ function G.solve()
       row.stash = n
       row.score = row.score + (n == 1 and 5 or (n == 0 and -5 or 0))
     end
+    -- sabotage: whoever rigged it took the weapon from its room earlier in the night
+    local wroom = G.case.kind == "sabotage" and #G.weaponCands == 1 and G.weaponCands[1].room
+    if wroom and row.time then
+      row.tookWeapon = G.tookWeapon(s, row.time, wroom)
+      row.score = row.score + (row.tookWeapon and 30 or 0)
+    end
     rows[#rows + 1] = row
   end
   table.sort(rows, function(a, b) if a.score ~= b.score then return a.score > b.score end return a.name < b.name end)
@@ -986,6 +1037,11 @@ function G.solve()
     if r.suspect and r.partner and r.weapon and r.time then
       r.line = ("accuse %s and %s with %s at %s"):format(guestKw(r.suspect), guestKw(r.partner), G.keyword(r.weapon, G.akw.weapons), TIME_WORD[r.time])
     end
+  elseif G.case.kind == "sabotage" then
+    if r.suspect and r.weapon and r.time then
+      r.line = ("accuse %s with %s rigged at %s"):format(guestKw(r.suspect), G.keyword(r.weapon, G.akw.weapons), TIME_WORD[r.time])
+    end
+    if not G.delay then r.sure = false end
   elseif not theft and r.suspect and r.weapon and r.time then
     r.line = ("accuse %s with %s at %s"):format(guestKw(r.suspect), G.keyword(r.weapon, G.akw.weapons), TIME_WORD[r.time])
   end
@@ -1015,7 +1071,14 @@ function G.report(r)
       what = what .. "   Covered by: " .. (r.partner or "?") .. (G.cover and " (confessed)" or "")
     end
   end
-  cecho("  <white>When: " .. (#tw > 0 and table.concat(tw, " or ") or "?") .. what .. "\n")
+  local when = (#tw > 0 and table.concat(tw, " or ") or "?")
+  if G.case.kind == "sabotage" then
+    local fw = {}
+    for _, t in ipairs(G.fireTimes()) do fw[#fw + 1] = TIME_WORD[t] end
+    when = "rigged at " .. when .. " (went off at " .. (#fw > 0 and table.concat(fw, " or ") or "?")
+      .. (G.delay and (", timer " .. G.delay .. " chime" .. (G.delay == 1 and "" or "s")) or ", timer not found yet") .. ")"
+  end
+  cecho("  <white>When: " .. when .. what .. "\n")
   for i, row in ipairs(r.rows) do
     if i > 4 then break end
     local col = i == 1 and "green" or "white"
@@ -1381,7 +1444,7 @@ function G.status()
   for g, s in pairs(G.secrets) do sec[g .. (s.confronted and " (confronted)" or (" in the " .. tostring(s.room)))] = true end
   cecho("  <white>Secrets: " .. list(sec) .. "\n")
   cecho("  <white>Calling card: " .. (G.card and ("found in the " .. G.card .. ", yours if you solve it") or "none this case")
-    .. (G.cards and ("   cards held: " .. G.cards .. " of 3" .. (G.cards >= 3 and " (enough to summon the Phantom)" or "")) or "") .. "\n")
+    .. (G.cards and ("   cards held: " .. G.cards .. (G.cards >= 3 and "" or " of 3") .. (G.cards >= 3 and " (enough to summon the Phantom)" or "")) or "") .. "\n")
 end
 
 function G.go(where)

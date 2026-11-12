@@ -38,8 +38,8 @@ It walks to the nearest room with something left to do, does it, and repeats:
 
 Sometimes a search turns up one of the Phantom's black calling cards. It isn't a finding and has nothing to do with the case, but you keep it if you solve the case in time, and three of them summon a secret boss. Gumshoe:
 
-- picks it up (`get card`) and says when it finds one, and `gum status` and the solve report remind you there's one on this case;
-- counts it when the case closes solved (not when it goes cold) and says when you have three;
+- says when it finds one (there's nothing to pick up: finding it is enough), and `gum status` and the solve report remind you there's one on this case;
+- counts it when the case closes solved (not when it goes cold) and says once you have three or more;
 - reads the count from `casebook` (*Calling cards: 1*), so type `casebook` once after installing to start from your real count.
 
 Cards turn up in 1 case in 8 on Easy, 1 in 4 on Normal and 1 in 2 on Hard. The Kitchen cabinet also sells `buy cardguarantee` (6 vouchers), which hides a card in your next case. You still have to find it and solve the case.
@@ -62,12 +62,13 @@ Cards turn up in 1 case in 8 on Easy, 1 in 4 on Normal and 1 in 2 on Hard. The K
 - **The time** is the window from the remains or the cradle, minus any hour the notebook or the party log rules out (*the radar was still in its cradle at nine*, *Dr. Briefs had found the cradle empty by midnight*).
 - **Murder:** the weapon is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
 - **Accomplices:** one guest did it and another covered: the two swore they were together and each named the other. When the coverer is confronted they own up (*I was never in the Dining Room with Emperor Pilaf… I covered for them*), which names both. Before that, the partner is the suspect whose first story at that hour put them in the culprit's room, naming each other. The accusation is `accuse <culprit> and <partner> with <weapon> at <time>`.
+- **Delayed sabotage:** the weapon was rigged earlier and went off later. Jaco wants when it was *rigged*. The window from the remains, minus any hour the party log says *nothing had gone off yet*, gives when it went off; the delay timer in the scene room (*set two chimes before it fired*) counts back to the rigging hour. The rigger stood at the scene then, so their story for that hour is the lie to find. The weapon's empty case (somewhere in the house) or the notebook names the weapon and the room it was kept in; whoever claimed that room earlier in the night scores higher. The accusation is `accuse <suspect> with <weapon> rigged at <time>`.
 - **Theft:** three Hoi Poi capsules are hidden in party rooms. The stash is the capsule room the thief says they went to *after* the theft; the two decoys are in rooms they never went to afterwards. A suspect who went to exactly one capsule room afterwards scores higher. The accusation is `accuse <suspect> stash <room> at <time>`.
 - Until guests are questioned there are no alibis: `gum solve` says so and never calls it solved.
 
 ## Limits
 
-- **Case types:** murder, theft and accomplices are solved. For delayed sabotage (`accuse <suspect> with <weapon> rigged at <time>`) and locked room (`accuse <suspect> through <room> at <time>`, not seen by anyone yet), `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything until a real case shows how the rigging time and the way in are found.
+- **Case types:** murder, theft, accomplices and delayed sabotage are solved. For locked room (`accuse <suspect> through <room> at <time>`, not seen by anyone yet), `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything until a real case shows how the way in is found.
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
 - **Hard cases** are read from the intro: the lab analyzer is off, so it never suggests or walks to `analyze`. The extra liar and second broken log sensor need nothing special, but only the intro of a Hard case has been seen so far.
 - **Monthly twists** (from `help mansion`): January a fast watch, February guest dolls, March a lying witness, April eggs, May Goten and Trunks run off with clues (tag them), June a storm, July a pair slips off, August dark rooms, September the moon roof, October masks, November a feast, December presents to unwrap. Only November's (the seating chart) has been seen; the others may need changes when they come.
