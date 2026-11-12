@@ -691,7 +691,22 @@ end
 gum.command("case", "normal")
 wait(10)
 ok(joined() == "look | use mansion | focus 'instant' bulma | pursue jaco | say case normal", "no capsule: instant to Bulma, pursue Jaco: " .. joined())
--- the capsule keyword hits a scouter, and the instant fails (target protected): pursue Jaco from here
+-- the capsule keyword hits a scouter, and the instant fails twice before it lands
+sent = {}; G.room = nil
+local fails = 0
+respond = function(c)
+  if c == "use mansion" then tempTimer(0.2, function() gum.line("You can only use a scouter when wearing it.") end)
+  elseif c == "focus 'instant' bulma" then
+    fails = fails + 1
+    if fails <= 2 then tempTimer(0.3, function() feed({ "Okay.", "You failed." }) end)
+    else tempTimer(0.5, function() feed({ "Okay.", "You touch two fingers to your forehead and disappear suddenly.", "Bulma's Workshop" }) end) end
+  elseif c == "pursue jaco" then tempTimer(3, function() feed({ "Front Steps" }) end)
+  end
+end
+gum.command("case")
+wait(15)
+ok(joined() == "look | use mansion | focus 'instant' bulma | focus 'instant' bulma | focus 'instant' bulma | pursue jaco | say case hard", "instant retried after failing: " .. joined())
+-- never lands: pursue Jaco from here
 sent = {}; G.room = nil
 respond = function(c)
   if c == "use mansion" then tempTimer(0.2, function() gum.line("You can only use a scouter when wearing it.") end)
@@ -700,8 +715,19 @@ respond = function(c)
   end
 end
 gum.command("case")
+wait(20)
+ok(joined() == "look | use mansion | focus 'instant' bulma | focus 'instant' bulma | focus 'instant' bulma | pursue jaco | say case hard", "instant keeps failing: pursue from here: " .. joined())
+-- already in Bulma's Workshop
+sent = {}; G.room = nil
+respond = function(c)
+  if c == "use mansion" then tempTimer(0.2, function() gum.line("You can only use a scouter when wearing it.") end)
+  elseif c == "focus 'instant' bulma" then tempTimer(0.3, function() feed({ "Okay.", "But you are already in the same place as them." }) end)
+  elseif c == "pursue jaco" then tempTimer(3, function() feed({ "Front Steps" }) end)
+  end
+end
+gum.command("case")
 wait(15)
-ok(joined() == "look | use mansion | focus 'instant' bulma | pursue jaco | say case hard", "instant fails: pursue Jaco from here: " .. joined())
+ok(joined() == "look | use mansion | focus 'instant' bulma | pursue jaco | say case hard", "already with Bulma: pursue Jaco: " .. joined())
 -- already in the house: walk out to the Front Steps
 sent = {}; G.room = "Grand Hall"
 respond = function(c)
