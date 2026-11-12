@@ -12,7 +12,10 @@ G.attack     = G.attack or "de"   -- attack used on every boss and rival: "<atta
 G.kamiWait   = G.kamiWait or 15   -- seconds for Kami to take the items after `say yes`
 G.spawnWait  = G.spawnWait or 30  -- seconds for Goku and Vegeta to land
 G.fightWait  = G.fightWait or 180 -- seconds without a kill before giving up on a fight
-G.rivalWait  = G.rivalWait or 300 -- seconds a rival fight may take
+G.rivalWait  = G.rivalWait or 600 -- seconds without a rival dying before giving up on it and carrying on
+G.rivalHit   = G.rivalHit or 15   -- seconds between attacks on a rival (strong ones, nemeses, take a while)
+G.minPl      = G.minPl or 80      -- % powerlevel to recover to after a rival before going on
+G.healWait   = G.healWait or 120  -- seconds to wait for that at most
 G.retries    = G.retries or 5     -- sense / pursue retries
 
 -- ---------------------------------------------------------------- state
@@ -22,6 +25,7 @@ G.rounds  = G.rounds or 0
 G.limit   = G.limit or nil
 G.rivals  = G.rivals or {}   -- rivals fighting me: first word (lowercase) -> name
 G.mats    = G.mats or {}     -- { essence = n, diamond = n } from the last count
+G.pl      = G.pl or nil      -- powerlevel %, from the prompt
 local timer, tries
 
 local function info(color, msg) cecho("\n<" .. color .. ">[gog] " .. msg .. "\n") end
@@ -185,6 +189,22 @@ function G.dropped(item)
 end
 
 -- ---------------------------------------------------------------- rivals
+-- Rivals can be strong (a nemesis takes a while): keep hitting one every G.rivalHit seconds until
+-- it's dead, sense it if it moves away, then recover before going back to the round.
+local rivalGen = 0
+local function firstRival() for k in pairs(G.rivals) do return k end end
+
+local function hitRivals()
+  rivalGen = rivalGen + 1
+  local gen = rivalGen
+  local function again()
+    if not G.active or gen ~= rivalGen or not fighting() then return end
+    hit(firstRival())
+    tempTimer(G.rivalHit, again)
+  end
+  again()
+end
+
 -- "The sky splits open as Chillix the Icer crashes down upon you, ..." / "... flies out of nowhere and attacks you!"
 function G.rivalAppears(name, victim)
   if not G.active or (victim or ""):lower() ~= "you" then return end
@@ -192,11 +212,27 @@ function G.rivalAppears(name, victim)
   local new = not G.rivals[key]
   G.rivals[key] = name
   info("red", "Rival " .. name .. ": fighting it first")
-  if new then hit(key) end
-  deadline(G.rivalWait, "fighting the rival " .. name)
+  if new then hitRivals() end
+  clearTimer()
+  timer = tempTimer(G.rivalWait, function()
+    timer = nil
+    info("yellow", "No rival died in " .. G.rivalWait .. "s: carrying on with the round")
+    G.rivals = {}
+    G.whenHealthy(G.resume)
+  end)
 end
 
--- "Chillix the Icer is dead!  R.I.P.": once every rival is down, carry on from where the round was
+-- "Death Beam who?": the rival moved away, sense it
+local lastWho = 0
+function G.noTarget()
+  if not G.active or not fighting() then return end
+  local now = os.time()
+  if now - lastWho < 5 then return end
+  lastWho = now
+  send("sense " .. firstRival())
+end
+
+-- "Chillix the Icer is dead!  R.I.P.": once every rival is down, recover, then carry on from where the round was
 function G.rivalDead(name)
   local key = (name:match("^(%S+)") or ""):lower()
   if not G.active or not G.rivals[key] then return end
@@ -204,7 +240,28 @@ function G.rivalDead(name)
   if fighting() then return end
   clearTimer()
   info("green", "Rival down, back to the round")
-  tempTimer(2, function() if G.active and not fighting() then G.resume() end end)
+  tempTimer(2, function() if G.active and not fighting() then G.whenHealthy(G.resume) end end)
+end
+
+-- The prompt's "[Pl: 151,520,583,583 99% | ..."
+function G.prompt(pct) G.pl = tonumber(pct) end
+
+-- Wait (at most G.healWait seconds) until the powerlevel is back to G.minPl %
+function G.whenHealthy(fn)
+  local waited = 0
+  local function check()
+    if not G.active or fighting() then return end
+    if not G.pl or G.pl >= G.minPl or waited >= G.healWait then return fn() end
+    if waited == 0 then info("yellow", "Recovering first (powerlevel " .. G.pl .. "%)") end
+    waited = waited + 3
+    tempTimer(3, check)
+  end
+  check()
+end
+
+-- "You are dead!"
+function G.died()
+  if G.active then G.stop("you died") end
 end
 
 function G.resume()
@@ -304,6 +361,7 @@ G.HELP = {
   { "gog stop",         "Stop after whatever is happening now" },
   { "gog attack <cmd>", "Attack used on the bosses (now: " .. G.attack .. ")" },
   { "gog status",       "Phase and rounds done" },
+  { "gog resume",       "Forget the rivals being fought and carry on with the round" },
   { "gog check",        "Count your Essences and Diamonds (how many rounds you can run)" },
   { "gog buy <n>",      "Buy n Essences from a Dying Star from the event shop (finds its number in eshop)" },
 }
@@ -328,6 +386,9 @@ function G.command(c, arg)
       G.toKami()
     end)
   elseif c == "check" then G.count()
+  elseif c == "resume" then
+    if not G.active then return info("yellow", "Not running") end
+    G.rivals = {}; clearTimer(); info("white", "Carrying on with the round"); G.resume()
   elseif c == "stop" then
     if not G.active then return info("yellow", "Not running") end
     G.stop()

@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, senses and kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -165,6 +165,36 @@
             }
           ],
           "script": "gog.rivalDead(matches[2])"
+        },
+        {
+          "name": "gog No target",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^[\\w ]+ who\\?$"
+            }
+          ],
+          "script": "gog.noTarget()"
+        },
+        {
+          "name": "gog Prompt",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\[Pl: [\\d,]+ (\\d+)% "
+            }
+          ],
+          "script": "gog.prompt(matches[2])"
+        },
+        {
+          "name": "gog Died",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You are dead!"
+            }
+          ],
+          "script": "gog.died()"
         },
         {
           "name": "gog Count Essence",

@@ -40,6 +40,9 @@ local TRIG = {
   { "^The sky splits open as (.-) crashes down upon (%w+), wreathed in a blazing aura!$", function(a, b) gog.rivalAppears(a, b) end },
   { "^(.-) flies out of nowhere and attacks (%w+)!$", function(a, b) gog.rivalAppears(a, b) end },
   { "^(.-) is dead!%s+R%.I%.P%.", function(m) gog.rivalDead(m) end },
+  { "^[%w ]+ who%?$", function() gog.noTarget() end },
+  { "^%[Pl: [%d,]+ (%d+)%% ", function(m) gog.prompt(m) end },
+  { "^You are dead!", function() gog.died() end },
   { "^%((%s*%d+)%) Essence from a Dying Star$", function(m) gog.countItem("essence", m) end },
   { "^Essence from a Dying Star$", function() gog.countItem("essence", "") end },
   { "^%((%s*%d+)%) a Celestial Diamond Gemstone", function(m) gog.countItem("diamond", m) end },
@@ -120,6 +123,24 @@ feed(GOKU); feed("SSJ4 Goku is dead!  R.I.P."); feed(FUSE); feed("SSJ4 Vegeta is
 feed(GOGETA); feed("SSJ4 Gogeta is dead!  R.I.P."); wait(5)
 expect("de goku | de vegeta | sense gogeta | de gogeta")
 ok(not gog.active and gog.rounds == 3 and LOG:find("3 rounds done"), "stops when the Diamonds run out")
+
+-- A strong rival (a nemesis): keep hitting it, sense it when it moves, recover before going on
+os.time = function() return math.floor(now) end
+gog.command("start", "1"); mats(5, 5); expect("inventory | materials | pursue kami")
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | sense goku")
+feed("The sky splits open as Nemesis Vorricer crashes down upon you, wreathed in a blazing aura!"); expect("de nemesis")
+wait(15); expect("de nemesis")
+wait(15); expect("de nemesis")
+feed("Death Beam who?"); expect("sense nemesis")
+feed("[Pl: 151,520,583,583 40% | Ki: 91% | Fatigue: 2%]")
+feed("Nemesis Vorricer is dead!  R.I.P."); wait(2); expect("")
+ok(LOG:find("Recovering first"), "low powerlevel after the rival: waits")
+wait(6); expect("")
+feed("[Pl: 151,520,583,583 85% | Ki: 91% | Fatigue: 2%]"); wait(3); expect("sense goku")
+wait(30); expect("")   -- no more rival attacks once it's dead
+-- dying stops the loop
+feed("You are dead!  You are sent to the Next Dimension.")
+ok(not gog.active and LOG:find("you died"), "stops when you die")
 
 -- A rival on the way to Kami: pursue Kami again afterwards
 gog.command("start", "1"); mats(5, 5); expect("inventory | materials | pursue kami")
