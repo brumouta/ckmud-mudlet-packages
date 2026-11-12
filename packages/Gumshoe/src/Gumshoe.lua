@@ -1503,7 +1503,8 @@ end
 -- Inside the house it walks there. Otherwise the return capsule (Briefs Family Garden, then 6 west),
 -- or without one, instant transmission to Bulma (Bulma's Workshop), then pursue jaco.
 local NO_CAPSULE = { { "^Briefs Family Garden$", "ok" }, { "^You don't", "no" }, { "^You do not", "no" },
-                     { "^Use what", "no" }, { "^You can't", "no" }, { "^Huh", "no" } }
+                     { "^Use what", "no" }, { "^You can't", "no" }, { "^Huh", "no" },
+                     { "^You can only use", "no" } }
 function G.toJaco(diff)
   diff = (diff or G.difficulty):lower()
   if not ({ easy = true, normal = true, hard = true })[diff] then
@@ -1528,13 +1529,24 @@ function G.toJaco(diff)
     cmd(G.capsuleCmd, NO_CAPSULE, 5, function(k2)
       if k2 == "ok" then return walkIn() end
       info("yellow", "No return capsule: instant transmission to Bulma, then pursue Jaco")
-      cmd(G.instantCmd, { { "^Bulma's Workshop$", "ok" } }, 8, function(k3)
-        if k3 ~= "ok" then return halt("instant transmission to Bulma didn't land") end
+      local function pursueJaco()
         cmd("pursue jaco", { { "^Front Steps$", "ok" } }, 30, function(k4)
           if k4 == "ok" then return sayCase() end
           halt("pursue jaco didn't reach the Front Steps")
         end)
-      end)
+      end
+      -- instant transmission can just fail ("You failed."): try again, then pursue Jaco from wherever we are
+      local tries = 0
+      local function instant()
+        tries = tries + 1
+        cmd(G.instantCmd, { { "^Bulma's Workshop$", "ok" }, { "^You failed%.$", "failed" } }, 8, function(k3)
+          if k3 == "ok" then return pursueJaco() end
+          if tries < 3 then return tempTimer(1, function() if G.running then instant() end end) end
+          info("yellow", "Instant transmission keeps failing: pursuing Jaco from here")
+          pursueJaco()
+        end)
+      end
+      instant()
     end)
   end)
 end
