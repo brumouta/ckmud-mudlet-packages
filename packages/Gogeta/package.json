@@ -1,8 +1,8 @@
 {
   "name": "Gogeta",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "title": "Kami's timeline portal on a loop",
-  "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, and repeats. Type `gog help` for commands.",
+  "description": "Gives Kami an Essence and a Diamond, senses and kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
   "scripts": [
     {
@@ -24,58 +24,207 @@
       "children": [
         {
           "name": "gog Tracked",
-          "patterns": [ { "type": "regex", "pattern": "^You have successfully tracked down (.+)!$" } ],
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You have successfully tracked down (.+)!$"
+            }
+          ],
+          "script": "gog.arrived(matches[2])"
+        },
+        {
+          "name": "gog Sensed",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You concentrate and sense (.+)'s ki\\.$"
+            }
+          ],
           "script": "gog.arrived(matches[2])"
         },
         {
           "name": "gog Same room",
-          "patterns": [ { "type": "substring", "pattern": "You're already in the same room!!" } ],
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You're already in the same room!!"
+            }
+          ],
           "script": "gog.arrived(nil)"
         },
         {
+          "name": "gog Sense slipped",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You lose your concentration\\.$"
+            }
+          ],
+          "script": "gog.senseSlipped()"
+        },
+        {
+          "name": "gog Can't sense",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You can't seem to sense (.+)'s ki from here\\.$"
+            }
+          ],
+          "script": "gog.cantSense()"
+        },
+        {
           "name": "gog No ki",
-          "patterns": [ { "type": "substring", "pattern": "You sense no ki." } ],
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You sense no ki."
+            }
+          ],
           "script": "gog.noKi()"
         },
         {
           "name": "gog Paid",
-          "patterns": [ { "type": "regex", "pattern": "hands over the Essence from a Dying Star and the Celestial Diamond to Kami" } ],
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "hands over the Essence from a Dying Star and the Celestial Diamond to Kami"
+            }
+          ],
           "script": "gog.paid()"
         },
         {
           "name": "gog Landed",
-          "patterns": [ { "type": "substring", "pattern": "[Quest: SSJ4 Vegeta] What a waste of my time" } ],
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "[Quest: SSJ4 Vegeta] What a waste of my time"
+            }
+          ],
           "script": "gog.landed()"
         },
         {
           "name": "gog Fused",
-          "patterns": [ { "type": "substring", "pattern": "standing before you is SSJ Gogeta!" } ],
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "standing before you is SSJ Gogeta!"
+            }
+          ],
           "script": "gog.fused()"
         },
         {
+          "name": "gog Moved",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(SSJ\\d? Gogeta|SSJ4 Goku|SSJ4 Vegeta) (?:leaves|flies) \\w+\\.$"
+            }
+          ],
+          "script": "gog.moved(matches[2])"
+        },
+        {
           "name": "gog Celestial drop",
-          "patterns": [ { "type": "regex", "pattern": "^SSJ4 (?:Goku|Vegeta|Gogeta) drops (.+?)(?: \\(Tier \\d+\\))? \\(Celestial\\)\\.?$" } ],
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^SSJ4 (?:Goku|Vegeta|Gogeta) drops (.+?)(?: \\(Tier \\d+\\))? \\(Celestial\\)\\.?$"
+            }
+          ],
           "script": "gog.dropped(matches[2])"
         },
         {
+          "name": "gog Dead",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(SSJ4 Goku|SSJ4 Vegeta|SSJ4 Gogeta) is dead!\\s+R\\.I\\.P\\."
+            }
+          ],
+          "script": "gog.dead(matches[2])"
+        },
+        {
+          "name": "gog Rival appears",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^The sky splits open as (.+?) crashes down upon (\\w+), wreathed in a blazing aura!$"
+            },
+            {
+              "type": "regex",
+              "pattern": "^(.+?) flies out of nowhere and attacks (\\w+)!$"
+            }
+          ],
+          "script": "gog.rivalAppears(matches[2], matches[3])"
+        },
+        {
+          "name": "gog Rival dead",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(.+?) is dead!\\s+R\\.I\\.P\\."
+            }
+          ],
+          "script": "gog.rivalDead(matches[2])"
+        },
+        {
+          "name": "gog Count Essence",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(?:\\(\\s*(\\d+)\\) )?Essence from a Dying Star$"
+            }
+          ],
+          "script": "gog.countItem(\"essence\", matches[2])"
+        },
+        {
+          "name": "gog Count Diamond",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^(?:\\(\\s*(\\d+)\\) )?a Celestial Diamond Gemstone"
+            }
+          ],
+          "script": "gog.countItem(\"diamond\", matches[2])"
+        },
+        {
+          "name": "gog Count end",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^To see additional inventory use:"
+            }
+          ],
+          "script": "gog.countEnd()"
+        },
+        {
           "name": "gog Shop Essence",
-          "patterns": [ { "type": "regex", "pattern": "^\\(\\s*(\\d+)\\)\\s+(\\d+)\\s+Essence from a Dying Star\\s*$" } ],
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\(\\s*(\\d+)\\)\\s+(\\d+)\\s+Essence from a Dying Star\\s*$"
+            }
+          ],
           "script": "gog.shopItem(matches[2], matches[3])"
         },
         {
           "name": "gog Shop points",
-          "patterns": [ { "type": "regex", "pattern": "You currently have ([\\d,]+) event points\\." } ],
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "You currently have ([\\d,]+) event points\\."
+            }
+          ],
           "script": "gog.shopPoints(matches[2])"
         },
         {
           "name": "gog Shop bought",
-          "patterns": [ { "type": "regex", "pattern": "^You spend \\d+ epoints for Essence from a Dying Star\\.$" } ],
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^You spend \\d+ epoints for Essence from a Dying Star\\.$"
+            }
+          ],
           "script": "gog.spent()"
-        },
-        {
-          "name": "gog Dead",
-          "patterns": [ { "type": "regex", "pattern": "^(SSJ4 Goku|SSJ4 Vegeta|SSJ4 Gogeta) is dead!\\s+R\\.I\\.P\\." } ],
-          "script": "gog.dead(matches[2])"
         }
       ]
     }

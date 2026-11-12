@@ -25,16 +25,29 @@ dofile("packages/Gogeta/src/Gogeta.lua")
 -- The package.json triggers, as Lua patterns
 local TRIG = {
   { "^You have successfully tracked down (.+)!$", function(m) gog.arrived(m) end },
+  { "^You concentrate and sense (.+)'s ki%.$", function(m) gog.arrived(m) end },
   { "You're already in the same room!!", function() gog.arrived(nil) end, plain = true },
+  { "^You lose your concentration%.$", function() gog.senseSlipped() end },
+  { "^You can't seem to sense (.+)'s ki from here%.$", function() gog.cantSense() end },
   { "You sense no ki.", function() gog.noKi() end, plain = true },
   { "hands over the Essence from a Dying Star and the Celestial Diamond to Kami", function() gog.paid() end, plain = true },
   { "[Quest: SSJ4 Vegeta] What a waste of my time", function() gog.landed() end, plain = true },
   { "standing before you is SSJ Gogeta!", function() gog.fused() end, plain = true },
+  { "^(SSJ%d? %a+) leaves %a+%.$", function(m) gog.moved(m) end },
+  { "^(SSJ%d? %a+) flies %a+%.$", function(m) gog.moved(m) end },
   { "^SSJ4 %a+ drops (.-) %(Celestial%)%.?$", function(m) gog.dropped(m) end },
-  { "^%(%s*(%d+)%)%s+(%d+)%s+Essence from a Dying Star%s*$", function(a, b) gog.shopItem(a, b) end, two = true },
+  { "^(SSJ4 [GV]%a+) is dead!%s+R%.I%.P%.", function(m) if m == "SSJ4 Goku" or m == "SSJ4 Vegeta" or m == "SSJ4 Gogeta" then gog.dead(m) end end },
+  { "^The sky splits open as (.-) crashes down upon (%w+), wreathed in a blazing aura!$", function(a, b) gog.rivalAppears(a, b) end },
+  { "^(.-) flies out of nowhere and attacks (%w+)!$", function(a, b) gog.rivalAppears(a, b) end },
+  { "^(.-) is dead!%s+R%.I%.P%.", function(m) gog.rivalDead(m) end },
+  { "^%((%s*%d+)%) Essence from a Dying Star$", function(m) gog.countItem("essence", m) end },
+  { "^Essence from a Dying Star$", function() gog.countItem("essence", "") end },
+  { "^%((%s*%d+)%) a Celestial Diamond Gemstone", function(m) gog.countItem("diamond", m) end },
+  { "^a Celestial Diamond Gemstone", function() gog.countItem("diamond", "") end },
+  { "^To see additional inventory use:", function() gog.countEnd() end },
+  { "^%(%s*(%d+)%)%s+(%d+)%s+Essence from a Dying Star%s*$", function(a, b) gog.shopItem(a, b) end },
   { "You currently have ([%d,]+) event points%.", function(m) gog.shopPoints(m) end },
   { "^You spend %d+ epoints for Essence from a Dying Star%.$", function() gog.spent() end },
-  { "^(SSJ4 [GV]%a+) is dead!%s+R%.I%.P%.", function(m) if m == "SSJ4 Goku" or m == "SSJ4 Vegeta" or m == "SSJ4 Gogeta" then gog.dead(m) end end },
 }
 local function feed(text)
   for l in (text .. "\n"):gmatch("(.-)\n") do
@@ -49,60 +62,82 @@ local KAMI = "You have successfully tracked down Kami, Earth's Guardian!"
 local PAID = "Vorricer hands over the Essence from a Dying Star and the Celestial Diamond to Kami, Earth's Guardian."
 local LANDED = [[[Quest: SSJ4 Goku] I still want to see for myself just how powerful they really are! Come on Vegeta, lets see what they are capable of!
 [Quest: SSJ4 Vegeta] What a waste of my time, very well, lets play this little game of yours.]]
-local GOKU = "You have successfully tracked down SSJ4 Goku!"
+local GOKU = "You concentrate and sense SSJ4 Goku's ki."
+local GOGETA = "You concentrate and sense SSJ Gogeta's ki."
 local FUSE = "When the light fades, standing before you is SSJ Gogeta!"
+local function mats(e, d)
+  feed("You are carrying in your Inventory:\n( 2) a return capsule to the Briefs mansion (Tier 6)\n" ..
+       (e and ("(" .. e .. ") Essence from a Dying Star\n") or "") .. "To see additional inventory use:\n" ..
+       "Materials you are carrying:\n( 2) some silicone polymer [300]\n" ..
+       (d and ("(" .. d .. ") a Celestial Diamond Gemstone (Tier 6)\n") or "") .. "To see additional inventory use:")
+end
+
+assert(gog.attack == "de")
+-- gog check: counts both
+gog.command("check"); expect("inventory | materials")
+mats(19, "3"); ok(gog.mats.essence == 19 and gog.mats.diamond == 3 and LOG:find("3 rounds"), "materials counted: 3 rounds")
+-- nothing to give: not started
+gog.command("start"); sent = {}; mats(19, nil)
+ok(not gog.active and LOG:find("not started"), "no Diamonds: not started")
 
 -- Round 1: Goku dies first, then Vegeta (whose death line comes after the fusion)
-assert(gog.attack == "de")
-gog.command("start", "3")
-expect("pursue kami")
+gog.command("start"); expect("inventory | materials")
+mats(19, 3); expect("pursue kami")
+ok(gog.limit == 3, "runs as many rounds as the Diamonds allow")
 feed(KAMI); expect("say yes")
-feed(PAID); feed(LANDED); expect("pursue goku")
+feed(PAID); feed(LANDED); expect("sense goku")
 feed(GOKU); expect("de goku")
 feed("SSJ4 Goku is dead!  R.I.P."); expect("de vegeta")
 feed(FUSE .. "\nSSJ4 Vegeta is dead!  R.I.P."); expect("")
-wait(1); expect("pursue gogeta")
+wait(1); expect("sense gogeta")
+feed("You lose your concentration."); wait(1); expect("sense gogeta")
+feed(GOGETA); expect("de gogeta")
+feed("SSJ Gogeta leaves south."); wait(1); expect("sense gogeta")
 feed("You're already in the same room!!"); expect("de gogeta")
 feed("SSJ Gogeta's aura grows larger\nSSJ4 Gogeta is dead!  R.I.P."); expect("")
-ok(gog.rounds == 1, "round 1 counted")
+ok(gog.rounds == 1 and LOG:find("2 Diamonds left"), "round 1 counted, materials go down")
 wait(2); expect("pursue kami")
 
--- Round 2: a counter kills Vegeta first, then Goku; Gogeta wanders off south
-feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | pursue goku")
+-- Round 2: Goku and Vegeta fly off before the first hit; Vegeta dies first; Gogeta can't be sensed from here
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | sense goku")
+feed(GOKU); expect("de goku")
+feed("SSJ4 Goku flies west.\nSSJ4 Vegeta flies west."); wait(1); expect("sense goku")
 feed(GOKU); expect("de goku")
 feed("SSJ4 Vegeta is dead!  R.I.P."); expect("de goku")
-feed(FUSE .. "\nSSJ4 Goku is dead!  R.I.P."); expect("")
-wait(1); expect("pursue gogeta")
-feed("SSJ Gogeta leaves south.\nYou have successfully tracked down SSJ Gogeta!"); expect("de gogeta")
+feed(FUSE .. "\nSSJ4 Goku is dead!  R.I.P."); wait(1); expect("sense gogeta")
+feed("You can't seem to sense SSJ Gogeta's ki from here."); expect("pursue gogeta")
+feed("You have successfully tracked down SSJ Gogeta!"); expect("de gogeta")
 feed("SSJ4 Gogeta is dead!  R.I.P."); wait(2); expect("pursue kami")
 
--- Round 3 ends the run (limit 3)
-feed("You're already in the same room!!"); expect("say yes")
-feed(PAID); feed(LANDED); feed(GOKU); feed("SSJ4 Goku is dead!  R.I.P."); feed(FUSE); wait(1)
-feed("You're already in the same room!!"); feed("SSJ4 Gogeta is dead!  R.I.P."); wait(5)
-expect("pursue goku | de goku | de vegeta | pursue gogeta | de gogeta")
-ok(not gog.active and gog.rounds == 3, "stops after 3 rounds")
+-- Round 3: a rival jumps me on the way to Goku; fight it, then carry on
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | sense goku")
+feed("The sky splits open as Chillix the Icer crashes down upon you, wreathed in a blazing aura!\nYou are attacked and lose the trail!")
+expect("de chillix")
+feed(GOKU); expect("")      -- arrivals wait while the rival is alive
+feed("Seij flies out of nowhere and attacks Technine!"); expect("")   -- someone else's rival
+feed("Chillix the Icer is dead!  R.I.P."); wait(2); expect("sense goku")
+feed(GOKU); feed("SSJ4 Goku is dead!  R.I.P."); feed(FUSE); feed("SSJ4 Vegeta is dead!  R.I.P."); wait(1)
+feed(GOGETA); feed("SSJ4 Gogeta is dead!  R.I.P."); wait(5)
+expect("de goku | de vegeta | sense gogeta | de gogeta")
+ok(not gog.active and gog.rounds == 3 and LOG:find("3 rounds done"), "stops when the Diamonds run out")
+
+-- A rival on the way to Kami: pursue Kami again afterwards
+gog.command("start", "1"); mats(5, 5); expect("inventory | materials | pursue kami")
+feed("The sky splits open as Chillix the Icer crashes down upon you, wreathed in a blazing aura!"); expect("de chillix")
+feed("Chillix the Icer is dead!  R.I.P."); wait(2); expect("pursue kami")
+-- Out of items: Kami never takes them -> stop
+feed(KAMI); expect("say yes")
+wait(gog.kamiWait + 1)
+ok(not gog.active and LOG:find("out of them"), "stops when Kami doesn't take the items")
 
 -- Celestial drops are picked up, Legendary and plain ones aren't
-gog.command("start"); sent = {}
+gog.command("start", "1"); mats(5, 5); sent = {}
 feed("SSJ4 Gogeta drops SSJ4 Gogeta's explosive red aura (Legendary).\nSSJ4 Gogeta drops Celestial Knights Legendary Loot Box.\nSSJ4 Goku drops SSJ4 Goku's Halo.")
 expect("")
 feed("SSJ4 Gogeta drops SSJ4 Gogeta's explosive red aura (Celestial).\nSSJ4 Goku drops SSJ4 Goku's Tail (Celestial).")
 expect("get aura | get tail")
 gog.command("stop"); sent = {}
 
--- Out of items: Kami never takes them -> stop
-gog.command("start"); expect("pursue kami")
-feed(KAMI); expect("say yes")
-wait(gog.kamiWait + 1)
-ok(not gog.active and LOG:find("out of them"), "stops when Kami doesn't take the items")
-
--- Goku not landed yet: retry the pursue
-gog.command("start"); feed(KAMI); feed(PAID); feed(LANDED); sent = {}
-feed("You sense no ki."); wait(3); expect("pursue goku")
-gog.command("stop"); ok(not gog.active, "gog stop")
--- not running: lines do nothing
-feed(KAMI .. "\n" .. GOKU .. "\nSSJ4 Goku is dead!  R.I.P."); expect("")
 -- Buying Essences: the number comes from the listing, capped by the points
 local SHOP = [[ Event Shop:
 o------------------------------------------------------------o
