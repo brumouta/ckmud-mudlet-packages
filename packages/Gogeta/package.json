@@ -1,0 +1,63 @@
+{
+  "name": "Gogeta",
+  "version": "1.0.0",
+  "title": "Kami's timeline portal on a loop",
+  "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, and repeats. Type `gog help` for commands.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "Gogeta",
+      "file": "src/Gogeta.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "gog",
+      "regex": "^gog(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\ngog.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Gogeta",
+      "folder": true,
+      "children": [
+        {
+          "name": "gog Tracked",
+          "patterns": [ { "type": "regex", "pattern": "^You have successfully tracked down (.+)!$" } ],
+          "script": "gog.arrived(matches[2])"
+        },
+        {
+          "name": "gog Same room",
+          "patterns": [ { "type": "substring", "pattern": "You're already in the same room!!" } ],
+          "script": "gog.arrived(nil)"
+        },
+        {
+          "name": "gog No ki",
+          "patterns": [ { "type": "substring", "pattern": "You sense no ki." } ],
+          "script": "gog.noKi()"
+        },
+        {
+          "name": "gog Paid",
+          "patterns": [ { "type": "regex", "pattern": "hands over the Essence from a Dying Star and the Celestial Diamond to Kami" } ],
+          "script": "gog.paid()"
+        },
+        {
+          "name": "gog Landed",
+          "patterns": [ { "type": "substring", "pattern": "[Quest: SSJ4 Vegeta] What a waste of my time" } ],
+          "script": "gog.landed()"
+        },
+        {
+          "name": "gog Fused",
+          "patterns": [ { "type": "substring", "pattern": "standing before you is SSJ Gogeta!" } ],
+          "script": "gog.fused()"
+        },
+        {
+          "name": "gog Dead",
+          "patterns": [ { "type": "regex", "pattern": "^(SSJ4 Goku|SSJ4 Vegeta|SSJ4 Gogeta) is dead!\\s+R\\.I\\.P\\." } ],
+          "script": "gog.dead(matches[2])"
+        }
+      ]
+    }
+  ]
+}

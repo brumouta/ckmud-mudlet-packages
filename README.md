@@ -16,8 +16,9 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 | [Gumshoe](packages/Gumshoe) | `gum help` | Solves Jaco's **Briefs mansion** party cases: walks the house, searches, questions, opens the sealed rooms and names who did it. |
 | [CryonFarm](packages/CryonFarm) | `cryon help` | Farms the **Confession of Cryon Frigidus** in Iceria's hidden lab: the four DNA samples, the fields and the smack. |
+| [Gogeta](packages/Gogeta) | `gog help` | Loops **Kami's timeline portal**: hands Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, repeats. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer, Gumshoe and CryonFarm work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer, Gumshoe, CryonFarm and Gogeta work without it.
 
 ## Installing
 
@@ -39,9 +40,9 @@ packages/
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler JSON + .lua files
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  BossTimer/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gumshoe/ MSDP/ YamoshiSpawn/  single-script packages
+  BossTimer/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases, scripts
-    src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gum, msdp, ys)
+    src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gog, gum, msdp, ys)
     Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
 tests/                    Lua tests for the single-script packages + run.sh for everything
 docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
