@@ -355,6 +355,8 @@ local function parseLead(done, n, text)
       for q in text:gmatch("still in its cradle at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
       -- "the cradle was found empty by midnight": already gone at that chime, so it wasn't taken then
       for q in text:gmatch("found empty by (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
+      -- lights out: "the party log says the alarm was up by eleven": it had happened before then
+      for q in text:gmatch("alarm was up by (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
       -- sabotage: "the party log says nothing had gone off at eleven. The delay timer says it was set two chimes before it fired."
       for q in text:gmatch("nothing had gone off at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
       readDelay(text)
@@ -637,6 +639,9 @@ function G.line(l)
   -- "The stand-ins' party log: by midnight, Dr. Briefs had found the cradle in the Study empty."
   local emptyBy = l:match("party log: by (%a+), .*cradle.* empty")
   if emptyBy and TIMES[emptyBy] then G.quiet[TIMES[emptyBy]] = true end
+  -- "The stand-ins' party log: by eleven, the alarm had already gone up in the Menagerie Yard."
+  local upBy = l:match("party log: by (%a+), the alarm had already gone up")
+  if upBy and TIMES[upBy] then G.quiet[TIMES[upBy]] = true end
   if l:find("cradle") and not emptyBy and not l:find("still in its cradle") and not l:find("inspect cradle") and #timesIn(l) > 0 then
     setWindow(l)
     G.inspected = true
@@ -851,7 +856,22 @@ function G.alibi(s, t)
   local claim = 0
   for _, x in pairs(at) do if x.room == R then claim = claim + 1 end end
   if type(heads) == "number" and claim > heads and #seen == 0 then
-    against[#against + 1] = ("the door log counts %d in the %s, %d say they were there"):format(heads, R, claim)
+    -- too many claim the room: if the extra ones are exactly those nobody else there names,
+    -- only they lied, and the log fits the rest
+    local unnamed, sUnnamed = 0, false
+    for g, x in pairs(at) do
+      if x.room == R then
+        local named = false
+        for o, y in pairs(at) do if o ~= g and y.room == R and has(y.with, g) then named = true end end
+        if not named then unnamed = unnamed + 1; if g == s then sUnnamed = true end end
+      end
+    end
+    if unnamed > 0 and unnamed <= claim - heads and not sUnnamed then
+      claim = heads
+    else
+      against[#against + 1] = ("the door log counts %d in the %s, %d say they were there"):format(heads, R, claim)
+        .. (sUnnamed and ", and nobody there names them" or "")
+    end
   end
   local where = "the " .. R
   if #against > 0 then return 3, "LIED", where .. ": " .. table.concat(against, "; ") end

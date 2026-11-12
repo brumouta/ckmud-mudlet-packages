@@ -1,0 +1,208 @@
+## intro
+Tonight is the Thanksgiving party.
+Difficulty: Normal.
+The case: the lights went out, and the robot DJ was found in pieces in the Menagerie Yard.
+Inspect the remains in the Menagerie Yard for the damage. The power failed when it happened: inspect breaker in the Robot Charging Bay. The house is still dark for you; reset breaker there brings the lights back.
+Twelve people were at the party: Yamcha, Master Roshi, Yajirobe, Mai, Mr. Satan, Tien, Gohan, Videl, Krillin, Puar, Dende and Mr. Popo.
+## guests
+========================================
+THE GUESTS, AS ANYONE CAN SEE THEM
+========================================
+  Guest          Ki      Tread Hair
+  Yamcha         flaring light dark
+  Master Roshi   flaring light not dark
+  Yajirobe       flaring heavy dark
+  Mai            quiet   light dark
+  Mr. Satan      quiet   heavy dark
+  Tien           flaring heavy not dark
+  Gohan          flaring heavy dark
+  Videl          flaring light dark
+Cake: only Mrs. Briefs' stand-in knows. plate <suspect> in the Kitchen, once per case.
+Witnesses: Krillin, Puar, Dende and Mr. Popo. Never the culprit, never liars.
+Match these against your evidence: notebook lists what you found.
+========================================
+## logs
+Garter's door log for nine, heads per room:
+  Grand Hall       3
+  Dining Room      0
+  Family Lounge    0
+  Kitchen          3
+  Study            2
+  Robot Workshop   sensor broken
+  Menagerie Yard   sensor broken
+  Conservatory     0
+Garter's door log for ten, heads per room:
+  Grand Hall       0
+  Dining Room      2
+  Family Lounge    2
+  Kitchen          3
+  Study            2
+  Robot Workshop   sensor broken
+  Menagerie Yard   sensor broken
+  Conservatory     2
+Garter's door log for eleven, heads per room:
+  Grand Hall       2
+  Dining Room      0
+  Family Lounge    0
+  Kitchen          2
+  Study            0
+  Robot Workshop   sensor broken
+  Menagerie Yard   sensor broken
+  Conservatory     2
+Garter's door log for midnight, heads per room:
+  Grand Hall       0
+  Dining Room      3
+  Family Lounge    3
+  Kitchen          2
+  Study            2
+  Robot Workshop   sensor broken
+  Menagerie Yard   sensor broken
+  Conservatory     2
+## chart
+The seating chart, every place card signed at the feast:
+At nine: nobody.
+At ten: Krillin, Dende.
+At eleven: nobody.
+At midnight: Mr. Satan, Gohan, Videl.
+## partylog
+The stand-ins' party log: by eleven, the alarm had already gone up in the Menagerie Yard.
+## weapon
+Shoved out of sight: the Lights Out Capsule, still warm. Dr. Briefs keeps it in the Study, so whoever used it was in there earlier in the night.
+## breaker
+The breaker's outage log: the lights failed between ten and eleven.
+## evidence
+You find deep footprints pressed into the carpet pile. (evidence #1)
+You find a trail of light, quick footprints through spilled punch. (evidence #2)
+You find an untouched slice of cake, the fork never lifted. (evidence #3)
+You find a single dark hair caught on a splinter. (evidence #4)
+You find a fork with a smear of birthday frosting. (evidence #5)
+You find fresh scorch marks, the wallpaper still smoking. (evidence #6)
+## plate
+Mrs. Briefs' stand-in checks her list: Gohan refused the cake.
+## analyze
+The analyzer hums over evidence #2: PLANTED. Someone put that there to frame somebody.
+## notebook-end
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: the robot DJ smashed, Menagerie Yard
+Status: OPEN, 59 minutes left
+Difficulty: Normal
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [x] 1. When: between ten and eleven; the party log says the alarm was up by eleven.
+ [x] 2. Weapon: the Lights Out Capsule, kept in the Study. notebook <time> shows who claimed the Study before the attack.
+ [x] 3. Physical evidence: 6 of 6 found. search the rooms; analyze <number> one in the lab (1 left). notebook guests shows who looks like what.
+      #1 [unverified] deep footprints pressed into the carpet pile
+      #2 [unverified] a trail of light, quick footprints through spilled punch
+      #3 [unverified] an untouched slice of cake, the fork never lifted
+      #4 [unverified] a single dark hair caught on a splinter
+      #5 [unverified] a fork with a smear of birthday frosting
+      #6 [unverified] fresh scorch marks, the wallpaper still smoking
+      Searched: every open room.
+ [x] 4. Statements: 12 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw.
+ [x] 5. Secrets: Yamcha (confronted), a phrase on the back; Master Roshi (confronted); Gohan (confronted)
+      Scribbled on the back: "chop chop".
+ [x] 6. Sealed rooms: the lab open; the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 12 of 4 findings. Anywhere in the house: accuse <suspect> with <weapon> at <time>, then accuse yes. accuse alone shows the words.
+Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## final-statements
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Grand Hall, 3 say so:
+   Master Roshi, with Mai and Dende.
+   Mai, with Master Roshi and Dende.
+   Dende, with Master Roshi and Mai.
+Kitchen, 3 say so:
+   Yamcha, with Mr. Satan and Mr. Popo.
+   Mr. Satan, with Yamcha and Mr. Popo.
+   Mr. Popo, with Yamcha and Mr. Satan.
+Study, 2 say so:
+   Gohan, with Krillin.
+   Krillin, with Gohan.
+Robot Workshop, 2 say so:
+   Videl, with Puar.
+   Puar, with Videl.
+Menagerie Yard, 2 say so:
+   Yajirobe, with Tien.
+   Tien, with Yajirobe.
+========================================
+========================================
+STATEMENTS ABOUT TEN (in the window)
+========================================
+Dining Room, 2 say so:
+   Krillin, with Dende.
+   Dende, with Krillin.
+Family Lounge, 2 say so:
+   Yajirobe, with Tien.
+   Tien, with Yajirobe.
+Kitchen, 4 say so:
+   Yamcha, with Master Roshi and Videl (first said the Dining Room).
+   Master Roshi, with Yamcha and Videl.
+   Gohan, with Master Roshi and Videl (first said the Dining Room).
+   Videl, with Yamcha and Master Roshi.
+Study, 2 say so:
+   Mai, with Mr. Popo.
+   Mr. Popo, with Mai.
+Conservatory, 2 say so:
+   Mr. Satan, with Puar.
+   Puar, with Mr. Satan.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN (in the window)
+========================================
+Grand Hall, 2 say so:
+   Mai, with Gohan.
+   Gohan, with Mai.
+Kitchen, 2 say so:
+   Tien, with Krillin.
+   Krillin, with Tien.
+Robot Workshop, 3 say so:
+   Yamcha, with Yajirobe and Mr. Satan.
+   Yajirobe, with Yamcha and Mr. Satan.
+   Mr. Satan, with Yamcha and Yajirobe.
+Menagerie Yard, 3 say so:
+   Master Roshi, with Puar and Dende (first said the Robot Workshop).
+   Puar, with Master Roshi and Dende.
+   Dende, with Master Roshi and Puar.
+Conservatory, 2 say so:
+   Videl, with Mr. Popo.
+   Mr. Popo, with Videl.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT
+========================================
+Dining Room, 3 say so:
+   Mr. Satan, with Gohan and Videl.
+   Gohan, with Mr. Satan and Videl.
+   Videl, with Mr. Satan and Gohan.
+Family Lounge, 3 say so:
+   Mai, with Tien and Mr. Popo.
+   Tien, with Mai and Mr. Popo.
+   Mr. Popo, with Mai and Tien.
+Kitchen, 2 say so:
+   Krillin, with Puar.
+   Puar, with Krillin.
+Study, 2 say so:
+   Yamcha, with Dende.
+   Dende, with Yamcha.
+Conservatory, 2 say so:
+   Master Roshi, with Yajirobe.
+   Yajirobe, with Master Roshi.
+========================================
+## accuse
+Accuse in one line, anywhere in the house:
+  accuse <suspect> with <weapon> at <time>
+Suspects: yamcha roshi yajirobe mai
+          satan tien gohan videl
+Weapons:  gauntlet jacket lights
+          dream hornets taser
+Times:    nine ten eleven midnight (or 9 to 12)
+Example:  accuse roshi with dream at ten
+Short:    accuse roshi dream 10
+Then accuse yes makes the arrest.
+Findings: 13 of 4. Three wrong and the case goes cold.

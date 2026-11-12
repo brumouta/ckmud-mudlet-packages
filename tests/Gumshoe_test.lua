@@ -628,4 +628,24 @@ local got = false
 for _, c in ipairs(sent) do if c == "get card" then got = true end end
 ok(not got and G.card, "calling card noted, not picked up")
 
+-- Lights Out: the breaker says ten or eleven, the party log says the alarm was up by eleven -> ten.
+-- Four claim the Kitchen at ten but the log counts 3: Yamcha, Roshi and Videl name each other, nobody names Gohan.
+local L, lcur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe-lightsout.log") do
+  local name = l:match("^## (.+)$")
+  if name then lcur = name; L[lcur] = {} elseif lcur then table.insert(L[lcur], l) end
+end
+G.newCase(); G.room = nil
+for _, k in ipairs({ "intro", "guests", "logs", "chart", "breaker", "weapon", "evidence" }) do feed(L[k]) end
+feed(L.partylog)
+ok(G.quiet[11], "party log: alarm already up by eleven rules out eleven")
+for _, k in ipairs({ "notebook-end", "final-statements", "plate", "analyze", "accuse" }) do feed(L[k]) end
+ok(#G.crimeTimes() == 1 and G.crimeTimes()[1] == 10, "lights out: ten")
+local _, tg = G.alibi("Gohan", 10)
+local _, tv = G.alibi("Videl", 10)
+local _, ty = G.alibi("Yamcha", 10)
+ok(tg == "LIED" and tv == "fits" and ty == "fits", "door log 3 of 4: only the one nobody names lied (" .. tg .. "/" .. tv .. "/" .. ty .. ")")
+r = G.solve()
+ok(r.line == "accuse gohan with lights at ten" and r.sure, "Lights Out: " .. tostring(r.line) .. " sure=" .. tostring(r.sure))
+
 print("gum: ALL PASSED")
