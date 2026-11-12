@@ -66,5 +66,6 @@ Sometimes a search turns up one of the Phantom's black calling cards. It isn't a
 
 - **Case types:** murder, theft and accomplices are solved. For delayed sabotage and locked-room cases, `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything (the accuse words differ). The theft rules come from one case (*the radar's cradle logs that the Dragon Radar left it between nine and ten*).
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
+- **Hard cases** are read from the intro: the lab analyzer is off, so it never suggests or walks to `analyze`. The extra liar and second broken log sensor need nothing special, but only the intro of a Hard case has been seen so far.
 - **Monthly twists** other than November's feast (the seating chart) haven't been seen yet.
 - **Upgrading mid-case** keeps what the case has found so far and adds anything the new version needs, so you can install a fix without starting over.

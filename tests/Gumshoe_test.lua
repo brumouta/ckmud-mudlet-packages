@@ -572,4 +572,12 @@ ok(r.line == "accuse pilaf and mai with taser at ten",
 sent = {}; G.command("accuse")
 ok(sent[1] == "accuse pilaf and mai with taser at ten", "gum accuse sends the two-name accusation")
 
+-- Hard cases: the analyzer is off -----------------------------------------------------------------
+G.newCase()
+feed({ "Difficulty: Hard. One more guest lies, the lab analyzer is off, and Garter's door log has a second broken sensor. Half again the pay, and a Good or Perfect solve earns a stronger boost." })
+ok(G.case.difficulty == "Hard" and G.case.noAnalyzer, "Hard: read, and no lab runs")
+G.analyses = 1
+r = G.solve()
+ok(not r.analyze and G.analyses == 0, "...so it never walks to the lab to analyze")
+
 print("gum: ALL PASSED")

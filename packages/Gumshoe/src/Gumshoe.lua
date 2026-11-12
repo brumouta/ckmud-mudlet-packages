@@ -520,8 +520,10 @@ function G.line(l)
 
   -- a new case
   if l:find("^Tonight is the .- party%.") then G.newCase(); G.case.season = l:match("^Tonight is the (.-) party") end
-  local diff = l:match("^Difficulty: (%a+)%.$")
+  -- "Difficulty: Hard. One more guest lies, the lab analyzer is off, and Garter's door log has a second broken sensor."
+  local diff = l:match("^Difficulty: (%a+)%.")
   if diff then G.case.difficulty = diff end
+  if l:find("^Difficulty: .*analyzer is off") then G.case.noAnalyzer = true end
   local caseText = l:match("^The case: (.+)$")
   if caseText then
     G.case.title = caseText
@@ -884,6 +886,7 @@ function G.partnerOf(culprit, t)
 end
 
 function G.solve()
+  if G.case.noAnalyzer then G.analyses = 0 end   -- Hard: the lab analyzer is off
   G.weighEvidence()
   local theft = G.case.kind == "theft"
   local times = G.crimeTimes()
