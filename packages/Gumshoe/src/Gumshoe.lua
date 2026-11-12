@@ -345,6 +345,8 @@ local function parseLead(done, n, text)
       setWindow((text:match("^When: ([^;]*)") or ""))
       for q in text:gmatch("quiet at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
       for q in text:gmatch("still in its cradle at (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
+      -- "the cradle was found empty by midnight": already gone at that chime, so it wasn't taken then
+      for q in text:gmatch("found empty by (%a+)") do if TIMES[q] then G.quiet[TIMES[q]] = true end end
     else
       readInspect(text)
     end
@@ -612,7 +614,10 @@ function G.line(l)
   if l:find("^Tucked out of sight: a plain Hoi Poi capsule") and G.room then G.capsules[G.room] = true end
   local stillAt = l:match("party log: at (%a+), ")
   if stillAt and TIMES[stillAt] and l:find("still") then G.quiet[TIMES[stillAt]] = true end
-  if l:find("cradle") and not l:find("still in its cradle") and not l:find("inspect cradle") and #timesIn(l) > 0 then
+  -- "The stand-ins' party log: by midnight, Dr. Briefs had found the cradle in the Study empty."
+  local emptyBy = l:match("party log: by (%a+), .*cradle.* empty")
+  if emptyBy and TIMES[emptyBy] then G.quiet[TIMES[emptyBy]] = true end
+  if l:find("cradle") and not emptyBy and not l:find("still in its cradle") and not l:find("inspect cradle") and #timesIn(l) > 0 then
     setWindow(l)
     G.inspected = true
   end
@@ -833,6 +838,15 @@ function G.alibi(s, t)
   local where = "the " .. R
   if #against > 0 then return 3, "LIED", where .. ": " .. table.concat(against, "; ") end
   if #seen > 0 then return 0, "seen", where .. ", seen by " .. table.concat(seen, ", ") end
+  -- they name people in that room who name each other but not them (a confession nobody there backs)
+  local snub = {}
+  for _, o in ipairs(st.with or {}) do
+    local os = at[o]
+    if os and os.room == R and #(os.with or {}) > 0 and not has(os.with, s) then snub[#snub + 1] = o end
+  end
+  if #snub > 0 and #snub == #(st.with or {}) then
+    return 2.5, "unbacked", where .. ": " .. table.concat(snub, " and ") .. " were there and don't name them"
+  end
   if type(heads) == "number" and claim == heads then return 1, "fits", where .. ", only suspects back it but the door log fits" end
   return 2, "alone", where .. ", only suspects back it" .. (heads == "broken" and " (sensor broken)" or "")
 end

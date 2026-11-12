@@ -1,0 +1,189 @@
+## intro
+Tonight is the Thanksgiving party.
+Difficulty: Hard. One more guest lies, the lab analyzer is off, and Garter's door log has a second broken sensor. Half again the pay, and a Good or Perfect solve earns a stronger boost.
+The case: the Dragon Radar is gone from Dr. Briefs' desk in the Study. Nobody was hurt, and the thief is still at the party.
+Theft: later in the night the thief hid the radar in a Hoi Poi capsule, in a party room they went to after taking it. Three capsules that look exactly alike are hidden in the party rooms: the other two are decoys, in rooms the thief never went to after the theft, and only Jaco can open them. Jaco wants who took it, the room it is stashed in, and when it was taken.
+Twelve people were at the party: Yamcha, Master Roshi, Yajirobe, Emperor Pilaf, Mr. Satan, Gohan, Piccolo, Videl, Chi-Chi, Puar, Dende and Mr. Popo.
+ 2. inspect cradle in the Study for when the radar was taken.
+## guests
+========================================
+THE GUESTS, AS ANYONE CAN SEE THEM
+========================================
+  Guest          Ki      Tread Hair
+  Yamcha         flaring light dark
+  Master Roshi   flaring light not dark
+  Yajirobe       flaring heavy dark
+  Emperor Pilaf  quiet   light not dark
+  Mr. Satan      quiet   heavy dark
+  Gohan          flaring heavy dark
+  Piccolo        flaring heavy not dark
+  Videl          flaring light dark
+Cake: only Mrs. Briefs' stand-in knows. plate <suspect> in the Kitchen, once per case.
+Witnesses: Chi-Chi, Puar, Dende and Mr. Popo. Never the culprit, never liars.
+Match these against your evidence: notebook lists what you found.
+========================================
+## clues
+The radar's cradle logs that the Dragon Radar left it between eleven and midnight.
+The stand-ins' party log: by midnight, Dr. Briefs had found the cradle in the Study empty.
+## notebook-end
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: the Dragon Radar stolen, Study
+Status: OPEN, 59 minutes left
+Difficulty: Hard, one more liar, no lab analyzer, a second broken sensor
+Kind: Theft. Name who took the radar, the room it is stashed in, and when.
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [x] 1. When: taken between eleven and midnight; the party log says the cradle was found empty by midnight.
+ [x] 2. Stash: all 3 of 3 capsules found, in the Family Lounge, the Menagerie Yard and the Conservatory. The radar is in the one in a room the thief went to after the theft; notebook <time> shows where everyone went.
+ [x] 3. Physical evidence: 6 of 6 found. search the rooms; the lab analyzer is off on a Hard case. notebook guests shows who looks like what.
+      #1 [unverified] an untouched slice of cake, the fork never lifted
+      #2 [unverified] a trail of light, quick footprints through spilled punch
+      #3 [unverified] a single dark hair caught on a splinter
+      #4 [unverified] deep footprints pressed into the carpet pile
+      #5 [unverified] a tuft of something that is not dark hair
+      #6 [unverified] fresh scorch marks, the wallpaper still smoking
+      Searched: every open room.
+ [x] 4. Statements: 12 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw when it was taken, then where they went after.
+ [x] 5. Secrets: Master Roshi (confronted); Yajirobe (confronted); Emperor Pilaf (confronted), a phrase on the back; Gohan (confronted)
+      Scribbled on the back: "chop chop".
+ [x] 6. Sealed rooms: the lab open; the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 14 of 4 findings. Anywhere in the house: accuse <suspect> stash <room> at <time>, then accuse yes. accuse alone shows the words.
+Rooms: Grand Hall, Dining Room, Family Lounge, Kitchen, Robot Workshop, Menagerie Yard, Conservatory.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## logs
+Garter's door log for nine, heads per room:
+  Grand Hall       3
+  Dining Room      0
+  Family Lounge    3
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   sensor broken
+  Menagerie Yard   0
+  Conservatory     3
+Garter's door log for ten, heads per room:
+  Grand Hall       0
+  Dining Room      3
+  Family Lounge    3
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   sensor broken
+  Menagerie Yard   3
+  Conservatory     0
+Garter's door log for eleven, heads per room:
+  Grand Hall       3
+  Dining Room      3
+  Family Lounge    0
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   sensor broken
+  Menagerie Yard   3
+  Conservatory     0
+Garter's door log for midnight, heads per room:
+  Grand Hall       2
+  Dining Room      0
+  Family Lounge    2
+  Kitchen          sensor broken
+  Study            sensor broken
+  Robot Workshop   sensor broken
+  Menagerie Yard   2
+  Conservatory     2
+## final-statements
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Grand Hall, 3 say so:
+   Puar, with Dende and Mr. Popo.
+   Dende, with Puar and Mr. Popo.
+   Mr. Popo, with Puar and Dende.
+Family Lounge, 3 say so:
+   Yamcha, with Yajirobe and Chi-Chi.
+   Yajirobe, with Yamcha and Chi-Chi.
+   Chi-Chi, with Yamcha and Yajirobe.
+Robot Workshop, 3 say so:
+   Emperor Pilaf, with Piccolo and Videl (first said the Grand Hall).
+   Piccolo, with Emperor Pilaf and Videl.
+   Videl, with Emperor Pilaf and Piccolo.
+Conservatory, 3 say so:
+   Master Roshi, with Mr. Satan and Gohan.
+   Mr. Satan, with Master Roshi and Gohan.
+   Gohan, with Master Roshi and Mr. Satan.
+========================================
+========================================
+STATEMENTS ABOUT TEN
+========================================
+Dining Room, 3 say so:
+   Yajirobe, with Mr. Satan and Dende.
+   Mr. Satan, with Yajirobe and Dende.
+   Dende, with Yajirobe and Mr. Satan.
+Family Lounge, 3 say so:
+   Master Roshi, with Emperor Pilaf and Videl.
+   Emperor Pilaf, with Master Roshi and Videl.
+   Videl, with Master Roshi and Emperor Pilaf.
+Kitchen, 3 say so:
+   Gohan, with Chi-Chi and Mr. Popo.
+   Chi-Chi, with Gohan and Mr. Popo.
+   Mr. Popo, with Gohan and Chi-Chi.
+Menagerie Yard, 3 say so:
+   Yamcha, with Piccolo and Puar.
+   Piccolo, with Yamcha and Puar.
+   Puar, with Yamcha and Piccolo.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN (in the window)
+========================================
+Grand Hall, 3 say so:
+   Piccolo, with Chi-Chi and Puar.
+   Chi-Chi, with Piccolo and Puar.
+   Puar, with Piccolo and Chi-Chi.
+Dining Room, 3 say so:
+   Gohan, with Dende and Mr. Popo (first said the Robot Workshop).
+   Dende, with Gohan and Mr. Popo.
+   Mr. Popo, with Gohan and Dende.
+Robot Workshop, 3 say so:
+   Yamcha, with Emperor Pilaf.
+   Master Roshi, with Yamcha and Emperor Pilaf (first said the Dining Room).
+   Emperor Pilaf, with Yamcha.
+Menagerie Yard, 3 say so:
+   Yajirobe, with Mr. Satan and Videl (first said the Dining Room).
+   Mr. Satan, with Yajirobe and Videl.
+   Videl, with Yajirobe and Mr. Satan.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT (in the window)
+========================================
+Grand Hall, 2 say so:
+   Mr. Satan, with Dende.
+   Dende, with Mr. Satan.
+Family Lounge, 2 say so:
+   Master Roshi, with Yajirobe.
+   Yajirobe, with Master Roshi.
+Kitchen, 2 say so:
+   Emperor Pilaf, with Chi-Chi.
+   Chi-Chi, with Emperor Pilaf.
+Robot Workshop, 2 say so:
+   Puar, with Mr. Popo.
+   Mr. Popo, with Puar.
+Menagerie Yard, 2 say so:
+   Yamcha, with Piccolo.
+   Piccolo, with Yamcha.
+Conservatory, 2 say so:
+   Gohan, with Videl.
+   Videl, with Gohan.
+========================================
+## accuse
+Accuse in one line, anywhere in the house:
+  accuse <suspect> stash <room> at <time>
+The room is where the radar is stashed: a party room the thief went to after the theft.
+Suspects: yamcha roshi yajirobe pilaf
+          satan gohan piccolo videl
+Rooms:    grand dining family kitchen
+          workshop menagerie conservatory
+Times:    nine ten eleven midnight (or 9 to 12)
+Example:  accuse roshi stash kitchen at ten
+Short:    accuse roshi kitchen 10
+Then accuse yes makes the arrest.
+Findings: 14 of 4. Three wrong and the case goes cold.

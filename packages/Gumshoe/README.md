@@ -51,12 +51,13 @@ Sometimes a search turns up one of the Phantom's black calling cards. It isn't a
   |---|---|
   | **seen** | A witness or the chart puts them there |
   | **LIED** | A witness was in that room and doesn't name them, the chart leaves them out of the Dining Room, or the door log counts fewer heads than claim the room |
+  | **unbacked** | They say they were with people in that room who name each other but not them (Roshi "confessing" to the Robot Workshop with Yamcha and Pilaf, who only name each other) |
   | **fits** | Only suspects back the story, but the door log count matches |
   | **alone** | Only suspects back the story, and no log count can check it (sensor broken) |
 
   A confession is checked the same way. In the first case it was mapped from, Yamcha "confessed" to being in the Family Lounge at midnight, but Krillin and Dende were there and never named him.
 - **Evidence** is matched against the guest table by keyword: footprints for tread, a hair for hair colour, scorch marks or still air for ki, frosting or an untouched slice for the cake. When two clues disagree, one of them is planted, so neither counts until `analyze` or `plate` settles it. The alibi comes first (*find the one nobody saw*); a clue that doesn't fit only costs points, because a clue can be planted. When one doesn't fit the top suspect, it suggests analyzing that clue.
-- **The time** is the window from the remains or the cradle, minus any hour the notebook or the party log rules out (*the radar was still in its cradle at nine*).
+- **The time** is the window from the remains or the cradle, minus any hour the notebook or the party log rules out (*the radar was still in its cradle at nine*, *Dr. Briefs had found the cradle empty by midnight*).
 - **Murder:** the weapon is the one the notebook names. Until it does, it's whichever of the two was kept where the suspect had been before the attack, marked as a guess.
 - **Accomplices:** one guest did it and another covered: the two swore they were together and each named the other. When the coverer is confronted they own up (*I was never in the Dining Room with Emperor Pilaf… I covered for them*), which names both. Before that, the partner is the suspect whose first story at that hour put them in the culprit's room, naming each other. The accusation is `accuse <culprit> and <partner> with <weapon> at <time>`.
 - **Theft:** three Hoi Poi capsules are hidden in party rooms. The stash is the capsule room the thief says they went to *after* the theft; the two decoys are in rooms they never went to afterwards. A suspect who went to exactly one capsule room afterwards scores higher. The accusation is `accuse <suspect> stash <room> at <time>`.

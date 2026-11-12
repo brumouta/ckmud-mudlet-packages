@@ -580,4 +580,19 @@ G.analyses = 1
 r = G.solve()
 ok(not r.analyze and G.analyses == 0, "...so it never walks to the lab to analyze")
 
+-- A Hard theft: the cradle "found empty by midnight", and a confession nobody in the room backs ----
+local H2, hcur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe-theft-hard.log") do
+  local name = l:match("^## (.+)$")
+  if name then hcur = name; H2[hcur] = {} elseif hcur then table.insert(H2[hcur], l) end
+end
+G.newCase(); G.room = nil
+for _, k in ipairs({ "intro", "guests", "clues", "notebook-end", "logs", "final-statements", "accuse" }) do feed(H2[k]) end
+ok(G.quiet[12] and #G.crimeTimes() == 1 and G.crimeTimes()[1] == 11, "found empty by midnight: taken at eleven")
+local _, tagR = G.alibi("Master Roshi", 11)
+local _, tagY = G.alibi("Yamcha", 11)
+ok(tagR == "unbacked" and tagY == "alone", "Roshi says he was with Yamcha and Pilaf, who name only each other")
+r = G.solve()
+ok(r.line == "accuse roshi stash family at eleven", "Hard theft: " .. tostring(r.line))
+
 print("gum: ALL PASSED")
