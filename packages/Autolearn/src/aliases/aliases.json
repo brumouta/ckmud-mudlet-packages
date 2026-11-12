@@ -20,6 +20,10 @@
         "regex": "^AL constants? ([a-zA-Z_\\.-]+)\\s*=\\s*(.+)$"
     },
     {
+        "name": "AL priority",
+        "regex": "^AL priority(?: (.+))?$"
+    },
+    {
         "name": "AL update",
         "regex": "^AL update$",
         "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Autolearn.mpackage\")"

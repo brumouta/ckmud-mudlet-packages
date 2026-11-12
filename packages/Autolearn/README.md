@@ -46,6 +46,20 @@ The bot needs to know your skills and race: it sends `learn` and `score` when
 it sees the MOTD, and again when you toggle `autolearn` on. If your race shows
 as `???`, type `score` once.
 
+### What it trains first
+
+By default ki attacks come first, then fatigue attacks, AoE, buffs, heals, ultras, then the
+other skills (powersense, multiform, scan, instant, ...). Whatever you can't afford right now
+waits while the others train. To train some skills first, list them in order:
+
+`AL priority multiform, kamehameha, roundhouse` (`AL priority` shows the list, `AL priority clear` empties it)
+
+Names are the ones `learn` shows (or the short command, `kame`). A priority skill you can't
+afford yet waits, and the others keep training meanwhile.
+
+Multiform is trained with `focus 'multiform'` followed by `order followers dismiss`, so no
+clones pile up (that also dismisses any other followers you have).
+
 ## Aliases
 
 `autolearn <target> <speedwalk>` - toggle auto learning
@@ -59,6 +73,8 @@ as `???`, type `score` once.
 `AL constants` - list script constants (these survive resetProfile())
 
 `AL constant <name>=<value>` - set a script constant
+
+`AL priority [skills|clear]` - skills to train first, in order (e.g. `AL priority multiform, kamehameha`)
 
 `AL update` - update Autolearn from github latest
 

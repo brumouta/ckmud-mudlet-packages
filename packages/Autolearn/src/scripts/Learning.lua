@@ -19,6 +19,8 @@ ck:define_feature("learning.use_zeta", false)
 -- learning.return_to_target is gone: the way back comes from the path autolearn is started with
 ck:get_table("Constants")["learning.return_to_target"] = nil
 ck:define_constant("learning.recall_isolation", "")
+-- Skills to train first, in order: "multiform, rescue, kamehameha" (empty: the usual order)
+ck:define_constant("learning.priority", "")
 
 -- The way back to the target, worked out from the path you start with: crecall, then the path
 -- backwards with every step reversed. `autolearn elder n;n;n;n;w` -> "crecall;e;s;s;s;s"
@@ -55,6 +57,14 @@ function learn:return_path()
     return self.derived_return or ""
 end
 
+local function skill_key(name)
+    return (name or ""):lower():gsub("%s", "")
+end
+
+local function status_ok()
+    return API:status_ok()
+end
+
 local function aoe_ok()
     return API:status_ok()
 end
@@ -71,14 +81,6 @@ local function ultra_ok(skill)
     return Player.GK >= ((500 * (100 - (Skills:level(skill) or 1)) / 100) + 5)
 end
 
--- The first skill in the list we have enough ki / fatigue / god ki for, using the
--- costs in the attack table. Lets a cheaper skill train while an expensive one waits.
-local function first_affordable(list, can_use)
-    for _, name in ipairs(list) do
-        if can_use(name) then return name end
-    end
-end
-
 local function can_use_energy(name) return API:can_use_energy_attack(name) end
 local function can_use_melee(name) return API:can_use_melee_attack(name) end
 local function can_use_any(name) return API:can_use_attack(name) end
@@ -93,7 +95,6 @@ local function do_learning()
 
     if State:is(State.NORMAL) and API:cmd_stack_empty() then
         local target = AL.table.sample_items(learn.target:split(","))
-        local sent = false
         local to_learn = learn.to_learn
         if next(learn.gk_blocked) and Player.GK and Player.MaxGK and Player.GK >= Player.MaxGK then
             learn.gk_blocked = {}                   -- god ki is full again: try those skills again
@@ -109,80 +110,11 @@ local function do_learning()
             return _G.send(cmd, ...)
         end
 
-        -- Handle Primary Skills
-        -- Ki attacks first, then fatigue ones: when ki runs low the melee skills keep
-        -- training (and the other way round). Resting only happens once nothing fits.
-        local energy = first_affordable(to_learn.energy, can_use_energy)
-        local melee = first_affordable(to_learn.melee, can_use_melee)
-        local ultra = first_affordable(to_learn.ultras, ultra_ok)
-        local learnable = first_affordable(to_learn.learnable, can_use_any)
-        if energy then
-            send(f "{energy} {target}")
-            sent = true
-        elseif melee then
-            send(f "{melee} {target}")
-            sent = true
-        elseif #(to_learn.aoe) > 0 and aoe_ok() then
-            send(f "{to_learn.aoe[1]}")
-            sent = true
-        elseif #(to_learn.buffs) > 0 and buff_ok() then
-            send(f "focus '{to_learn.buffs[1]}'")
-            sent = true
-        elseif #(to_learn.heals) > 0 and heal_ok() then
-            send(f "focus '{to_learn.heals[1]}'")
-            sent = true
-        elseif ultra then
-            send(f "focus '{ultra}'")
-            send("urevert")
-            sent = true
-        elseif learnable then
-            send(f "{learnable} {target}")
-            sent = true
-        elseif learn:need_to_master("powersense") and API:status_ok() then
-            send(f "powersense {target}")
-            sent = true
-        elseif (learn:need_to_master("powerdown") or learn:need_to_master("powerup")) and API:status_ok() then
-            send("powerdown")
-            send("powerup")
-            sent = true
-        elseif learn:need_to_master("sup") and API:status_ok() then
-            send("sup 69")
-            send("sup")
-            sent = true
-        elseif learn:need_to_master("battlerespite") and Player.Ki > 500 then
-            send("focus 'battle respite'")
-            send("stand")
-            sent = true
-        elseif learn:need_to_master("purification") and Player.Ki > 250 then
-            send("focus 'purification'")
-            sent = true
-        elseif learn:need_to_master("ironwill") and Player.Ki > 250 then
-            send("focus 'iron will'")
-            sent = true
-        elseif target ~= "self" and learn:need_to_master("unravel defense") and API:status_ok() then
-            send(f "focus 'unravel' {target}")
-            sent = true
-        elseif learn:need_to_master("scan") and API:status_ok() then
-            send("scan")
-            sent = true
-        elseif learn:need_to_master("taiyoken") and Player.Ki > API:get_energy_cost("taiyoken", 10) then
-            send(f"focus 'taiyoken' {target}")
-            sent = true
-        elseif learn:need_to_master("portal") and Player.Ki > (Player.MaxKi * .10) and learn:can_return() then
-            send(f "focus 'portal' king kai")
-            learn.teleported = true
-            sent = true
-        elseif learn:need_to_master("instant") and Player.Ki > 500 and learn:can_return() then
-            send(f "focus 'instant' king kai")
-            learn.teleported = true
-            sent = true
-        elseif target ~= "self" and Skills:mastered("kick") and Player.LBS < 100 and API:can_use_melee_attack("kick") then
-            send(f "kick {target}")
-            sent = true
-        elseif target ~= "self" and Skills:mastered("punch") and Player.UBS < 100 and API:can_use_melee_attack("punch") then
-            send(f "punch {target}")
-            sent = true
-        end
+        -- Everything there is to train this tick, in the default order: ki attacks first, then
+        -- fatigue ones (when ki runs low the melee skills keep training, and the other way round),
+        -- then the rest. learning.priority moves the skills it names to the front. The first one
+        -- we can afford right now is used; resting only happens once nothing fits.
+        local sent = learn:train(learn:candidates(target, to_learn), send)
 
         if sent == false and learn.teleported then
             -- We teleported away to train portal/instant; walk back to the
@@ -231,6 +163,124 @@ local function do_learning()
             end
         end
     end
+end
+
+-- learning.priority: "multiform, rescue, kamehameha" -> { multiform = 1, rescue = 2, kame = 3 }.
+-- Names as `learn` shows them or as typed (instant trans / instant, iron will / ironwill).
+function learn.priority_rank()
+    local rank, n = {}, 0
+    for name in (ck:constant("learning.priority") or ""):gmatch("[^,;]+") do
+        name = name:gsub("^%s+", ""):gsub("%s+$", "")
+        if name ~= "" then
+            local key = skill_key(Skills:translate(name))
+            if not rank[key] then
+                n = n + 1
+                rank[key] = n
+            end
+        end
+    end
+    return rank
+end
+
+local function affordable_ki(cost)
+    return function() return Player.Ki > cost end
+end
+
+-- Each candidate: { skill = name (for learning.priority), cmds = { ... }, ok = function, after = function }
+function learn:candidates(target, to_learn)
+    local list = {}
+    local function add(skill, cmds, ok, after)
+        list[#list + 1] = { skill = skill, cmds = cmds, ok = ok, after = after }
+    end
+    local function each(names, cmd_of, ok)
+        for _, name in ipairs(names) do
+            add(name, cmd_of(name), function() return ok(name) end)
+        end
+    end
+    local on_target = function(name) return { name .. " " .. target } end
+    local focus = function(name) return { "focus '" .. name .. "'" } end
+    local mastering = function(name) return learn:need_to_master(name) end
+
+    each(to_learn.energy, on_target, can_use_energy)
+    each(to_learn.melee, on_target, can_use_melee)
+    each(to_learn.aoe, function(name) return { name } end, aoe_ok)
+    each(to_learn.buffs, focus, buff_ok)
+    each(to_learn.heals, focus, heal_ok)
+    each(to_learn.ultras, function(name) return { "focus '" .. name .. "'", "urevert" } end, ultra_ok)
+    each(to_learn.learnable, on_target, can_use_any)
+
+    if mastering("powersense") then add("powersense", { "powersense " .. target }, status_ok) end
+    if mastering("powerdown") or mastering("powerup") then
+        add(mastering("powerdown") and "powerdown" or "powerup", { "powerdown", "powerup" }, status_ok)
+    end
+    if mastering("sup") then add("sup", { "sup 69", "sup" }, status_ok) end
+    if mastering("battlerespite") then
+        add("battlerespite", { "focus 'battle respite'", "stand" }, affordable_ki(500))
+    end
+    if mastering("purification") then add("purification", { "focus 'purification'" }, affordable_ki(250)) end
+    if mastering("iron will") then add("iron will", { "focus 'iron will'" }, affordable_ki(250)) end
+    -- Multiform makes a clone (10 ki, 3 at most); dismiss it right away so there's always room
+    -- for the next one and no clone wanders after you.
+    if mastering("multiform") then
+        add("multiform", { "focus 'multiform'", "order followers dismiss" }, function()
+            return API:status_ok() and Player.Ki > API:get_energy_cost("multiform", 10)
+        end)
+    end
+    if target ~= "self" and mastering("unravel defense") then
+        add("unravel defense", { "focus 'unravel' " .. target }, status_ok)
+    end
+    if mastering("scan") then add("scan", { "scan" }, status_ok) end
+    if mastering("taiyoken") then
+        add("taiyoken", { "focus 'taiyoken' " .. target }, function()
+            return Player.Ki > API:get_energy_cost("taiyoken", 10)
+        end)
+    end
+    local teleported = function() learn.teleported = true end
+    if mastering("portal") then
+        add("portal", { "focus 'portal' king kai" }, function()
+            return Player.Ki > (Player.MaxKi * .10) and learn:can_return()
+        end, teleported)
+    end
+    if mastering("instant") then
+        add("instant", { "focus 'instant' king kai" }, function()
+            return Player.Ki > 500 and learn:can_return()
+        end, teleported)
+    end
+
+    -- learning.priority first (in its order), everything else keeps its place
+    local rank = learn.priority_rank()
+    if next(rank) then
+        for i, c in ipairs(list) do c.index = i end
+        local last = #list + 1
+        table.sort(list, function(a, b)
+            local ra, rb = rank[skill_key(a.skill)] or last, rank[skill_key(b.skill)] or last
+            if ra ~= rb then return ra < rb end
+            return a.index < b.index
+        end)
+    end
+
+    -- Not training a skill: keep body stats up with kick/punch once nothing else fits
+    if target ~= "self" then
+        add(nil, { "kick " .. target }, function()
+            return Skills:mastered("kick") and Player.LBS < 100 and API:can_use_melee_attack("kick")
+        end)
+        add(nil, { "punch " .. target }, function()
+            return Skills:mastered("punch") and Player.UBS < 100 and API:can_use_melee_attack("punch")
+        end)
+    end
+    return list
+end
+
+-- Send the first candidate we can afford; true if something was sent
+function learn:train(list, send)
+    for _, c in ipairs(list) do
+        if c.ok() then
+            for _, cmd in ipairs(c.cmds) do send(cmd) end
+            if c.after then c.after() end
+            return true
+        end
+    end
+    return false
 end
 
 local function exit()
@@ -302,9 +352,6 @@ end
 -- Cleared once god ki is full (e.g. after resting). Names compare without spaces, so
 -- "iron will", "ironwill" and focus 'iron will' are the same skill.
 learn.gk_blocked = learn.gk_blocked or {}
-local function skill_key(name)
-    return (name or ""):lower():gsub("%s", "")
-end
 
 -- The skill a command trains: focus 'ultra instinct' -> ultra instinct, "hakai troll" -> hakai
 local function skill_of(command)

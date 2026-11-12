@@ -918,6 +918,47 @@ do
   AL.API:setRace(race)
 end
 
+realprint("=== PHASE: priority + multiform ===")
+do
+  local L, P, ck = AL.API.Learning, AL.Player, require(PKG)
+  local Lr, M, Lv = P.Skills.Learned, P.Skills.Mastered, P.Skills.Level
+  local saved = { P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl }
+  P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl = 1000, 1000, 1000, 1000, 1000, 1000
+  Lr["multiform"], Lv["multiform"] = true, 20
+  Lr["iron will"], Lv["iron will"] = true, 20
+  local to_learn = { energy = { "kame" }, melee = { "roundhouse" }, aoe = {}, buffs = {}, heals = {}, ultras = {}, learnable = {} }
+  local function first(target)
+    local out = {}
+    L:train(L:candidates(target or "troll", to_learn), function(c) out[#out + 1] = c end)
+    return table.concat(out, " | ")
+  end
+  ck:set_constant("learning.priority", "")
+  check(first() == "kame troll", "no priority: the usual order, ki attacks first (got " .. first() .. ")")
+  ck:set_constant("learning.priority", "multiform")
+  check(first() == "focus 'multiform' | order followers dismiss", "multiform first, clone dismissed (got " .. first() .. ")")
+  ck:set_constant("learning.priority", "Iron Will, multiform")
+  check(first() == "focus 'iron will'", "priority order kept, names as learn shows them (got " .. first() .. ")")
+  ck:set_constant("learning.priority", "roundhouse")
+  check(first() == "roundhouse troll", "a melee skill ahead of ki attacks (got " .. first() .. ")")
+  ck:set_constant("learning.priority", "kamehameha, roundhouse")
+  check(first() == "kame troll", "long names translate (kamehameha -> kame) (got " .. first() .. ")")
+  ck:set_constant("learning.priority", "multiform")
+  P.Ki = 5
+  check(first() == "roundhouse troll", "can't afford the priority skill: the others keep training (got " .. first() .. ")")
+  P.Ki = 1000
+  M["multiform"] = true
+  check(first() == "kame troll", "a mastered priority skill is skipped (got " .. first() .. ")")
+  -- the alias
+  matches = { "AL priority rescue, multiform", "rescue, multiform" }
+  ok, err = pcall(load_pkg_file("aliases/AL_priority.lua")); check(ok, "AL priority alias" .. (ok and "" or (" -- " .. tostring(err))))
+  check(ck:constant("learning.priority") == "rescue, multiform", "AL priority sets the list")
+  matches = { "AL priority clear", "clear" }
+  ok, err = pcall(load_pkg_file("aliases/AL_priority.lua"))
+  check(ok and ck:constant("learning.priority") == "", "AL priority clear empties it")
+  Lr["multiform"], M["multiform"], Lv["multiform"], Lr["iron will"], Lv["iron will"] = nil, nil, nil, nil, nil
+  P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl = table.unpack(saved)
+end
+
 realprint("=== PHASE: config aliases ===")
 matches = { "AL features" }
 ok, err = pcall(load_pkg_file("aliases/AL_feature.lua")); check(ok, "AL features alias" .. (ok and "" or (" -- " .. tostring(err))))
