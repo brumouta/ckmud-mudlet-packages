@@ -65,6 +65,7 @@ local KAMI = "You have successfully tracked down Kami, Earth's Guardian!"
 local PAID = "Vorricer hands over the Essence from a Dying Star and the Celestial Diamond to Kami, Earth's Guardian."
 local LANDED = [[[Quest: SSJ4 Goku] I still want to see for myself just how powerful they really are! Come on Vegeta, lets see what they are capable of!
 [Quest: SSJ4 Vegeta] What a waste of my time, very well, lets play this little game of yours.]]
+local TRACKED = "You have successfully tracked down SSJ4 Goku!"
 local GOKU = "You concentrate and sense SSJ4 Goku's ki."
 local GOGETA = "You concentrate and sense SSJ Gogeta's ki."
 local FUSE = "When the light fades, standing before you is SSJ Gogeta!"
@@ -83,51 +84,51 @@ mats(19, "3"); ok(gog.mats.essence == 19 and gog.mats.diamond == 3 and LOG:find(
 gog.command("start"); sent = {}; mats(19, nil)
 ok(not gog.active and LOG:find("not started"), "no Diamonds: not started")
 
--- Round 1: Goku dies first, then Vegeta (whose death line comes after the fusion)
 gog.command("start"); expect("inventory | materials")
 mats(19, 3); expect("pursue kami")
 ok(gog.limit == 3, "runs as many rounds as the Diamonds allow")
+-- Round 1: Goku dies first, then Vegeta (whose death line comes after the fusion); Gogeta walks off
 feed(KAMI); expect("say yes")
-feed(PAID); feed(LANDED); expect("sense goku")
-feed(GOKU); expect("de goku")
+feed(PAID); feed(LANDED); expect("pursue goku")
+feed(TRACKED); expect("de goku")
 feed("SSJ4 Goku is dead!  R.I.P."); expect("de vegeta")
 feed(FUSE .. "\nSSJ4 Vegeta is dead!  R.I.P."); expect("")
-wait(1); expect("sense gogeta")
+wait(1); expect("de gogeta")
+feed("SSJ Gogeta leaves south."); wait(1); expect("sense gogeta")
 feed("You lose your concentration."); wait(1); expect("sense gogeta")
 feed(GOGETA); expect("de gogeta")
-feed("SSJ Gogeta leaves south."); wait(1); expect("sense gogeta")
-feed("You're already in the same room!!"); expect("de gogeta")
 feed("SSJ Gogeta's aura grows larger\nSSJ4 Gogeta is dead!  R.I.P."); expect("")
 ok(gog.rounds == 1 and LOG:find("2 Diamonds left"), "round 1 counted, materials go down")
 wait(2); expect("pursue kami")
 
--- Round 2: Goku and Vegeta fly off before the first hit; Vegeta dies first; Gogeta can't be sensed from here
-feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | sense goku")
-feed(GOKU); expect("de goku")
+-- Round 2: Goku and Vegeta fly off before the first hit; Vegeta dies first; Gogeta flies off out of sense range
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | pursue goku")
+feed(TRACKED); expect("de goku")
 feed("SSJ4 Goku flies west.\nSSJ4 Vegeta flies west."); wait(1); expect("sense goku")
 feed(GOKU); expect("de goku")
 feed("SSJ4 Vegeta is dead!  R.I.P."); expect("de goku")
-feed(FUSE .. "\nSSJ4 Goku is dead!  R.I.P."); wait(1); expect("sense gogeta")
+feed(FUSE .. "\nSSJ4 Goku is dead!  R.I.P."); wait(1); expect("de gogeta")
+feed("SSJ Gogeta flies north."); wait(1); expect("sense gogeta")
 feed("You can't seem to sense SSJ Gogeta's ki from here."); expect("pursue gogeta")
 feed("You have successfully tracked down SSJ Gogeta!"); expect("de gogeta")
 feed("SSJ4 Gogeta is dead!  R.I.P."); wait(2); expect("pursue kami")
 
--- Round 3: a rival jumps me on the way to Goku; fight it, then carry on
-feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | sense goku")
+-- Round 3: a rival jumps me on the way to Goku; fight it, then pursue Goku again
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | pursue goku")
 feed("The sky splits open as Chillix the Icer crashes down upon you, wreathed in a blazing aura!\nYou are attacked and lose the trail!")
 expect("de chillix")
-feed(GOKU); expect("")      -- arrivals wait while the rival is alive
+feed(TRACKED); expect("")      -- arrivals wait while the rival is alive
 feed("Seij flies out of nowhere and attacks Technine!"); expect("")   -- someone else's rival
-feed("Chillix the Icer is dead!  R.I.P."); wait(2); expect("sense goku")
-feed(GOKU); feed("SSJ4 Goku is dead!  R.I.P."); feed(FUSE); feed("SSJ4 Vegeta is dead!  R.I.P."); wait(1)
-feed(GOGETA); feed("SSJ4 Gogeta is dead!  R.I.P."); wait(5)
-expect("de goku | de vegeta | sense gogeta | de gogeta")
+feed("Chillix the Icer is dead!  R.I.P."); wait(2); expect("pursue goku")
+feed(TRACKED); feed("SSJ4 Goku is dead!  R.I.P."); feed(FUSE); feed("SSJ4 Vegeta is dead!  R.I.P."); wait(1)
+feed("SSJ4 Gogeta is dead!  R.I.P."); wait(5)
+expect("de goku | de vegeta | de gogeta")
 ok(not gog.active and gog.rounds == 3 and LOG:find("3 rounds done"), "stops when the Diamonds run out")
 
 -- A strong rival (a nemesis): keep hitting it, sense it when it moves, recover before going on
 os.time = function() return math.floor(now) end
 gog.command("start", "1"); mats(5, 5); expect("inventory | materials | pursue kami")
-feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | sense goku")
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | pursue goku")
 feed("The sky splits open as Nemesis Vorricer crashes down upon you, wreathed in a blazing aura!"); expect("de nemesis")
 wait(15); expect("de nemesis")
 wait(15); expect("de nemesis")
@@ -136,7 +137,7 @@ feed("[Pl: 151,520,583,583 40% | Ki: 91% | Fatigue: 2%]")
 feed("Nemesis Vorricer is dead!  R.I.P."); wait(2); expect("")
 ok(LOG:find("Recovering first"), "low powerlevel after the rival: waits")
 wait(6); expect("")
-feed("[Pl: 151,520,583,583 85% | Ki: 91% | Fatigue: 2%]"); wait(3); expect("sense goku")
+feed("[Pl: 151,520,583,583 85% | Ki: 91% | Fatigue: 2%]"); wait(3); expect("pursue goku")
 wait(30); expect("")   -- no more rival attacks once it's dead
 -- dying stops the loop
 feed("You are dead!  You are sent to the Next Dimension.")

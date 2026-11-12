@@ -1,8 +1,8 @@
 -- Gogeta: Kami's timeline portal, on a loop. Type `gog help`.
 --
 -- Each round: pursue Kami, say yes (he takes an Essence from a Dying Star and a Celestial Diamond),
--- wait for SSJ4 Goku and SSJ4 Vegeta to land, sense and kill both, then sense and kill Gogeta
--- (SSJ to SSJ4) and go back to Kami. Bosses that walk off are sensed again; a rival that jumps
+-- wait for SSJ4 Goku and SSJ4 Vegeta to land, pursue and kill both, then kill Gogeta (SSJ to SSJ4)
+-- and go back to Kami. Bosses seen walking off are sensed; a rival that jumps
 -- you is fought first, then the round picks up where it was.
 gog = gog or {}
 local G = gog
@@ -47,12 +47,12 @@ function G.stop(why)
 end
 
 -- ---------------------------------------------------------------- getting there
--- Bosses wander, so they're found with `sense` (instant). If the concentration slips, sense again;
--- if they can't be sensed from here, pursue them.
-function G.travel(target)
-  G.target, tries = target, 0
+-- Far away (just landed, or after a rival): `pursue`. Seen leaving or flying off nearby: `sense`.
+-- If the concentration slips, sense again; if they can't be sensed from here, pursue them.
+function G.travel(target, how)
+  G.target, G.how, tries = target, how or "pursue", 0
   if fighting() then return end
-  send("sense " .. target)
+  send(G.how .. " " .. target)
   deadline(60, "reaching " .. target)
 end
 
@@ -78,7 +78,7 @@ function G.noKi()
   tries = (tries or 0) + 1
   if tries > G.retries then return G.stop("can't sense " .. target) end
   tempTimer(3, function()
-    if G.active and not fighting() then send((G.phase == "kami" and "pursue " or "sense ") .. target) end
+    if G.active and not fighting() then send((G.phase == "kami" and "pursue " or (G.how or "pursue") .. " ") .. target) end
   end)
 end
 
@@ -154,11 +154,12 @@ function G.dead(who)
   end
 end
 
--- "When the light fades, standing before you is SSJ Gogeta!"
+-- "When the light fades, standing before you is SSJ Gogeta!": he's right here (if he walks off, `moved` senses him)
 function G.fused()
   if not G.active then return end
-  G.phase = "hunt"
-  tempTimer(1, function() if G.active and G.phase == "hunt" then G.travel("gogeta") end end)
+  G.phase = "gogeta"
+  deadline(G.fightWait, "fighting Gogeta")
+  tempTimer(1, function() if G.active and G.phase == "gogeta" and not fighting() then hit("gogeta") end end)
 end
 
 -- "SSJ Gogeta leaves south." / "SSJ4 Goku flies west.": sense them again and keep hitting
@@ -171,7 +172,7 @@ function G.moved(name)
   elseif G.phase == "gogeta" and kw == "gogeta" then G.after = "gogeta"
   else return end
   G.phase = "chase"
-  tempTimer(1, function() if G.active and G.phase == "chase" then G.travel(kw) end end)
+  tempTimer(1, function() if G.active and G.phase == "chase" then G.travel(kw, "sense") end end)
 end
 
 -- "SSJ4 Gogeta drops SSJ4 Gogeta's explosive red aura (Celestial).": pick up Celestial drops only,
@@ -274,7 +275,7 @@ function G.resume()
     G.phase, G.after = "chase", "fight"
     G.travel(G.goku and "vegeta" or "goku")
   elseif p == "hunt" or p == "gogeta" then G.phase = "hunt"; G.travel("gogeta")
-  elseif p == "chase" then G.travel(G.target or "gogeta") end
+  elseif p == "chase" then G.travel(G.target or "gogeta") end   -- after a rival they may be far: pursue
 end
 
 -- ---------------------------------------------------------------- materials

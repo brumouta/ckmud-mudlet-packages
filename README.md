@@ -16,7 +16,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 | [Gumshoe](packages/Gumshoe) | `gum help` | Solves Jaco's **Briefs mansion** party cases: walks the house, searches, questions, opens the sealed rooms and names who did it. |
 | [CryonFarm](packages/CryonFarm) | `cryon help` | Farms the **Confession of Cryon Frigidus** in Iceria's hidden lab: the four DNA samples, the fields and the smack. |
-| [Gogeta](packages/Gogeta) | `gog help` | Loops **Kami's timeline portal**: counts your Essences and Diamonds, hands them to Kami, senses and kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, repeats. Also buys Essences from the event shop. |
+| [Gogeta](packages/Gogeta) | `gog help` | Loops **Kami's timeline portal**: counts your Essences and Diamonds, hands them to Kami, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, repeats. Also buys Essences from the event shop. |
 
 Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossTimer, Gumshoe, CryonFarm and Gogeta work without it.
 

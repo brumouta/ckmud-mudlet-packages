@@ -9,15 +9,15 @@ Command: `gog`
 ## Each round
 
 1. `pursue kami`, then `say yes`. Kami takes one Essence and one Diamond and opens the portal.
-2. When SSJ4 Vegeta says *What a waste of my time*, both have landed: `sense goku`, then `de goku`.
+2. When SSJ4 Vegeta says *What a waste of my time*, both have landed somewhere on Earth: `pursue goku`, then `de goku`.
 3. When one of them dies, it attacks the other (`de vegeta` or `de goku`).
-4. When they fuse (*standing before you is SSJ Gogeta*): `sense gogeta`, then `de gogeta` until SSJ4 Gogeta dies.
+4. When they fuse (*standing before you is SSJ Gogeta*), he's right there: `de gogeta` until SSJ4 Gogeta dies.
 5. Back to Kami.
 
 Getting to the bosses:
 
-- **Sense, not pursue.** Bosses wander off, so they're reached with `sense`. If *You lose your concentration*, it senses again (up to 5 tries). If *You can't seem to sense … from here*, it falls back to `pursue`.
-- **Bosses that move.** If Goku, Vegeta or Gogeta *leaves* or *flies* somewhere mid-fight, it senses them again and keeps attacking.
+- **Far away: pursue.** Goku and Vegeta after they land, and any boss after a rival fight, are reached with `pursue`.
+- **Seen moving: sense.** If Goku, Vegeta or Gogeta *leaves* or *flies* somewhere, they're nearby, so it uses `sense` and keeps attacking. If *You lose your concentration*, it senses again (up to 5 tries). If *You can't seem to sense … from here*, it falls back to `pursue`.
 
 **Rivals.** When a rival crashes down on you (*The sky splits open as … crashes down upon you* or *… flies out of nowhere and attacks you*), the round pauses. Rivals attacking other players are ignored. While a rival is alive:
 
