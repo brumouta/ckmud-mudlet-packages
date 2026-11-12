@@ -648,4 +648,43 @@ ok(tg == "LIED" and tv == "fits" and ty == "fits", "door log 3 of 4: only the on
 r = G.solve()
 ok(r.line == "accuse gohan with lights at ten" and r.sure, "Lights Out: " .. tostring(r.line) .. " sure=" .. tostring(r.sure))
 
+-- gum case: to Jaco and open a case ----------------------------------------------------
+local function joined() return table.concat(sent, " | ") end
+-- outside the house, with the capsule
+G.newCase(); G.room = nil; sent = {}
+respond = function(c)
+  if c == "use mansion" then tempTimer(0.2, function() gum.line("Briefs Family Garden") end)
+  elseif c == "w" then
+    G._w = (G._w or 0) + 1
+    if G._w == 6 then tempTimer(0.2, function() gum.line("Front Steps") end) end
+  end
+end
+G._w = 0
+gum.command("case")
+wait(10)
+ok(joined() == "look | use mansion | w | w | w | w | w | w | say case hard", "capsule, 6 west, say case hard: " .. joined())
+-- no capsule: instant to Mrs. Briefs, north, 6 west
+sent = {}; G._w = 0; G.room = nil
+respond = function(c)
+  if c == "use mansion" then tempTimer(0.2, function() gum.line("You don't have that.") end)
+  elseif c == "focus 'instant' mrs briefs" then tempTimer(0.5, function() gum.line("Obvious exits:") end)
+  elseif c == "w" then
+    G._w = G._w + 1
+    if G._w == 6 then tempTimer(0.2, function() gum.line("Front Steps") end) end
+  end
+end
+gum.command("case", "normal")
+wait(10)
+ok(joined() == "look | use mansion | focus 'instant' mrs briefs | n | w | w | w | w | w | w | say case normal", "no capsule: instant then n + 6 west: " .. joined())
+-- already in the house: walk out to the Front Steps
+sent = {}; G.room = "Grand Hall"
+respond = function(c)
+  if c == "look" then tempTimer(0.2, function() gum.line("Grand Hall") end)
+  elseif c == "s" then tempTimer(0.2, function() gum.line(G.room == "Grand Hall" and "Entrance Hall" or "Front Steps") end) end
+end
+gum.command("case")
+wait(10)
+ok(joined() == "look | s | s | say case hard", "inside the house: walk out: " .. joined())
+respond = nil
+
 print("gum: ALL PASSED")

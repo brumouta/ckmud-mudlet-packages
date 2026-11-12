@@ -12,6 +12,9 @@ G.searchDelay = G.searchDelay or 1.5   -- seconds between searches in the same r
 G.busyDelay   = G.busyDelay or 2       -- after "You are still turning this room over."
 G.stepTimeout = G.stepTimeout or 6     -- seconds to wait for a room / an answer
 G.FEAST_ROOM  = "Dining Room"          -- the seating chart is who sat in here
+G.difficulty  = G.difficulty or "hard" -- `gum case` with no difficulty
+G.capsuleCmd  = G.capsuleCmd or "use mansion"                  -- the return capsule: to the Briefs Family Garden
+G.instantCmd  = G.instantCmd or "focus 'instant' mrs briefs"   -- if there's no capsule
 
 local TIMES = { nine = 9, ten = 10, eleven = 11, midnight = 12, twelve = 12,
                 ["9"] = 9, ["10"] = 10, ["11"] = 11, ["12"] = 12 }
@@ -1425,6 +1428,7 @@ end
 
 -- ---------------------------------------------------------------- `gum` alias
 G.HELP = {
+  { "gum case [diff]",  "Go to Jaco (return capsule, else instant to Mrs. Briefs) and say case (default hard)" },
   { "gum run",          "Do the legwork: search, question, inspect, door log, sealed rooms, confront, then solve" },
   { "gum question",     "Only question everyone not questioned yet (walking to find them), then solve" },
   { "gum stop",         "Stop walking (everything found is kept)" },
@@ -1438,7 +1442,7 @@ G.HELP = {
 function G.help()
   cecho("\n<cyan>Gumshoe, Jaco's party cases at the Briefs house:\n")
   for _, h in ipairs(G.HELP) do cecho(("  <yellow>%-16s<white>%s\n"):format(h[1], h[2])) end
-  cecho("  <grey>Open a case with Jaco on the Front Steps (say case), step inside, then gum run.\n")
+  cecho("  <grey>gum case to open one with Jaco, step inside, then gum run.\n")
 end
 
 local function list(set)
@@ -1483,6 +1487,43 @@ function G.go(where)
   end)
 end
 
+-- `gum case [easy|normal|hard]`: get to Jaco on the Front Steps and open a case.
+-- Inside the house it walks there. Otherwise the return capsule (Briefs Family Garden, then 6 west),
+-- or without one, instant transmission to Mrs. Briefs (then north and 6 west).
+local NO_CAPSULE = { { "Family Garden", "ok" }, { "^You don't", "no" }, { "^You do not", "no" },
+                     { "^Use what", "no" }, { "^You can't", "no" }, { "^Huh", "no" } }
+function G.toJaco(diff)
+  diff = (diff or G.difficulty):lower()
+  if not ({ easy = true, normal = true, hard = true })[diff] then
+    return info("yellow", "gum case easy, normal or hard (default " .. G.difficulty .. ")")
+  end
+  G.gen = G.gen + 1
+  G.running = true
+  local function sayCase() G.running = false; send("say case " .. diff, false) end
+  local function walkIn(first)
+    if first then send(first, false) end
+    for _ = 1, 6 do send("w", false) end
+    expect({ { "^Front Steps$", "ok" } }, 20, function(k)
+      if k == "ok" then return sayCase() end
+      halt("didn't reach Jaco on the Front Steps")
+    end)
+  end
+  cmd("look", { { "@arrived", "in" } }, 3, function(k)
+    if k == "in" and G.room then
+      return G.walk("Front Steps", function(ok) if ok then sayCase() else G.running = false end end)
+    end
+    info("green", "Off to Jaco for a " .. diff .. " case")
+    cmd(G.capsuleCmd, NO_CAPSULE, 5, function(k2)
+      if k2 == "ok" then return walkIn() end
+      info("yellow", "No return capsule: instant transmission to Mrs. Briefs")
+      cmd(G.instantCmd, { { "^Obvious exits:", "ok" } }, 8, function(k3)
+        if k3 == "ok" then return walkIn("n") end
+        halt("instant transmission to Mrs. Briefs didn't land")
+      end)
+    end)
+  end)
+end
+
 function G.command(c, arg)
   if c == nil or c == "help" then G.help()
   elseif c == "run" or c == "start" then G.run()
@@ -1501,6 +1542,7 @@ function G.command(c, arg)
     send(r.line, false)
   elseif c == "status" then G.status()
   elseif c == "go" and arg then G.go(arg)
+  elseif c == "case" then G.toJaco(arg)
   elseif c == "reset" then G.newCase(); info("white", "Case forgotten")
   else info("yellow", "Unknown command '" .. tostring(c) .. "'. Type gum help") end
 end

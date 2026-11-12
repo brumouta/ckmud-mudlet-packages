@@ -2,12 +2,13 @@
 
 Command: `gum`
 
-Solves Jaco's party cases at the Briefs house (`help mansion`). Open a case with Jaco on the Front Steps (`say case`), step inside and type `gum run`. It does the legwork, then tells you who did it. You make the arrest yourself.
+Solves Jaco's party cases at the Briefs house (`help mansion`). Type `gum case` to go to Jaco and open a Hard case, step inside and type `gum run`. It does the legwork, then tells you who did it. You make the arrest yourself.
 
 ## Commands
 
 | Command | Effect |
 |---|---|
+| `gum case [easy\|normal\|hard]` | Go to Jaco on the Front Steps and `say case` (Hard unless you say otherwise). From inside the house it walks out. Anywhere else it uses the return capsule (`use mansion`, to the Briefs Family Garden, then 6 west). With no capsule it uses `focus 'instant' mrs briefs`, then north and 6 west |
 | `gum run` | Do the whole case: search, question, inspect, door log, sealed rooms, confront, then solve |
 | `gum question` | Only question everyone not questioned yet: walks to where it last saw each guest (looking in unseen rooms for the rest), then solves |
 | `gum stop` | Stop walking. Everything found so far is kept |
