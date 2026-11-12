@@ -8,7 +8,7 @@ Solves Jaco's party cases at the Briefs house (`help mansion`). Type `gum case` 
 
 | Command | Effect |
 |---|---|
-| `gum case [easy\|normal\|hard]` | Go to Jaco on the Front Steps and `say case` (Hard unless you say otherwise). From inside the house it walks out. Anywhere else it uses the return capsule (`use mansion`, to the Briefs Family Garden, then 6 west). With no capsule it uses `focus 'instant' mrs briefs`, then north and 6 west |
+| `gum case [easy\|normal\|hard]` | Go to Jaco on the Front Steps and `say case` (Hard unless you say otherwise). From inside the house it walks out. Anywhere else it uses the return capsule (`use mansion`, to the Briefs Family Garden, then 6 west). With no capsule it uses `focus 'instant' bulma` (Bulma's Workshop), then `pursue jaco` |
 | `gum run` | Do the whole case: search, question, inspect, door log, sealed rooms, confront, then solve |
 | `gum question` | Only question everyone not questioned yet: walks to where it last saw each guest (looking in unseen rooms for the rest), then solves |
 | `gum stop` | Stop walking. Everything found so far is kept |

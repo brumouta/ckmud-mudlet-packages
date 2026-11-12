@@ -14,7 +14,7 @@ G.stepTimeout = G.stepTimeout or 6     -- seconds to wait for a room / an answer
 G.FEAST_ROOM  = "Dining Room"          -- the seating chart is who sat in here
 G.difficulty  = G.difficulty or "hard" -- `gum case` with no difficulty
 G.capsuleCmd  = G.capsuleCmd or "use mansion"                  -- the return capsule: to the Briefs Family Garden
-G.instantCmd  = G.instantCmd or "focus 'instant' mrs briefs"   -- if there's no capsule
+G.instantCmd  = G.instantCmd or "focus 'instant' bulma"        -- if there's no capsule: Bulma's Workshop, then pursue jaco
 
 local TIMES = { nine = 9, ten = 10, eleven = 11, midnight = 12, twelve = 12,
                 ["9"] = 9, ["10"] = 10, ["11"] = 11, ["12"] = 12 }
@@ -1440,7 +1440,7 @@ end
 
 -- ---------------------------------------------------------------- `gum` alias
 G.HELP = {
-  { "gum case [diff]",  "Go to Jaco (return capsule, else instant to Mrs. Briefs) and say case (default hard)" },
+  { "gum case [diff]",  "Go to Jaco (return capsule, else instant to Bulma and pursue Jaco) and say case (default hard)" },
   { "gum run",          "Do the legwork: search, question, inspect, door log, sealed rooms, confront, then solve" },
   { "gum question",     "Only question everyone not questioned yet (walking to find them), then solve" },
   { "gum stop",         "Stop walking (everything found is kept)" },
@@ -1501,7 +1501,7 @@ end
 
 -- `gum case [easy|normal|hard]`: get to Jaco on the Front Steps and open a case.
 -- Inside the house it walks there. Otherwise the return capsule (Briefs Family Garden, then 6 west),
--- or without one, instant transmission to Mrs. Briefs (her part of the garden, then north and 6 west).
+-- or without one, instant transmission to Bulma (Bulma's Workshop), then pursue jaco.
 local NO_CAPSULE = { { "^Briefs Family Garden$", "ok" }, { "^You don't", "no" }, { "^You do not", "no" },
                      { "^Use what", "no" }, { "^You can't", "no" }, { "^Huh", "no" } }
 function G.toJaco(diff)
@@ -1527,11 +1527,13 @@ function G.toJaco(diff)
     info("green", "Off to Jaco for a " .. diff .. " case")
     cmd(G.capsuleCmd, NO_CAPSULE, 5, function(k2)
       if k2 == "ok" then return walkIn() end
-      info("yellow", "No return capsule: instant transmission to Mrs. Briefs")
-      -- lands in another room also called Briefs Family Garden, where Mrs. Briefs waters the flowers
-      cmd(G.instantCmd, { { "^Briefs Family Garden$", "ok" } }, 8, function(k3)
-        if k3 == "ok" then return walkIn("n") end
-        halt("instant transmission to Mrs. Briefs didn't land")
+      info("yellow", "No return capsule: instant transmission to Bulma, then pursue Jaco")
+      cmd(G.instantCmd, { { "^Bulma's Workshop$", "ok" } }, 8, function(k3)
+        if k3 ~= "ok" then return halt("instant transmission to Bulma didn't land") end
+        cmd("pursue jaco", { { "^Front Steps$", "ok" } }, 30, function(k4)
+          if k4 == "ok" then return sayCase() end
+          halt("pursue jaco didn't reach the Front Steps")
+        end)
       end)
     end)
   end)

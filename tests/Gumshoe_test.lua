@@ -680,19 +680,17 @@ G._w = 0
 gum.command("case")
 wait(10)
 ok(joined() == "look | use mansion | w | w | w | w | w | w | say case hard", "capsule, 6 west, say case hard: " .. joined())
--- no capsule: instant to Mrs. Briefs, north, 6 west
-sent = {}; G._w = 0; G.room = nil
+-- no capsule: instant to Bulma, then pursue Jaco
+sent = {}; G.room = nil
 respond = function(c)
   if c == "use mansion" then tempTimer(0.2, function() gum.line("You don't have that.") end)
-  elseif c == "focus 'instant' mrs briefs" then tempTimer(0.5, function() feed({ "Briefs Family Garden", "Mrs. Briefs hums while watering the flowers." }) end)
-  elseif c == "w" then
-    G._w = G._w + 1
-    if G._w == 6 then tempTimer(0.2, function() gum.line("Front Steps") end) end
+  elseif c == "focus 'instant' bulma" then tempTimer(0.5, function() feed({ "You touch two fingers to your forehead and disappear suddenly.", "Bulma's Workshop", "Bulma frowns at a schematic, a screwdriver behind one ear." }) end)
+  elseif c == "pursue jaco" then tempTimer(3, function() feed({ "You begin tracking Jaco the Galactic Patrolman's ki...", "Front Steps", "You have successfully tracked down Jaco the Galactic Patrolman!" }) end)
   end
 end
 gum.command("case", "normal")
 wait(10)
-ok(joined() == "look | use mansion | focus 'instant' mrs briefs | n | w | w | w | w | w | w | say case normal", "no capsule: instant then n + 6 west: " .. joined())
+ok(joined() == "look | use mansion | focus 'instant' bulma | pursue jaco | say case normal", "no capsule: instant to Bulma, pursue Jaco: " .. joined())
 -- already in the house: walk out to the Front Steps
 sent = {}; G.room = "Grand Hall"
 respond = function(c)
