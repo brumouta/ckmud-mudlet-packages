@@ -1474,7 +1474,8 @@ function G.command(c, arg)
     local r = G.solve()
     if not r.line then return info("yellow", "Not enough to accuse anyone yet: gum solve") end
     local fmt = G.akw.format
-    if fmt and not fmt:find("with <weapon> at <time>$") and not fmt:find("stash <room> at <time>$") then
+    if fmt and not fmt:find("with <weapon> at <time>$") and not fmt:find("stash <room> at <time>$")
+      and not fmt:find("with <weapon> rigged at <time>$") then
       return info("yellow", "This case wants: " .. fmt .. " - accuse by hand")
     end
     send(r.line, false)

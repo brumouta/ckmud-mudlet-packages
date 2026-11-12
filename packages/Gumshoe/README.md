@@ -39,7 +39,7 @@ It walks to the nearest room with something left to do, does it, and repeats:
 Sometimes a search turns up one of the Phantom's black calling cards. It isn't a finding and has nothing to do with the case, but you keep it if you solve the case in time, and three of them summon a secret boss. Gumshoe:
 
 - says when it finds one (there's nothing to pick up: finding it is enough), and `gum status` and the solve report remind you there's one on this case;
-- counts it when the case closes solved (not when it goes cold) and says once you have three or more;
+- counts it when the case closes solved (not when it goes cold) and says once you have three or more (then `say gallery` to Jaco brings the Phantom to his Gallery, south of the Front Steps);
 - reads the count from `casebook` (*Calling cards: 1*), so type `casebook` once after installing to start from your real count.
 
 Cards turn up in 1 case in 8 on Easy, 1 in 4 on Normal and 1 in 2 on Hard. The Kitchen cabinet also sells `buy cardguarantee` (6 vouchers), which hides a card in your next case. You still have to find it and solve the case.

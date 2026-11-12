@@ -619,6 +619,8 @@ ok(tagL == "LIED", "Launch lied about ten")
 ok(G.tookWeapon("Launch", 10, "Grand Hall"), "Launch was in the Grand Hall at nine")
 r = G.solve()
 ok(r.line == "accuse launch with jacket rigged at ten", "Hard sabotage: " .. tostring(r.line))
+sent = {}; gum.command("accuse")
+ok(sent[#sent] == "accuse launch with jacket rigged at ten", "gum accuse sends the rigged-at form: " .. tostring(sent[#sent]))
 sent = {}
 G.cards = 4
 feed(S.card)
