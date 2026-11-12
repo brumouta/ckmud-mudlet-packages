@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -66,6 +66,11 @@
           "name": "gog Shop points",
           "patterns": [ { "type": "regex", "pattern": "You currently have ([\\d,]+) event points\\." } ],
           "script": "gog.shopPoints(matches[2])"
+        },
+        {
+          "name": "gog Shop bought",
+          "patterns": [ { "type": "regex", "pattern": "^You spend \\d+ epoints for Essence from a Dying Star\\.$" } ],
+          "script": "gog.spent()"
         },
         {
           "name": "gog Dead",

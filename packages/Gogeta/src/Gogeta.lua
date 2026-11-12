@@ -160,7 +160,20 @@ function G.shopPoints(points)
   if n < 1 then return info("red", ("Not enough event points: an Essence costs %d, you have %d"):format(sh.cost, have)) end
   info("green", ("Buying %d Essence%s from a Dying Star (#%d, %d each, %d of %d points)%s"):format(
     n, n == 1 and "" or "s", sh.num, sh.cost, n * sh.cost, have, n < sh.want and " - all you can afford" or ""))
+  G.buying = { want = n, got = 0 }
   for i = 1, n do tempTimer((i - 1) * 0.3, function() send("eshop buy " .. sh.num) end) end
+  tempTimer((n - 1) * 0.3 + 4, function()
+    local b = G.buying
+    G.buying = nil
+    if not b then return end
+    if b.got == b.want then info("green", ("Bought %d Essence%s"):format(b.got, b.got == 1 and "" or "s"))
+    else info("red", ("Only %d of %d Essences were bought - check the shop's replies"):format(b.got, b.want)) end
+  end)
+end
+
+-- "You spend 500 epoints for Essence from a Dying Star."
+function G.spent()
+  if G.buying then G.buying.got = G.buying.got + 1 end
 end
 
 -- ---------------------------------------------------------------- `gog` alias

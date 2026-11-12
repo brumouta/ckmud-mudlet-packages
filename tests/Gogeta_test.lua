@@ -33,6 +33,7 @@ local TRIG = {
   { "^SSJ4 %a+ drops (.-) %(Celestial%)%.?$", function(m) gog.dropped(m) end },
   { "^%(%s*(%d+)%)%s+(%d+)%s+Essence from a Dying Star%s*$", function(a, b) gog.shopItem(a, b) end, two = true },
   { "You currently have ([%d,]+) event points%.", function(m) gog.shopPoints(m) end },
+  { "^You spend %d+ epoints for Essence from a Dying Star%.$", function() gog.spent() end },
   { "^(SSJ4 [GV]%a+) is dead!%s+R%.I%.P%.", function(m) if m == "SSJ4 Goku" or m == "SSJ4 Vegeta" or m == "SSJ4 Gogeta" then gog.dead(m) end end },
 }
 local function feed(text)
@@ -116,8 +117,14 @@ o------------------------------------------------------------o
         Legendary/Celestial Items cost 2.5x/5x More
  You currently have 251,468 event points.]]
 sent = {}
+local BOUGHT = "You spend 500 epoints for Essence from a Dying Star."
 gog.command("buy", "3"); expect("eshop")
 feed(SHOP); wait(1); expect("eshop buy 19 | eshop buy 19 | eshop buy 19")
+feed(BOUGHT .. "\n" .. BOUGHT .. "\n" .. BOUGHT); wait(5)
+ok(LOG:find("Bought 3 Essences"), "every purchase confirmed")
+gog.command("buy", "2"); feed(SHOP); wait(1); sent = {}
+feed(BOUGHT); wait(5)
+ok(LOG:find("Only 1 of 2 Essences were bought"), "a purchase without its reply is reported")
 gog.command("buy", "10"); sent = {}
 feed((SHOP:gsub("251,468", "1,200"))); wait(5); expect("eshop buy 19 | eshop buy 19")
 ok(LOG:find("all you can afford"), "capped by the event points")
