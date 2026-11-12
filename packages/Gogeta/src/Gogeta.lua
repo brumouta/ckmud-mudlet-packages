@@ -108,6 +108,20 @@ function G.dead(who)
   end
 end
 
+-- "SSJ4 Gogeta drops SSJ4 Gogeta's explosive red aura (Celestial).": pick up Celestial drops only,
+-- by the last word of the name ("aura"). Legendary and plain drops stay on the ground.
+function G.keyword(item)
+  item = item:gsub("%s*%b()", "")
+  return item:match("(%w+)%s*$")
+end
+function G.dropped(item)
+  if not G.active then return end
+  local kw = G.keyword(item)
+  if not kw then return end
+  info("magenta", "Celestial drop: " .. item)
+  send("get " .. kw:lower())
+end
+
 -- "When the light fades, standing before you is SSJ Gogeta!" (he may wander off: pursue him)
 function G.fused()
   if not G.active then return end

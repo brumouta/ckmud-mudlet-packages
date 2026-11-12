@@ -10,7 +10,7 @@ Each round:
 4. When they fuse (*standing before you is SSJ Gogeta*), `pursue gogeta` (he sometimes walks off), then `de gogeta` until SSJ4 Gogeta dies.
 5. Back to Kami for the next round.
 
-Loot on the ground (loot boxes, auras, halos) is left where it falls.
+Drops that end in **(Celestial)** are picked up as they fall, by the last word of their name (*SSJ4 Gogeta's explosive red aura (Celestial)* → `get aura`). Everything else (Legendary drops, loot boxes, plain halos and tails) is left on the ground.
 
 ## Commands
 

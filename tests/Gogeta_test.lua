@@ -30,6 +30,7 @@ local TRIG = {
   { "hands over the Essence from a Dying Star and the Celestial Diamond to Kami", function() gog.paid() end, plain = true },
   { "[Quest: SSJ4 Vegeta] What a waste of my time", function() gog.landed() end, plain = true },
   { "standing before you is SSJ Gogeta!", function() gog.fused() end, plain = true },
+  { "^SSJ4 %a+ drops (.-) %(Celestial%)%.?$", function(m) gog.dropped(m) end },
   { "^(SSJ4 [GV]%a+) is dead!%s+R%.I%.P%.", function(m) if m == "SSJ4 Goku" or m == "SSJ4 Vegeta" or m == "SSJ4 Gogeta" then gog.dead(m) end end },
 }
 local function feed(text)
@@ -78,6 +79,14 @@ feed(PAID); feed(LANDED); feed(GOKU); feed("SSJ4 Goku is dead!  R.I.P."); feed(F
 feed("You're already in the same room!!"); feed("SSJ4 Gogeta is dead!  R.I.P."); wait(5)
 expect("pursue goku | de goku | de vegeta | pursue gogeta | de gogeta")
 ok(not gog.active and gog.rounds == 3, "stops after 3 rounds")
+
+-- Celestial drops are picked up, Legendary and plain ones aren't
+gog.command("start"); sent = {}
+feed("SSJ4 Gogeta drops SSJ4 Gogeta's explosive red aura (Legendary).\nSSJ4 Gogeta drops Celestial Knights Legendary Loot Box.\nSSJ4 Goku drops SSJ4 Goku's Halo.")
+expect("")
+feed("SSJ4 Gogeta drops SSJ4 Gogeta's explosive red aura (Celestial).\nSSJ4 Goku drops SSJ4 Goku's Tail (Celestial).")
+expect("get aura | get tail")
+gog.command("stop"); sent = {}
 
 -- Out of items: Kami never takes them -> stop
 gog.command("start"); expect("pursue kami")

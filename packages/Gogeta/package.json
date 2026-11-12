@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -51,6 +51,11 @@
           "name": "gog Fused",
           "patterns": [ { "type": "substring", "pattern": "standing before you is SSJ Gogeta!" } ],
           "script": "gog.fused()"
+        },
+        {
+          "name": "gog Celestial drop",
+          "patterns": [ { "type": "regex", "pattern": "^SSJ4 (?:Goku|Vegeta|Gogeta) drops (.+?)(?: \\(Tier \\d+\\))? \\(Celestial\\)\\.?$" } ],
+          "script": "gog.dropped(matches[2])"
         },
         {
           "name": "gog Dead",
