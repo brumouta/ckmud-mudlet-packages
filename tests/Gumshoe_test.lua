@@ -667,7 +667,7 @@ ok(joined() == "look | use mansion | w | w | w | w | w | w | say case hard", "ca
 sent = {}; G._w = 0; G.room = nil
 respond = function(c)
   if c == "use mansion" then tempTimer(0.2, function() gum.line("You don't have that.") end)
-  elseif c == "focus 'instant' mrs briefs" then tempTimer(0.5, function() gum.line("Obvious exits:") end)
+  elseif c == "focus 'instant' mrs briefs" then tempTimer(0.5, function() feed({ "Briefs Family Garden", "Mrs. Briefs hums while watering the flowers." }) end)
   elseif c == "w" then
     G._w = G._w + 1
     if G._w == 6 then tempTimer(0.2, function() gum.line("Front Steps") end) end

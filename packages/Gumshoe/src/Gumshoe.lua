@@ -1489,8 +1489,8 @@ end
 
 -- `gum case [easy|normal|hard]`: get to Jaco on the Front Steps and open a case.
 -- Inside the house it walks there. Otherwise the return capsule (Briefs Family Garden, then 6 west),
--- or without one, instant transmission to Mrs. Briefs (then north and 6 west).
-local NO_CAPSULE = { { "Family Garden", "ok" }, { "^You don't", "no" }, { "^You do not", "no" },
+-- or without one, instant transmission to Mrs. Briefs (her part of the garden, then north and 6 west).
+local NO_CAPSULE = { { "^Briefs Family Garden$", "ok" }, { "^You don't", "no" }, { "^You do not", "no" },
                      { "^Use what", "no" }, { "^You can't", "no" }, { "^Huh", "no" } }
 function G.toJaco(diff)
   diff = (diff or G.difficulty):lower()
@@ -1516,7 +1516,8 @@ function G.toJaco(diff)
     cmd(G.capsuleCmd, NO_CAPSULE, 5, function(k2)
       if k2 == "ok" then return walkIn() end
       info("yellow", "No return capsule: instant transmission to Mrs. Briefs")
-      cmd(G.instantCmd, { { "^Obvious exits:", "ok" } }, 8, function(k3)
+      -- lands in another room also called Briefs Family Garden, where Mrs. Briefs waters the flowers
+      cmd(G.instantCmd, { { "^Briefs Family Garden$", "ok" } }, 8, function(k3)
         if k3 == "ok" then return walkIn("n") end
         halt("instant transmission to Mrs. Briefs didn't land")
       end)
