@@ -27,7 +27,7 @@ It walks to the nearest room with something left to do, does it, and repeats:
 - **Read Garter's door log** for all four chimes in the Inner Hall.
 - **Open the sealed rooms:**
   - The lab: `study portraits`, work the code out from the plaque (left to right, right to left, alphabetical, oldest to youngest or youngest to oldest), `press` it in the Lab Vestibule, then go down.
-  - Bulma's Suite: `say` the phrase written on the back of a secret, on the Upper Landing East.
+  - Bulma's Suite: `say` the phrase written on the back of a secret, on the Upper Landing East. (The game now also records the phrase in `notebook` once found; Gumshoe still takes it from the secret.)
   - The Gravity Chamber: `shut gravity` in the Robot Charging Bay. The lights go out, so it fetches the flashlight from the Hangar first, then searches the chamber.
 - **Pitch dark?** If a search ever says *It is pitch dark*, it stops, fetches the flashlight from the Hangar (or, if that fails twice and the Gravity Chamber is already searched, does `reset breaker` in the Robot Charging Bay, which re-seals the chamber) and comes back to search that room again.
 - **Confront** every secret, once every room has been searched.
@@ -41,6 +41,8 @@ Sometimes a search turns up one of the Phantom's black calling cards. It isn't a
 - picks it up (`get card`) and says when it finds one, and `gum status` and the solve report remind you there's one on this case;
 - counts it when the case closes solved (not when it goes cold) and says when you have three;
 - reads the count from `casebook` (*Calling cards: 1*), so type `casebook` once after installing to start from your real count.
+
+Cards turn up in 1 case in 8 on Easy, 1 in 4 on Normal and 1 in 2 on Hard. The Kitchen cabinet also sells `buy cardguarantee` (6 vouchers), which hides a card in your next case. You still have to find it and solve the case.
 
 ## How it decides
 
@@ -68,5 +70,5 @@ Sometimes a search turns up one of the Phantom's black calling cards. It isn't a
 - **Case types:** murder, theft and accomplices are solved. For delayed sabotage (`accuse <suspect> with <weapon> rigged at <time>`) and locked room (`accuse <suspect> through <room> at <time>`, not seen by anyone yet), `gum solve` still shows the alibis and evidence, but `gum accuse` won't send anything until a real case shows how the rigging time and the way in are found.
 - **The map** is fixed, mapped from one case. If the house ever changes, the room list in `G.EXITS` needs updating.
 - **Hard cases** are read from the intro: the lab analyzer is off, so it never suggests or walks to `analyze`. The extra liar and second broken log sensor need nothing special, but only the intro of a Hard case has been seen so far.
-- **Monthly twists** (from `help mansion`): January a fast watch, February a lying witness, March guest dolls, April eggs, May Goten and Trunks run off with clues (tag them), June a storm, July a pair slips off, August dark rooms, September the moon roof, October masks, November a feast, December presents to unwrap. Only November's (the seating chart) has been seen; the others may need changes when they come.
+- **Monthly twists** (from `help mansion`): January a fast watch, February guest dolls, March a lying witness, April eggs, May Goten and Trunks run off with clues (tag them), June a storm, July a pair slips off, August dark rooms, September the moon roof, October masks, November a feast, December presents to unwrap. Only November's (the seating chart) has been seen; the others may need changes when they come.
 - **Upgrading mid-case** keeps what the case has found so far and adds anything the new version needs, so you can install a fix without starting over.
