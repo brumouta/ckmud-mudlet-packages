@@ -1535,18 +1535,11 @@ function G.toJaco(diff)
           halt("pursue jaco didn't reach the Front Steps")
         end)
       end
-      -- instant transmission can just fail ("You failed."): try again, then pursue Jaco from wherever we are
-      local tries = 0
-      local function instant()
-        tries = tries + 1
-        cmd(G.instantCmd, { { "^Bulma's Workshop$", "ok" }, { "^You failed%.$", "failed" } }, 8, function(k3)
-          if k3 == "ok" then return pursueJaco() end
-          if tries < 3 then return tempTimer(1, function() if G.running then instant() end end) end
-          info("yellow", "Instant transmission keeps failing: pursuing Jaco from here")
-          pursueJaco()
-        end)
-      end
-      instant()
+      -- "You failed." means the target is protected against instant transmission: pursue Jaco from here instead
+      cmd(G.instantCmd, { { "^Bulma's Workshop$", "ok" }, { "^You failed%.$", "failed" } }, 8, function(k3)
+        if k3 ~= "ok" then info("yellow", "Instant transmission to Bulma " .. (k3 == "failed" and "failed" or "didn't land") .. ": pursuing Jaco from here") end
+        pursueJaco()
+      end)
     end)
   end)
 end
