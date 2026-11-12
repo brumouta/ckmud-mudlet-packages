@@ -1,0 +1,217 @@
+## intro
+Tonight is the Thanksgiving party.
+Difficulty: Hard. One more guest lies, the lab analyzer is off, and Garter's door log has a second broken sensor. Half again the pay, and a Good or Perfect solve earns a stronger boost.
+The case: Dr. Briefs' stand-in lies smashed in the Study. Whoever did it thought it was the real one.
+Inspect the remains in the Study for the damage and the stand-in's last telemetry.
+Twelve people were at the party: Master Roshi, Launch, Yajirobe, Emperor Pilaf, Mr. Satan, Tien, Piccolo, Videl, Krillin, Puar, Dende and Mr. Popo.
+## guests
+========================================
+THE GUESTS, AS ANYONE CAN SEE THEM
+========================================
+  Guest          Ki      Tread Hair
+  Master Roshi   flaring light not dark
+  Launch         quiet   heavy not dark
+  Yajirobe       flaring heavy dark
+  Emperor Pilaf  quiet   light not dark
+  Mr. Satan      quiet   heavy dark
+  Tien           flaring heavy not dark
+  Piccolo        flaring heavy not dark
+  Videl          flaring light dark
+Cake: only Mrs. Briefs' stand-in knows. plate <suspect> in the Kitchen, once per case.
+Witnesses: Krillin, Puar, Dende and Mr. Popo. Never the culprit, never liars.
+Match these against your evidence: notebook lists what you found.
+========================================
+## chart
+The seating chart, every place card signed at the feast:
+At nine: Yajirobe, Dende, Mr. Popo.
+At ten: Master Roshi, Tien, Puar.
+At eleven: Master Roshi, Puar, Mr. Popo.
+At midnight: Mr. Satan, Krillin, Dende.
+(Finding 1 of the 4 Jaco needs.)
+## remains
+The damage tells its own story: crushed, not struck, as if the room's gravity leaned on one spot. Either the Gravity Gauntlet from the Robot Workshop, or the Battle Jacket Mk.0 from the Grand Hall. Both are missing.
+The stand-in's last telemetry: its heart capsule stopped between eleven and midnight.
+## logs
+Garter's door log for nine, heads per room:
+  Grand Hall       sensor broken
+  Dining Room      3
+  Family Lounge    3
+  Kitchen          0
+  Study            sensor broken
+  Robot Workshop   3
+  Menagerie Yard   sensor broken
+  Conservatory     0
+Garter's door log for ten, heads per room:
+  Grand Hall       sensor broken
+  Dining Room      3
+  Family Lounge    3
+  Kitchen          2
+  Study            sensor broken
+  Robot Workshop   2
+  Menagerie Yard   sensor broken
+  Conservatory     0
+Garter's door log for eleven, heads per room:
+  Grand Hall       sensor broken
+  Dining Room      3
+  Family Lounge    0
+  Kitchen          3
+  Study            sensor broken
+  Robot Workshop   0
+  Menagerie Yard   sensor broken
+  Conservatory     3
+Garter's door log for midnight, heads per room:
+  Grand Hall       sensor broken
+  Dining Room      3
+  Family Lounge    3
+  Kitchen          0
+  Study            sensor broken
+  Robot Workshop   3
+  Menagerie Yard   sensor broken
+  Conservatory     0
+## partylog
+The stand-ins' party log: at eleven, all was quiet in the Study.
+## weapon
+Shoved out of sight: the Gravity Gauntlet, still warm. Dr. Briefs keeps it in the Robot Workshop, so whoever used it was in there earlier in the night.
+## evidence
+You find fresh scorch marks, the wallpaper still smoking. (evidence #1)
+You find a trail of light, quick footprints through spilled punch. (evidence #2)
+You find a tuft of something that is not dark hair. (evidence #3)
+You find a fork with a smear of birthday frosting. (evidence #4)
+You find an untouched slice of cake, the fork never lifted. (evidence #5)
+You find deep footprints pressed into the carpet pile. (evidence #6)
+## plate
+Mrs. Briefs' stand-in checks her list: Piccolo refused the cake.
+## notebook-end
+========================================
+GALACTIC PATROL, PARTY INCIDENT REPORT
+Case: Dr. Briefs' stand-in smashed, Study
+Status: OPEN, 59 minutes left
+Difficulty: Hard, one more liar, no lab analyzer, a second broken sensor
+Wrong accusations: 0 of 3. notebook commands lists every command.
+========================================
+Season: Thanksgiving.
+Leads:
+ [x] 1. When: between eleven and midnight; the party log says all was quiet at eleven.
+ [x] 2. Weapon: the Gravity Gauntlet, kept in the Robot Workshop. notebook <time> shows who claimed the Robot Workshop before the attack.
+ [x] 3. Physical evidence: 6 of 6 found. search the rooms; the lab analyzer is off on a Hard case. notebook guests shows who looks like what.
+      #1 [unverified] fresh scorch marks, the wallpaper still smoking
+      #2 [unverified] a trail of light, quick footprints through spilled punch
+      #3 [unverified] a tuft of something that is not dark hair
+      #4 [unverified] a fork with a smear of birthday frosting
+      #5 [unverified] an untouched slice of cake, the fork never lifted
+      #6 [unverified] deep footprints pressed into the carpet pile
+      Plate: Piccolo refused cake.
+      Searched: every open room.
+ [x] 4. Statements: 12 of 12. question <guest> where they stand; notebook <time> compares them, and read log <time> in the Inner Hall counts heads. Find the one nobody saw.
+ [x] 5. Secrets: Master Roshi (confronted), a phrase on the back; Yajirobe (confronted); Mr. Satan (confronted); Piccolo (confronted)
+      Scribbled on the back: "capsule corp forever".
+ [x] 6. Sealed rooms: the lab open; the Gravity Chamber open; Bulma's Suite open.
+ [ ] 7. Accuse: 15 of 4 findings. Anywhere in the house: accuse <suspect> with <weapon> at <time>, then accuse yes. accuse alone shows the words.
+Weapons: Gravity Gauntlet, Battle Jacket Mk.0, Lights Out Capsule, Dream Ray, Hoi Poi Hornets, Capsule Taser.
+Times: nine, ten, eleven, midnight (or 9 to 12).
+========================================
+## first-statements
+Piccolo tells you, 'Make it quick. Here.'
+At nine: "In the Robot Workshop, with Emperor Pilaf and Krillin. Hmph."
+At ten: "In the Robot Workshop, with Dende. I do not need to explain myself."
+At eleven: "In the Study, with Mr. Satan and Tien. Watching. I am always watching."
+At midnight: "In the Dining Room, with Krillin and Dende. Wasting my time at a party."
+Mr. Satan tells you, 'The champ was signing autographs all night! Here is the whole schedule.'
+At nine: "In the Study, with Master Roshi and Videl. Signing autographs, of course!"
+At ten: "In the Family Lounge, with Yajirobe and Videl. Everyone saw me. Everyone always does!"
+At eleven: "In the Study, with Tien and Piccolo. Hahaha! Ask my fans!"
+At midnight: "In the Robot Workshop, with Puar and Mr. Popo. Training. Champions never rest!"
+## final-statements
+========================================
+STATEMENTS ABOUT NINE
+========================================
+Dining Room, 3 say so:
+   Yajirobe, with Dende and Mr. Popo.
+   Dende, with Yajirobe and Mr. Popo.
+   Mr. Popo, with Yajirobe and Dende.
+Family Lounge, 3 say so:
+   Launch, with Tien and Puar.
+   Tien, with Launch and Puar.
+   Puar, with Launch and Tien.
+Study, 3 say so:
+   Master Roshi, with Mr. Satan and Videl.
+   Mr. Satan, with Master Roshi and Videl.
+   Videl, with Master Roshi and Mr. Satan.
+Robot Workshop, 3 say so:
+   Emperor Pilaf, with Piccolo and Krillin.
+   Piccolo, with Emperor Pilaf and Krillin.
+   Krillin, with Emperor Pilaf and Piccolo.
+========================================
+========================================
+STATEMENTS ABOUT TEN
+========================================
+Dining Room, 3 say so:
+   Master Roshi, with Tien and Puar.
+   Tien, with Master Roshi and Puar.
+   Puar, with Master Roshi and Tien.
+Family Lounge, 3 say so:
+   Yajirobe, with Mr. Satan and Videl.
+   Mr. Satan, with Yajirobe and Videl.
+   Videl, with Yajirobe and Mr. Satan.
+Kitchen, 2 say so:
+   Launch, with Mr. Popo.
+   Mr. Popo, with Launch.
+Robot Workshop, 2 say so:
+   Piccolo, with Dende.
+   Dende, with Piccolo.
+Menagerie Yard, 2 say so:
+   Emperor Pilaf, with Krillin.
+   Krillin, with Emperor Pilaf.
+========================================
+========================================
+STATEMENTS ABOUT ELEVEN (in the window)
+========================================
+Dining Room, 3 say so:
+   Master Roshi, with Puar and Mr. Popo.
+   Puar, with Master Roshi and Mr. Popo.
+   Mr. Popo, with Master Roshi and Puar.
+Kitchen, 3 say so:
+   Launch, with Emperor Pilaf and Krillin.
+   Emperor Pilaf, with Launch and Krillin.
+   Krillin, with Launch and Emperor Pilaf.
+Study, 3 say so:
+   Mr. Satan, with Tien and Piccolo.
+   Tien, with Mr. Satan and Piccolo.
+   Piccolo, with Mr. Satan and Tien.
+Conservatory, 3 say so:
+   Yajirobe, with Videl and Dende (first said the Dining Room).
+   Videl, with Yajirobe and Dende.
+   Dende, with Yajirobe and Videl.
+========================================
+========================================
+STATEMENTS ABOUT MIDNIGHT (in the window)
+========================================
+Dining Room, 3 say so:
+   Mr. Satan, with Krillin and Dende (first said the Robot Workshop).
+   Krillin, with Mr. Satan and Dende.
+   Dende, with Mr. Satan and Krillin.
+Family Lounge, 3 say so:
+   Launch, with Tien and Videl.
+   Tien, with Launch and Videl.
+   Videl, with Launch and Tien.
+Robot Workshop, 3 say so:
+   Master Roshi, with Puar and Mr. Popo (first said the Dining Room).
+   Puar, with Master Roshi and Mr. Popo.
+   Mr. Popo, with Master Roshi and Puar.
+Menagerie Yard, 3 say so:
+   Yajirobe, with Emperor Pilaf.
+   Emperor Pilaf, with Yajirobe.
+   Piccolo, with Yajirobe and Emperor Pilaf (first said the Dining Room).
+========================================
+## accuse
+Accuse in one line, anywhere in the house:
+  accuse <suspect> with <weapon> at <time>
+Suspects: roshi launch yajirobe pilaf
+          satan tien piccolo videl
+Weapons:  gauntlet jacket lights
+          dream hornets taser
+Times:    nine ten eleven midnight (or 9 to 12)
+Example:  accuse launch with dream at ten
+Short:    accuse launch dream 10
+Then accuse yes makes the arrest.
+Findings: 15 of 4. Three wrong and the case goes cold.

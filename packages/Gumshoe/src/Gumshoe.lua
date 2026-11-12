@@ -886,7 +886,19 @@ function G.alibi(s, t)
     if os and os.room == R and #(os.with or {}) > 0 and not has(os.with, s) then snub[#snub + 1] = o end
   end
   if #snub > 0 and #snub == #(st.with or {}) then
-    return 2.5, "unbacked", where .. ": " .. table.concat(snub, " and ") .. " were there and don't name them"
+    local why = where .. ": " .. table.concat(snub, " and ") .. " were there and don't name them"
+    -- a confession nobody backs, after a first story that was already a proven lie: lied twice
+    local F = st.first
+    if F and F ~= R then
+      local caught
+      for w in pairs(G.witnesses) do
+        local ws = at[w]
+        if not caught and w ~= s and ws and ws.room == F and not has(ws.with, s) then caught = w .. " was in the " .. F .. " and didn't see them" end
+      end
+      if not caught and chart and F == G.FEAST_ROOM and not chart[s] then caught = "the seating chart leaves them out of the " .. F end
+      if caught then return 3, "LIED", why .. "; first said the " .. F .. ", but " .. caught end
+    end
+    return 2.5, "unbacked", why
   end
   if type(heads) == "number" and claim == heads then return 1, "fits", where .. ", only suspects back it but the door log fits" end
   return 2, "alone", where .. ", only suspects back it" .. (heads == "broken" and " (sensor broken)" or "")

@@ -591,7 +591,7 @@ for _, k in ipairs({ "intro", "guests", "clues", "notebook-end", "logs", "final-
 ok(G.quiet[12] and #G.crimeTimes() == 1 and G.crimeTimes()[1] == 11, "found empty by midnight: taken at eleven")
 local _, tagR = G.alibi("Master Roshi", 11)
 local _, tagY = G.alibi("Yamcha", 11)
-ok(tagR == "unbacked" and tagY == "alone", "Roshi says he was with Yamcha and Pilaf, who name only each other")
+ok(tagR == "LIED" and tagY == "alone", "Roshi says he was with Yamcha and Pilaf, who name only each other, after a first story that was a lie: " .. tagR)
 r = G.solve()
 ok(r.line == "accuse roshi stash family at eleven", "Hard theft: " .. tostring(r.line))
 
@@ -647,6 +647,23 @@ local _, ty = G.alibi("Yamcha", 10)
 ok(tg == "LIED" and tv == "fits" and ty == "fits", "door log 3 of 4: only the one nobody names lied (" .. tg .. "/" .. tv .. "/" .. ty .. ")")
 r = G.solve()
 ok(r.line == "accuse gohan with lights at ten" and r.sure, "Lights Out: " .. tostring(r.line) .. " sure=" .. tostring(r.sure))
+
+-- Hard murder: Piccolo first said the Dining Room at midnight (Krillin and Dende there, chart leaves him out),
+-- then "confessed" to the Menagerie Yard with Yajirobe and Pilaf, who name only each other: lied twice.
+local P, pcur = {}, nil
+for l in io.lines("tests/fixtures/gumshoe-hard-firstlie.log") do
+  local name = l:match("^## (.+)$")
+  if name then pcur = name; P[pcur] = {} elseif pcur then table.insert(P[pcur], l) end
+end
+G.newCase(); G.room = nil
+for _, k in ipairs({ "intro", "guests", "chart", "remains", "logs", "partylog", "weapon", "evidence", "plate",
+                     "first-statements", "notebook-end", "final-statements", "accuse" }) do feed(P[k]) end
+local _, tp, whyP = G.alibi("Piccolo", 12)
+ok(tp == "LIED" and whyP:find("first said the Dining Room"), "unbacked confession after a proven first lie: " .. tostring(whyP))
+local _, ts = G.alibi("Mr. Satan", 12)
+ok(ts == "seen", "Satan's confession is backed by the chart: " .. ts)
+r = G.solve()
+ok(r.line == "accuse piccolo with gauntlet at midnight" and r.sure, "Hard first-lie: " .. tostring(r.line) .. " sure=" .. tostring(r.sure))
 
 -- gum case: to Jaco and open a case ----------------------------------------------------
 local function joined() return table.concat(sent, " | ") end
