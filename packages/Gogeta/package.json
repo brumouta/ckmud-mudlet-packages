@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -56,6 +56,16 @@
           "name": "gog Celestial drop",
           "patterns": [ { "type": "regex", "pattern": "^SSJ4 (?:Goku|Vegeta|Gogeta) drops (.+?)(?: \\(Tier \\d+\\))? \\(Celestial\\)\\.?$" } ],
           "script": "gog.dropped(matches[2])"
+        },
+        {
+          "name": "gog Shop Essence",
+          "patterns": [ { "type": "regex", "pattern": "^\\(\\s*(\\d+)\\)\\s+(\\d+)\\s+Essence from a Dying Star\\s*$" } ],
+          "script": "gog.shopItem(matches[2], matches[3])"
+        },
+        {
+          "name": "gog Shop points",
+          "patterns": [ { "type": "regex", "pattern": "You currently have ([\\d,]+) event points\\." } ],
+          "script": "gog.shopPoints(matches[2])"
         },
         {
           "name": "gog Dead",

@@ -31,13 +31,15 @@ local TRIG = {
   { "[Quest: SSJ4 Vegeta] What a waste of my time", function() gog.landed() end, plain = true },
   { "standing before you is SSJ Gogeta!", function() gog.fused() end, plain = true },
   { "^SSJ4 %a+ drops (.-) %(Celestial%)%.?$", function(m) gog.dropped(m) end },
+  { "^%(%s*(%d+)%)%s+(%d+)%s+Essence from a Dying Star%s*$", function(a, b) gog.shopItem(a, b) end, two = true },
+  { "You currently have ([%d,]+) event points%.", function(m) gog.shopPoints(m) end },
   { "^(SSJ4 [GV]%a+) is dead!%s+R%.I%.P%.", function(m) if m == "SSJ4 Goku" or m == "SSJ4 Vegeta" or m == "SSJ4 Gogeta" then gog.dead(m) end end },
 }
 local function feed(text)
   for l in (text .. "\n"):gmatch("(.-)\n") do
     for _, t in ipairs(TRIG) do
       if t.plain then if l:find(t[1], 1, true) then t[2]() end
-      else local m = l:match(t[1]); if m then t[2](m) end end
+      else local m, m2 = l:match(t[1]); if m then t[2](m, m2) end end
     end
   end
 end
@@ -100,4 +102,27 @@ feed("You sense no ki."); wait(3); expect("pursue goku")
 gog.command("stop"); ok(not gog.active, "gog stop")
 -- not running: lines do nothing
 feed(KAMI .. "\n" .. GOKU .. "\nSSJ4 Goku is dead!  R.I.P."); expect("")
+-- Buying Essences: the number comes from the listing, capped by the points
+local SHOP = [[ Event Shop:
+o------------------------------------------------------------o
+  #   Cost         Item Description
+o------------------------------------------------------------o
+( 1)  500000        a Hyperbolic Coupon
+(16)  1000          an Unstable Makai Shard
+(19)  500           Essence from a Dying Star
+(20)  50            Dragonball Token
+o------------------------------------------------------------o
+ Syntax: eshop  'buy/detail' <item #> [legend/celestial]
+        Legendary/Celestial Items cost 2.5x/5x More
+ You currently have 251,468 event points.]]
+sent = {}
+gog.command("buy", "3"); expect("eshop")
+feed(SHOP); wait(1); expect("eshop buy 19 | eshop buy 19 | eshop buy 19")
+gog.command("buy", "10"); sent = {}
+feed((SHOP:gsub("251,468", "1,200"))); wait(5); expect("eshop buy 19 | eshop buy 19")
+ok(LOG:find("all you can afford"), "capped by the event points")
+gog.command("buy", "1"); sent = {}
+feed((SHOP:gsub("%(19%)%s+500%s+Essence from a Dying Star\n", ""))); wait(1); expect("")
+ok(LOG:find("No Essence from a Dying Star"), "no Essence in the shop: buys nothing")
+feed(SHOP); wait(1); expect("")   -- a later eshop by hand buys nothing
 print("gog: ALL PASSED")

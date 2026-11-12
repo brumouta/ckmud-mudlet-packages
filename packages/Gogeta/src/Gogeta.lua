@@ -130,12 +130,46 @@ function G.fused()
   tempTimer(1, function() if G.active and G.phase == "hunt" then send("pursue gogeta") end end)
 end
 
+-- ---------------------------------------------------------------- buying Essences
+-- `gog buy <n>`: read `eshop` for the Essence's number and price (they change with the events),
+-- then `eshop buy <#>` n times, no more than the event points cover.
+G.shop = G.shop or {}
+function G.buy(n)
+  G.shop = { want = n }
+  send("eshop")
+  G.shop.timer = tempTimer(8, function()
+    if G.shop.want then info("red", "Couldn't read the event shop"); G.shop = {} end
+  end)
+end
+
+-- "(19)  500           Essence from a Dying Star"
+function G.shopItem(num, cost)
+  if not G.shop.want then return end
+  G.shop.num, G.shop.cost = tonumber(num), tonumber(cost)
+end
+
+-- " You currently have 251,468 event points."
+function G.shopPoints(points)
+  local sh = G.shop
+  if not sh.want then return end
+  if sh.timer then killTimer(sh.timer) end
+  G.shop = {}
+  if not sh.num then return info("red", "No Essence from a Dying Star in the event shop right now") end
+  local have = tonumber((points:gsub(",", ""))) or 0
+  local n = math.min(sh.want, math.floor(have / sh.cost))
+  if n < 1 then return info("red", ("Not enough event points: an Essence costs %d, you have %d"):format(sh.cost, have)) end
+  info("green", ("Buying %d Essence%s from a Dying Star (#%d, %d each, %d of %d points)%s"):format(
+    n, n == 1 and "" or "s", sh.num, sh.cost, n * sh.cost, have, n < sh.want and " - all you can afford" or ""))
+  for i = 1, n do tempTimer((i - 1) * 0.3, function() send("eshop buy " .. sh.num) end) end
+end
+
 -- ---------------------------------------------------------------- `gog` alias
 G.HELP = {
   { "gog start [n]",    "Loop: Kami, Goku and Vegeta, Gogeta. Stops after n rounds if given" },
   { "gog stop",         "Stop after whatever is happening now" },
   { "gog attack <cmd>", "Attack used on the bosses (now: " .. G.attack .. ")" },
   { "gog status",       "Phase and rounds done" },
+  { "gog buy <n>",      "Buy n Essences from a Dying Star from the event shop (finds its number in eshop)" },
 }
 
 function G.help()
@@ -155,6 +189,10 @@ function G.command(c, arg)
   elseif c == "stop" then
     if not G.active then return info("yellow", "Not running") end
     G.stop()
+  elseif c == "buy" then
+    local n = tonumber(arg)
+    if not n or n < 1 then return info("yellow", "gog buy <how many>") end
+    G.buy(math.floor(n))
   elseif c == "attack" and arg then G.attack = arg; info("white", "Attack set to '" .. arg .. "'")
   elseif c == "status" then
     info("white", (G.active and ("Running, phase " .. tostring(G.phase)) or "Off") .. ", " .. G.rounds .. " rounds"
