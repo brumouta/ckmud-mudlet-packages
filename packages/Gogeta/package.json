@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -184,7 +184,7 @@
               "pattern": "^\\[Pl: [\\d,]+ (\\d+)% "
             }
           ],
-          "script": "gog.prompt(matches[2])"
+          "script": "gog.prompt(matches[2], line)"
         },
         {
           "name": "gog Died",
@@ -195,6 +195,16 @@
             }
           ],
           "script": "gog.died()"
+        },
+        {
+          "name": "gog UI lost",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Lacking God Ki, you lose your heightened ultra state"
+            }
+          ],
+          "script": "gog.uiLost()"
         },
         {
           "name": "gog Count Essence",

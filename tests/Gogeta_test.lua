@@ -41,7 +41,8 @@ local TRIG = {
   { "^(.-) flies out of nowhere and attacks (%w+)!$", function(a, b) gog.rivalAppears(a, b) end },
   { "^(.-) is dead!%s+R%.I%.P%.", function(m) gog.rivalDead(m) end },
   { "^[%w ]+ who%?$", function() gog.noTarget() end },
-  { "^%[Pl: [%d,]+ (%d+)%% ", function(m) gog.prompt(m) end },
+  { "^%[Pl: [%d,]+ (%d+)%% ", function(m, _, l) gog.prompt(m, l) end },
+  { "Lacking God Ki, you lose your heightened ultra state", function() gog.uiLost() end, plain = true },
   { "^You are dead!", function() gog.died() end },
   { "^%((%s*%d+)%) Essence from a Dying Star$", function(m) gog.countItem("essence", m) end },
   { "^Essence from a Dying Star$", function() gog.countItem("essence", "") end },
@@ -56,7 +57,7 @@ local function feed(text)
   for l in (text .. "\n"):gmatch("(.-)\n") do
     for _, t in ipairs(TRIG) do
       if t.plain then if l:find(t[1], 1, true) then t[2]() end
-      else local m, m2 = l:match(t[1]); if m then t[2](m, m2) end end
+      else local m, m2 = l:match(t[1]); if m then t[2](m, m2, l) end end
     end
   end
 end
@@ -189,4 +190,37 @@ gog.command("buy", "1"); sent = {}
 feed((SHOP:gsub("%(19%)%s+500%s+Essence from a Dying Star\n", ""))); wait(1); expect("")
 ok(LOG:find("No Essence from a Dying Star"), "no Essence in the shop: buys nothing")
 feed(SHOP); wait(1); expect("")   -- a later eshop by hand buys nothing
+
+-- Super Saiyan 3 Goku answers `pursue goku` first: kill him, then pursue the SSJ4 one
+gog.command("start", "1"); mats(5, 5); expect("inventory | materials | pursue kami")
+feed(KAMI); feed(PAID); feed(LANDED); expect("say yes | pursue goku")
+feed("You have successfully tracked down Super Saiyan 3 Goku!"); expect("de goku")
+ok(gog.phase == "goku", "still after SSJ4 Goku")
+feed("Super Saiyan 3 Goku is dead!  R.I.P."); wait(1); expect("pursue goku")
+feed(TRACKED); expect("de goku")
+gog.command("stop"); sent = {}
+
+-- Ultra Instinct kept up while looping, as god ki allows
+local P = "[Pl: 177,474,327,534 100%% | Ki: 100%% | GK: %d%% | Fatigue: 0%%] %s[FLY][1/42127x G]"
+feed(P:format(30, "")); expect("")                          -- not looping: leave it alone
+gog.command("start", "1"); mats(5, 5); expect("inventory | materials | pursue kami")
+feed(P:format(30, "[UI] [HT] ")); expect("")
+feed(P:format(30, "[TUI] [HT] ")); expect("")
+feed("Lacking God Ki, you lose your heightened ultra state...")
+ok(LOG:find("Ultra Instinct dropped"), "says when UI drops")
+feed(P:format(1, "[HT] ")); expect("")                      -- not enough god ki yet
+feed(P:format(8, "[HT] ")); expect("focus 'ultra instinct'")
+feed(P:format(8, "[HT] ")); expect("")                      -- not again straight away
+wait(8); feed(P:format(8, "[UI] ")); expect("")
+gog.command("ui", "tui"); wait(8)
+feed(P:format(8, "[UI] ")); expect("focus 'true ultra instinct'")
+wait(8); feed(P:format(8, "")); expect("focus 'ultra instinct' | focus 'true ultra instinct'")
+gog.command("ui", "off"); wait(8); feed(P:format(50, "")); expect("")
+gog.command("ui", "ui")
+-- a heal at low powerlevel, if set
+gog.panicCmd = "sz"
+feed("[Pl: 1 30% | Ki: 100% | GK: 50% | Fatigue: 0%] [UI] "); expect("sz")
+feed("[Pl: 1 20% | Ki: 100% | GK: 50% | Fatigue: 0%] [UI] "); expect("")   -- once per 30s
+gog.panicCmd = nil
+gog.command("stop"); sent = {}
 print("gog: ALL PASSED")

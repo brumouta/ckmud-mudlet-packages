@@ -17,6 +17,12 @@ G.rivalHit   = G.rivalHit or 15   -- seconds between attacks on a rival (strong 
 G.minPl      = G.minPl or 80      -- % powerlevel to recover to after a rival before going on
 G.healWait   = G.healWait or 120  -- seconds to wait for that at most
 G.retries    = G.retries or 5     -- sense / pursue retries
+-- Ultra Instinct kept up while the loop runs: recast when the prompt loses [UI] and god ki allows.
+-- "ui" = focus 'ultra instinct' ([UI] or [TUI] is fine), "tui" = also focus 'true ultra instinct', "off"
+G.uiMode     = G.uiMode or "ui"
+G.uiMinGk    = G.uiMinGk or 5     -- % god ki needed before trying to (re)cast it
+G.panicPl    = G.panicPl or 35    -- % powerlevel at which G.panicCmd runs during a fight (a heal / senzu)
+G.panicCmd   = G.panicCmd or nil  -- e.g. "sz": run through your aliases; nil = off
 
 -- ---------------------------------------------------------------- state
 G.active  = G.active or false
@@ -26,6 +32,8 @@ G.limit   = G.limit or nil
 G.rivals  = G.rivals or {}   -- rivals fighting me: first word (lowercase) -> name
 G.mats    = G.mats or {}     -- { essence = n, diamond = n } from the last count
 G.pl      = G.pl or nil      -- powerlevel %, from the prompt
+G.gk      = G.gk or nil      -- god ki %, from the prompt
+G.form    = G.form or nil    -- "UI", "TUI" or nil, from the prompt
 local timer, tries
 
 local function info(color, msg) cecho("\n<" .. color .. ">[gog] " .. msg .. "\n") end
@@ -101,6 +109,12 @@ function G.arrived(name)
     G.phase = "summon"
     send("say yes")
     deadline(G.kamiWait, "waiting for Kami to take the Essence and the Diamond (out of them?)")
+  elseif G.phase == "goku" and is("goku") and name and not who:find("ssj4", 1, true) then
+    -- `pursue goku` found another Goku (Super Saiyan 3 Goku, a boss of his own): he dies in a hit,
+    -- then pursue again for the SSJ4 one
+    G.detour = name
+    hit("goku")
+    deadline(G.fightWait, "fighting " .. name)
   elseif G.phase == "goku" and is("goku") then
     G.phase, G.target = "fight", nil
     hit("goku")
@@ -235,6 +249,11 @@ end
 
 -- "Chillix the Icer is dead!  R.I.P.": once every rival is down, recover, then carry on from where the round was
 function G.rivalDead(name)
+  if G.active and G.detour and name == G.detour then
+    G.detour = nil
+    info("white", name .. " was in the way: pursuing SSJ4 Goku again")
+    return tempTimer(1, function() if G.active and G.phase == "goku" and not fighting() then G.travel("goku") end end)
+  end
   local key = (name:match("^(%S+)") or ""):lower()
   if not G.active or not G.rivals[key] then return end
   G.rivals[key] = nil
@@ -244,8 +263,40 @@ function G.rivalDead(name)
   tempTimer(2, function() if G.active and not fighting() then G.whenHealthy(G.resume) end end)
 end
 
--- The prompt's "[Pl: 151,520,583,583 99% | ..."
-function G.prompt(pct) G.pl = tonumber(pct) end
+-- The prompt: "[Pl: 151,520,583,583 99% | Ki: 96% | GK: 18% | Fatigue: 14%] [UI] [HT] [FLY]..."
+local lastUi, lastPanic = -100, -100
+function G.prompt(pct, line)
+  G.pl = tonumber(pct)
+  if not line then return end
+  G.gk = tonumber(line:match("GK: (%d+)%%"))
+  G.form = line:find("[TUI]", 1, true) and "TUI" or line:find("[UI]", 1, true) and "UI" or nil
+  if not G.active then return end
+  local now = os.time()
+  if G.panicCmd and G.pl and G.pl <= G.panicPl and now - lastPanic >= 30 then
+    lastPanic = now
+    info("red", "Powerlevel " .. G.pl .. "%: " .. G.panicCmd)
+    if expandAlias then expandAlias(G.panicCmd, false) else send(G.panicCmd) end
+  end
+  G.keepUI(now)
+end
+
+-- Recast Ultra Instinct when it dropped (god ki ran out) and god ki is back to G.uiMinGk %
+function G.keepUI(now)
+  if G.uiMode == "off" or not G.gk or not G.active then return end
+  local want = G.uiMode == "tui" and "TUI" or "UI"
+  if G.form == want or (want == "UI" and G.form == "TUI") then return end
+  if G.gk < G.uiMinGk or now - lastUi < 8 then return end
+  lastUi = now
+  if G.form ~= "UI" then send("focus 'ultra instinct'") end
+  if want == "TUI" then send("focus 'true ultra instinct'") end
+end
+
+-- "Lacking God Ki, you lose your heightened ultra state..."
+function G.uiLost()
+  if G.active and G.uiMode ~= "off" then
+    info("yellow", "Ultra Instinct dropped (god ki " .. (G.gk or "?") .. "%): back on once god ki is at " .. G.uiMinGk .. "%")
+  end
+end
 
 -- Wait (at most G.healWait seconds) until the powerlevel is back to G.minPl %
 function G.whenHealthy(fn)
@@ -364,6 +415,7 @@ G.HELP = {
   { "gog status",       "Phase and rounds done" },
   { "gog resume",       "Forget the rivals being fought and carry on with the round" },
   { "gog check",        "Count your Essences and Diamonds (how many rounds you can run)" },
+  { "gog ui <ui|tui|off>", "Keep Ultra Instinct (or True Ultra Instinct) up while looping (now: " .. G.uiMode .. ")" },
   { "gog buy <n>",      "Buy n Essences from a Dying Star from the event shop (finds its number in eshop)" },
 }
 
@@ -381,7 +433,7 @@ function G.command(c, arg)
     if G.active then return info("yellow", "Already running. gog stop first") end
     G.count(function(rounds)
       if rounds == 0 then return info("red", "Nothing to give Kami: not started") end
-      G.active, G.rounds, G.rivals = true, 0, {}
+      G.active, G.rounds, G.rivals, G.detour = true, 0, {}, nil
       G.limit = (n and rounds) and math.min(n, rounds) or n or rounds
       info("green", "Started for " .. (G.limit and (G.limit .. " rounds") or "as long as it lasts") .. ". gog stop stops.")
       G.toKami()
@@ -397,6 +449,10 @@ function G.command(c, arg)
     local n = tonumber(arg)
     if not n or n < 1 then return info("yellow", "gog buy <how many>") end
     G.buy(math.floor(n))
+  elseif c == "ui" then
+    if arg ~= "ui" and arg ~= "tui" and arg ~= "off" then return info("yellow", "gog ui ui|tui|off (now: " .. G.uiMode .. ")") end
+    G.uiMode = arg
+    info("white", arg == "off" and "Not keeping Ultra Instinct up" or ("Keeping " .. (arg == "tui" and "True Ultra Instinct" or "Ultra Instinct") .. " up while looping"))
   elseif c == "attack" and arg then G.attack = arg; info("white", "Attack set to '" .. arg .. "'")
   elseif c == "status" then
     info("white", (G.active and ("Running, phase " .. tostring(G.phase) .. (fighting() and " (fighting a rival)" or "")) or "Off") .. ", " .. G.rounds .. " rounds"

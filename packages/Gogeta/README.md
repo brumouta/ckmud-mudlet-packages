@@ -19,6 +19,12 @@ Getting to the bosses:
 - **Far away: pursue.** Goku and Vegeta after they land, and any boss after a rival fight, are reached with `pursue`.
 - **Seen moving: sense.** If Goku, Vegeta or Gogeta *leaves* or *flies* somewhere, they're nearby, so it uses `sense` and keeps attacking. If *You lose your concentration*, it senses again (up to 5 tries). If *You can't seem to sense … from here*, it falls back to `pursue`.
 
+**Super Saiyan 3 Goku.** When he's around, `pursue goku` finds him instead of SSJ4 Goku. He dies in one hit, then it pursues Goku again.
+
+**Ultra Instinct.** While the loop runs, it keeps Ultra Instinct up: when the prompt loses `[UI]` (*Lacking God Ki, you lose your heightened ultra state*), it casts `focus 'ultra instinct'` again as soon as god ki is back to 5% (`lua gog.uiMinGk = 10` to change). `gog ui tui` keeps True Ultra Instinct up instead (`focus 'ultra instinct'` then `focus 'true ultra instinct'`), `gog ui off` leaves it to you.
+
+**Emergency heal.** `lua gog.panicCmd = "sz"` runs that command (through your aliases) when your powerlevel drops to 35% during the loop, at most every 30 seconds. Off by default.
+
 **Rivals.** When a rival crashes down on you (*The sky splits open as … crashes down upon you* or *… flies out of nowhere and attacks you*), the round pauses. Rivals attacking other players are ignored. While a rival is alive:
 
 - it attacks the rival again every 15 seconds, because strong ones (a nemesis) take a while;
@@ -39,6 +45,7 @@ If you die (*You are dead!*), it stops.
 | `gog stop` | Stop |
 | `gog resume` | Forget the rivals being fought and carry on with the round |
 | `gog buy <n>` | Buy n Essences from a Dying Star from the event shop. It reads `eshop` first, because the item numbers change with each event, and never buys more than your event points cover. It counts the *You spend 500 epoints* replies and says if any purchase didn't go through |
+| `gog ui <ui\|tui\|off>` | Keep Ultra Instinct (or True Ultra Instinct) up while looping, or not (default `ui`) |
 | `gog attack <cmd>` | Attack sent as `<cmd> <target>`, on bosses and rivals (default `de`, death beam) |
 | `gog status` | Phase, rounds done, and whether a rival is being fought |
 
