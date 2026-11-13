@@ -182,6 +182,44 @@ function learn.priority_rank()
     return rank
 end
 
+local function distance(a, b)
+    local prev = {}
+    for j = 0, #b do prev[j] = j end
+    for i = 1, #a do
+        local cur = { [0] = i }
+        for j = 1, #b do
+            local cost = a:sub(i, i) == b:sub(j, j) and 0 or 1
+            cur[j] = math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+        end
+        prev = cur
+    end
+    return prev[#b]
+end
+
+-- Check the learning.priority names against your skills (from `learn`). Returns nil when
+-- the skills aren't known yet, else a list of { name = typed, suggestion = closest or nil }.
+-- Spaces don't matter (power up = powerup).
+function learn.check_priority(list)
+    local Learned = ck:get_table("Player.Skills").Learned or {}
+    if not next(Learned) then return nil end
+    local keys = {}
+    for skill in pairs(Learned) do keys[skill_key(skill)] = skill end
+    local unknown = {}
+    for name in (list or ""):gmatch("[^,;]+") do
+        name = name:gsub("^%s+", ""):gsub("%s+$", "")
+        local key = skill_key(Skills:translate(name))
+        if name ~= "" and not keys[key] and not keys[skill_key(name)] then
+            local best, best_d
+            for k, skill in pairs(keys) do
+                local d = distance(key, k)
+                if not best_d or d < best_d or (d == best_d and skill < best) then best, best_d = skill, d end
+            end
+            unknown[#unknown + 1] = { name = name, suggestion = best_d and best_d <= math.max(2, math.floor(#key / 4)) and best or nil }
+        end
+    end
+    return unknown
+end
+
 local function affordable_ki(cost)
     return function() return Player.Ki > cost end
 end

@@ -54,7 +54,9 @@ waits while the others train. To train some skills first, list them in order:
 
 `AL priority multiform, kamehameha, roundhouse` (`AL priority` shows the list, `AL priority clear` empties it)
 
-Names are the ones `learn` shows (or the short command, `kame`). A priority skill you can't
+Names are the ones `learn` shows (or the short command, `kame`). Spaces don't matter (`power up` = `powerup`).
+When you set it, each name is checked against your skills and any that isn't one is
+reported, with the closest match (`Not one of your skills: 'multifrom' - did you mean 'multiform'?`). A priority skill you can't
 afford yet waits, and the others keep training meanwhile.
 
 Multiform is trained with `focus 'multiform'` followed by `order followers dismiss`, so no

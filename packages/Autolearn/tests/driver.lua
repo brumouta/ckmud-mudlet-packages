@@ -952,6 +952,23 @@ do
   matches = { "AL priority rescue, multiform", "rescue, multiform" }
   ok, err = pcall(load_pkg_file("aliases/AL_priority.lua")); check(ok, "AL priority alias" .. (ok and "" or (" -- " .. tostring(err))))
   check(ck:constant("learning.priority") == "rescue, multiform", "AL priority sets the list")
+  -- names are checked against your skills
+  Lr["powerup"], Lr["multiform"] = true, true
+  local u = L.check_priority("power up, multifrom, kamehameha, zzzzzz")
+  check(#u == 2 and u[1].name == "multifrom" and u[1].suggestion == "multiform",
+        "a misspelt name is reported with a suggestion (power up = powerup, kamehameha = kame)")
+  check(u[2] and u[2].name == "zzzzzz" and u[2].suggestion == nil, "no suggestion when nothing is close")
+  LOG = {}
+  matches = { "AL priority multifrom", "multifrom" }
+  ok, err = pcall(load_pkg_file("aliases/AL_priority.lua"))
+  local said = table.concat(LOG, "\n")
+  check(ok and said:find("Not one of your skills: 'multifrom'", 1, true) and said:find("did you mean 'multiform'", 1, true),
+        "AL priority warns about it (log: " .. said .. ")")
+  local saved_learned = P.Skills.Learned
+  P.Skills.Learned = {}
+  check(L.check_priority("multiform") == nil, "can't check before learn was read")
+  P.Skills.Learned = saved_learned
+  Lr["powerup"] = nil
   matches = { "AL priority clear", "clear" }
   ok, err = pcall(load_pkg_file("aliases/AL_priority.lua"))
   check(ok and ck:constant("learning.priority") == "", "AL priority clear empties it")
