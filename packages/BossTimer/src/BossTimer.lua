@@ -271,15 +271,17 @@ function BT.line(l)
     if #mapRows > 25 then mapRows = nil end
   end
   local h = BT.hunt
-  -- a stopped dash says up to three things ("Alas, you cannot go that way...", "Your dash is halted
-  -- by an obstacle.", "You can't dash in that direction."): one stop, not three
-  local blocked = l:find("You can't dash in that direction", 1, true) or l:find("Your dash is halted by an obstacle", 1, true)
-    or l:find("Alas, you cannot go that way", 1, true)
-  if h and blocked and h.justBlocked then return end
-  if h then h.justBlocked = false end
+  -- How a dash ends (from the log):
+  --   all 10 rooms:        ... "You fly quickly through the area!"
+  --   edge after a few:    ... "Alas, you cannot go that way..." / "Your dash is halted by an obstacle."
+  --                            / "You fly quickly through the area!"
+  --   edge right away:     "Alas, ..." / "Your dash is halted ..." / "You can't dash in that direction."
+  -- So only "fly quickly" and "can't dash" end it; "Alas" / "halted" just mark it as stopped short.
   if h and h.dashing then
-    if l:find("quickly through the area", 1, true) then BT.dashDone(true)
-    elseif blocked then h.justBlocked = true; BT.dashDone(false) end
+    if l:find("Alas, you cannot go that way", 1, true) or l:find("Your dash is halted by an obstacle", 1, true) then
+      h.blocked = true
+    elseif l:find("quickly through the area", 1, true) then BT.dashDone(not h.blocked, true)
+    elseif l:find("You can't dash in that direction", 1, true) then BT.dashDone(false, false) end
   elseif h and h.walking and l:find("Alas, you cannot go that way", 1, true) then
     BT.stopHunt("yellow", "Something's in the way, couldn't walk on")
   end
@@ -304,7 +306,7 @@ end
 
 local function dash(dir)
   local h = BT.hunt
-  h.dashing, h.walking, h.moves = true, false, h.moves + 1
+  h.dashing, h.walking, h.blocked, h.moves = true, false, false, h.moves + 1
   send(BT.dashCmd:format(dir))
   huntTimeout()
 end
@@ -313,7 +315,7 @@ end
 -- then sweep: east to the edge, 10 rooms south, west to the edge, 10 south... The map shows 5 rows
 -- above and below you, so 10-room strips miss nothing. Any 👹 seen on the way ends the search.
 local OPP = { e = "w", w = "e" }
-function BT.searchNext(ok)
+function BT.searchNext(ok, moved)
   local h = BT.hunt
   if h.moves >= BT.searchDashes then return BT.stopHunt("yellow", "Searched " .. h.moves .. " dashes without finding a boss") end
   local st = h.stage
@@ -325,18 +327,21 @@ function BT.searchNext(ok)
     h.stage, h.dir = "sweep", "e"; info("white", "In the corner: sweeping the map"); return dash("e")
   elseif st == "sweep" then
     if ok then return dash(h.dir) end
+    if h.lastRow then return BT.stopHunt("yellow", "Swept the whole map: no " .. BT.BOSS .. " anywhere") end
     h.stage = "down"; return dash("s")
   elseif st == "down" then
-    if not ok then return BT.stopHunt("yellow", "Swept the whole map: no " .. BT.BOSS .. " anywhere") end
+    -- couldn't go south at all: that was the bottom row. Went part of the way: sweep this last row too
+    if not moved then return BT.stopHunt("yellow", "Swept the whole map: no " .. BT.BOSS .. " anywhere") end
+    h.lastRow = not ok
     h.stage, h.dir = "sweep", OPP[h.dir]; return dash(h.dir)
   end
 end
 
 -- A dash finished: on (ok) or stopped at an edge / obstacle
-function BT.dashDone(ok)
+function BT.dashDone(ok, moved)
   local h = BT.hunt
   h.dashing = false
-  if h.mode == "search" and not h.spotted then return BT.searchNext(ok) end
+  if h.mode == "search" and not h.spotted then return BT.searchNext(ok, moved) end
   -- approaching, or a 👹 went by during the search: look where we are now
   h.mode, h.spotted = "approach", false
   send("look")

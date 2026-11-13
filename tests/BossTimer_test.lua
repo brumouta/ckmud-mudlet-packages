@@ -231,17 +231,23 @@ local empty = { far[1], far[4] }
 local BLOCK = "Alas, you cannot go that way...\nYour dash is halted by an obstacle.\nYou can't dash in that direction.\n[Pl: 152,065,671,629 100% | Ki: 100% | Fatigue: 1%]"
 local function say(text) for l in (text .. "\n"):gmatch("(.-)\n") do BossTimer.line(l) end end
 local DONE = "You fly quickly through the area!"
+local SHORT = "Alas, you cannot go that way...\nYour dash is halted by an obstacle.\nYou fly quickly through the area!\n[Pl: 1 100% | Ki: 100%]"
 LOG = ""; BossTimer.command("find"); sent = {}
 feedMap(empty); ok(sent[#sent] == "dash n" and LOG:find("No 👹 in sight"), "nothing in sight: dash north")
 feedMap(empty); say(DONE); ok(sent[#sent] == "dash n", "keeps going north")
 say(BLOCK); ok(sent[#sent] == "dash w" and #sent == 3, "north edge: west (once, for the three lines)")
 say(DONE); ok(sent[#sent] == "dash w", "keeps going west")
-say(BLOCK); ok(sent[#sent] == "dash e" and LOG:find("In the corner"), "corner: sweep east")
+say(SHORT); ok(sent[#sent] == "dash e" and #sent == 5 and LOG:find("In the corner"), "stopped short at the edge: one stop, sweep east")
 say(DONE); ok(sent[#sent] == "dash e", "east")
 say(BLOCK); ok(sent[#sent] == "dash s", "east edge: 10 south")
 say(DONE); ok(sent[#sent] == "dash w", "then back west")
-say(BLOCK); ok(sent[#sent] == "dash s", "west edge: south again")
-say(BLOCK); ok(BossTimer.hunt == nil and LOG:find("Swept the whole map"), "bottom reached: nothing anywhere")
+say(SHORT); ok(sent[#sent] == "dash s", "west edge: south again")
+say(SHORT); ok(sent[#sent] == "dash e" and BossTimer.hunt, "went part way south: sweep that last row too")
+say(SHORT); ok(BossTimer.hunt == nil and LOG:find("Swept the whole map"), "last row done: nothing anywhere")
+-- a south dash that can't move at all means the row before was the last one
+LOG = ""; BossTimer.command("find"); feedMap(empty); sent = {}
+say(BLOCK); say(BLOCK); say(BLOCK); ok(sent[#sent] == "dash s", "north, west, east edges")
+say(BLOCK); ok(BossTimer.hunt == nil and LOG:find("Swept the whole map"), "can't go south: done")
 -- a 👹 goes by during the sweep: look once the dash ends, then walk to it
 BossTimer.command("find"); feedMap(empty); sent = {}
 say(DONE); ok(sent[#sent] == "dash n", "searching")
