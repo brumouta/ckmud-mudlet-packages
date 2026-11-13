@@ -15,6 +15,7 @@ Solves Jaco's party cases at the Briefs house (`help mansion`). Type `gum case` 
 | `gum solve` | Re-read the notebook, the four statement tables and `accuse`, then show the evidence, each suspect's alibi and the accusation it points to |
 | `gum accuse` | Send the suggested accusation. You still type `accuse yes` |
 | `gum status` | What's left: rooms to search, guests to question, sealed rooms, secrets |
+| `gum cd` | How long until Jaco has a new case: 20 minutes after the case is finished (from *Case closed*, and again from the culprit's death if you kill them). It also tells you when the time is up, `gum case` warns if you go early, and the time is kept across Mudlet restarts |
 | `gum go <room>` | Walk to a room, e.g. `gum go kitchen` or `gum go lab` |
 | `gum reset` | Forget the case (a new case resets by itself) |
 

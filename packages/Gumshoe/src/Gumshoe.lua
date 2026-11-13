@@ -136,6 +136,7 @@ G.gen = G.gen or 0
 
 local function info(color, msg) cecho("\n<" .. color .. ">[gum] " .. msg .. "\n") end
 G.info = info
+local function mmss(secs) return ("%d:%02d"):format(math.floor(secs / 60), secs % 60) end
 
 -- "A, B and C." -> { A, B, C }; rooms = true splits on commas only ("Pond and Aviary")
 local function split(list, rooms)
@@ -781,9 +782,10 @@ function G.line(l)
     G.running = false
     clearWait()
   end
-  if l:find("Jaco will have a new case for you in twenty minutes") then
-    tempTimer(20 * 60, function() info("green", "Jaco has a new case: say case to him on the Front Steps") end)
-  end
+  if verdict2 then G.closedAt = G.clock(); G.caseOver() end
+  -- the case is finished once the culprit is dead: the 20 minutes count from then
+  local dead = l:match("^(.-) is dead!")
+  if dead and has(G.guests, dead) and G.closedAt and G.clock() - G.closedAt < 15 * 60 then G.caseOver() end
 
   check(l)
 end
@@ -1447,6 +1449,7 @@ G.HELP = {
   { "gum solve",        "Re-read the notebook and statements, then show the evidence, the alibis and the accusation" },
   { "gum accuse",       "Send the suggested accusation (you still type accuse yes)" },
   { "gum status",       "What's left: rooms to search, guests to question, sealed rooms, secrets" },
+  { "gum cd",           "How long until Jaco has a new case (20 minutes after the culprit dies)" },
   { "gum go <room>",    "Walk to a room in the house, e.g. gum go kitchen" },
   { "gum reset",        "Forget this case (a new case resets by itself)" },
 }
@@ -1510,6 +1513,10 @@ function G.toJaco(diff)
   if not ({ easy = true, normal = true, hard = true })[diff] then
     return info("yellow", "gum case easy, normal or hard (default " .. G.difficulty .. ")")
   end
+  local left = G.cooldownLeft and G.cooldownLeft()
+  if left and left > 0 then
+    info("yellow", "Jaco's next case should be ready in " .. mmss(left) .. " - going anyway")
+  end
   G.gen = G.gen + 1
   G.running = true
   local function sayCase() G.running = false; send("say case " .. diff, false) end
@@ -1552,6 +1559,54 @@ function G.toJaco(diff)
   end)
 end
 
+-- ---------------------------------------------------------------- the wait for the next case
+-- Jaco has a new case 20 minutes after the last one is finished (the culprit killed). Kept in a
+-- file in the profile, so a restart of Mudlet doesn't lose it.
+G.COOLDOWN = G.COOLDOWN or 20 * 60
+G.clock = G.clock or os.time
+local function cdFile() return getMudletHomeDir and (getMudletHomeDir() .. "/gumshoe_nextcase.lua") end
+
+local function remindAt(t)
+  if G.cdTimer then killTimer(G.cdTimer); G.cdTimer = nil end
+  local left = t - G.clock()
+  if left > 0 then
+    G.cdTimer = tempTimer(left, function()
+      G.cdTimer = nil
+      info("green", "Jaco has a new case for you: gum case")
+    end)
+  end
+end
+
+function G.caseOver()
+  G.nextCase = G.clock() + G.COOLDOWN
+  local f = cdFile()
+  if f and table.save then pcall(table.save, f, { nextCase = G.nextCase }) end
+  remindAt(G.nextCase)
+end
+
+-- seconds until Jaco has a case (0: now), nil if no finished case is known
+function G.cooldownLeft()
+  if not G.nextCase then return nil end
+  return math.max(0, G.nextCase - G.clock())
+end
+
+function G.cooldown()
+  local left = G.cooldownLeft()
+  if not left then
+    info("white", "No finished case on record: Jaco should have one for you (gum case)")
+  elseif left == 0 then
+    info("green", "Jaco has a new case for you: gum case")
+  else
+    info("yellow", "Next case in " .. mmss(left) .. " (at " .. os.date("%H:%M", G.nextCase) .. ")")
+  end
+end
+
+do -- pick up the wait from before a restart
+  local f, saved = cdFile(), {}
+  if f and table.load and io.open(f) then pcall(table.load, f, saved) end
+  if saved.nextCase and not G.nextCase then G.nextCase = saved.nextCase; remindAt(G.nextCase) end
+end
+
 function G.command(c, arg)
   if c == nil or c == "help" then G.help()
   elseif c == "run" or c == "start" then G.run()
@@ -1571,6 +1626,7 @@ function G.command(c, arg)
   elseif c == "status" then G.status()
   elseif c == "go" and arg then G.go(arg)
   elseif c == "case" then G.toJaco(arg)
+  elseif c == "cd" or c == "cooldown" then G.cooldown()
   elseif c == "reset" then G.newCase(); info("white", "Case forgotten")
   else info("yellow", "Unknown command '" .. tostring(c) .. "'. Type gum help") end
 end

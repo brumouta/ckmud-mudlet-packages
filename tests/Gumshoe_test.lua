@@ -739,4 +739,28 @@ wait(10)
 ok(joined() == "look | s | s | say case hard", "inside the house: walk out: " .. joined())
 respond = nil
 
+-- gum cd: Jaco's next case, 20 minutes after the culprit dies ------------------------------
+G.clock = function() return now end
+G.nextCase = nil
+LOG = ""; G.cooldown()
+ok(LOG:find("No finished case on record", 1, true), "gum cd: nothing known yet")
+G.newCase(); G.guests = { "Gohan", "Piccolo" }
+feed({ "Case closed: Perfect, no wrong accusations." })
+LOG = ""; G.command("cd")
+ok(LOG:find("Next case in 20:00", 1, true), "case closed: 20 minutes to go: " .. LOG)
+wait(5 * 60)
+feed({ "Krillin is dead!  R.I.P." })
+LOG = ""; G.command("cooldown")
+ok(LOG:find("Next case in 15:00", 1, true), "someone who isn't a guest dying changes nothing")
+feed({ "Piccolo is dead!  R.I.P." })
+LOG = ""; G.command("cd")
+ok(LOG:find("Next case in 20:00", 1, true), "the culprit dies: the 20 minutes start again from there")
+LOG = ""; wait(20 * 60)
+ok(LOG:find("Jaco has a new case for you", 1, true), "and it tells you when Jaco has one")
+LOG = ""; G.command("cd")
+ok(LOG:find("Jaco has a new case for you", 1, true), "gum cd says so too")
+wait(30 * 60); G.nextCase = now + 60
+feed({ "Piccolo is dead!  R.I.P." })
+ok(G.nextCase == now + 60, "a guest dying long after the case doesn't restart it")
+
 print("gum: ALL PASSED")
