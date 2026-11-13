@@ -209,7 +209,8 @@ end
 -- is (column difference / 2, row difference). Far away it dashes (10 rooms), close it walks.
 BT.dashCmd   = BT.dashCmd or "dash %s"   -- how to dash in a direction
 BT.dashFrom  = BT.dashFrom or 10         -- dash when the boss is at least this many rooms away
-BT.findSteps = BT.findSteps or 40        -- give up after this many moves
+BT.findSteps = BT.findSteps or 40        -- give up after this many moves towards a boss
+BT.searchDashes = BT.searchDashes or 150 -- give up searching after this many dashes
 BT.ME, BT.BOSS = "🧍", "👹"
 
 local WIDE = { [0x2757] = true, [0x2753] = true, [0x2754] = true, [0x2755] = true, [0x2B50] = true,
@@ -269,57 +270,116 @@ function BT.line(l)
     mapRows[#mapRows + 1] = l
     if #mapRows > 25 then mapRows = nil end
   end
-  if BT.hunt and BT.hunt.dashing and l:find("quickly through the area", 1, true) then
-    BT.hunt.dashing = false
-    send("look")
+  local h = BT.hunt
+  -- a stopped dash says up to three things ("Alas, you cannot go that way...", "Your dash is halted
+  -- by an obstacle.", "You can't dash in that direction."): one stop, not three
+  local blocked = l:find("You can't dash in that direction", 1, true) or l:find("Your dash is halted by an obstacle", 1, true)
+    or l:find("Alas, you cannot go that way", 1, true)
+  if h and blocked and h.justBlocked then return end
+  if h then h.justBlocked = false end
+  if h and h.dashing then
+    if l:find("quickly through the area", 1, true) then BT.dashDone(true)
+    elseif blocked then h.justBlocked = true; BT.dashDone(false) end
+  elseif h and h.walking and l:find("Alas, you cannot go that way", 1, true) then
+    BT.stopHunt("yellow", "Something's in the way, couldn't walk on")
   end
 end
 
 local function dist(b) return math.max(math.abs(b[1]), math.abs(b[2])) end
 
+function BT.stopHunt(color, msg)
+  local h = BT.hunt
+  if h and h.timer then killTimer(h.timer) end
+  BT.hunt = nil
+  if msg then info(color, msg) end
+end
+
 local function huntTimeout()
   local h = BT.hunt
   if h.timer then killTimer(h.timer) end
-  h.timer = tempTimer(10, function()
-    if BT.hunt == h then BT.hunt = nil; info("yellow", "Stopped looking: no map came back (blocked?)") end
+  h.timer = tempTimer(15, function()
+    if BT.hunt == h then BT.stopHunt("yellow", "Stopped looking: no answer to the last move") end
   end)
+end
+
+local function dash(dir)
+  local h = BT.hunt
+  h.dashing, h.walking, h.moves = true, false, h.moves + 1
+  send(BT.dashCmd:format(dir))
+  huntTimeout()
+end
+
+-- Searching, when no 👹 is in sight: dash north to the edge, then west (the north-west corner),
+-- then sweep: east to the edge, 10 rooms south, west to the edge, 10 south... The map shows 5 rows
+-- above and below you, so 10-room strips miss nothing. Any 👹 seen on the way ends the search.
+local OPP = { e = "w", w = "e" }
+function BT.searchNext(ok)
+  local h = BT.hunt
+  if h.moves >= BT.searchDashes then return BT.stopHunt("yellow", "Searched " .. h.moves .. " dashes without finding a boss") end
+  local st = h.stage
+  if st == "north" then
+    if ok then return dash("n") end
+    h.stage = "west"; return dash("w")
+  elseif st == "west" then
+    if ok then return dash("w") end
+    h.stage, h.dir = "sweep", "e"; info("white", "In the corner: sweeping the map"); return dash("e")
+  elseif st == "sweep" then
+    if ok then return dash(h.dir) end
+    h.stage = "down"; return dash("s")
+  elseif st == "down" then
+    if not ok then return BT.stopHunt("yellow", "Swept the whole map: no " .. BT.BOSS .. " anywhere") end
+    h.stage, h.dir = "sweep", OPP[h.dir]; return dash(h.dir)
+  end
+end
+
+-- A dash finished: on (ok) or stopped at an edge / obstacle
+function BT.dashDone(ok)
+  local h = BT.hunt
+  h.dashing = false
+  if h.mode == "search" and not h.spotted then return BT.searchNext(ok) end
+  -- approaching, or a 👹 went by during the search: look where we are now
+  h.mode, h.spotted = "approach", false
+  send("look")
+  huntTimeout()
 end
 
 function BT.onMap(bosses)
   local h = BT.hunt
-  if not h or h.dashing then return end
+  if not h then return end
+  if h.dashing then
+    if h.mode == "search" and bosses[1] and not h.spotted then h.spotted = true; info("green", BT.BOSS .. " spotted!") end
+    return
+  end
   local b = bosses[1]
   if not b then
-    BT.hunt = nil
-    if h.timer then killTimer(h.timer) end
-    if h.last and dist(h.last) <= 1 then return info("green", "You're on the boss: it's in this room") end
-    return info("yellow", h.moves == 0 and ("No " .. BT.BOSS .. " on the map here") or "Lost sight of the boss")
+    if h.last and dist(h.last) <= 1 then return BT.stopHunt("green", "You're on the boss: it's in this room") end
+    if h.mode == "search" or h.searched then
+      return BT.stopHunt("yellow", "Lost sight of the boss")
+    end
+    -- nothing in sight: search the map
+    info("white", "No " .. BT.BOSS .. " in sight: heading for the north-west corner, then sweeping the map")
+    h.mode, h.stage, h.searched = "search", "north", true
+    return dash("n")
   end
-  if h.moves >= BT.findSteps then
-    BT.hunt = nil
-    if h.timer then killTimer(h.timer) end
-    return info("yellow", "Gave up after " .. h.moves .. " moves")
-  end
+  if h.steps >= BT.findSteps then return BT.stopHunt("yellow", "Gave up after " .. h.steps .. " moves") end
   local dx, dy = b[1], b[2]
-  if h.moves == 0 then
+  if h.steps == 0 then
     info("white", BT.BOSS .. " " .. math.abs(dy) .. (dy < 0 and " north" or " south") .. ", " ..
       math.abs(dx) .. (dx < 0 and " west" or " east") .. ": on the way")
   end
   local dir, n
   if math.abs(dx) >= math.abs(dy) then dir, n = dx > 0 and "e" or "w", math.abs(dx)
   else dir, n = dy > 0 and "s" or "n", math.abs(dy) end
-  h.last, h.moves = b, h.moves + 1
-  if n >= BT.dashFrom then
-    h.dashing = true
-    send(BT.dashCmd:format(dir))
-  else
-    send(dir)
-  end
+  h.last, h.steps = b, h.steps + 1
+  if n >= BT.dashFrom then return dash(dir) end
+  h.walking = true
+  send(dir)
   huntTimeout()
 end
 
 function BT.find()
-  BT.hunt = { moves = 0 }
+  BT.stopHunt()
+  BT.hunt = { mode = "approach", moves = 0, steps = 0 }
   send("look")
   huntTimeout()
 end
@@ -331,7 +391,7 @@ BT.HELP = {
   { "boss window on|off",   "A small window with a live countdown" },
   { "boss warn <min,...>",  "When to warn before the respawn, in minutes (5,1,0.5) or seconds (30s); default 5,1" },
   { "boss flash on|off",    "Flash Mudlet's taskbar icon at the respawn" },
-  { "boss find",            "Walk to the nearest boss (👹) on the world map, dashing when it's far" },
+  { "boss find",            "Walk to the nearest boss (👹) on the world map; none in sight: sweep the map with dash" },
   { "boss find stop",       "Stop walking" },
   { "boss help",            "Show this list" },
 }
@@ -367,9 +427,7 @@ function BT.command(cmd, arg)
     for _, row in ipairs(BT.HELP) do cecho(string.format("  <yellow>%-22s<white>%s\n", row[1], row[2])) end
   elseif cmd == "find" then
     if arg == "stop" then
-      if BT.hunt and BT.hunt.timer then killTimer(BT.hunt.timer) end
-      BT.hunt = nil
-      return info("white", "Stopped looking")
+      return BT.stopHunt("white", "Stopped looking")
     end
     BT.find()
   elseif cmd == "check" then

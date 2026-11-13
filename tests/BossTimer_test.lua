@@ -226,7 +226,28 @@ feedMap(far); ok(sent[#sent] == "dash e", "far east: dash (" .. tostring(sent[#s
 feedMap(far); ok(#sent == 1, "maps shown during the dash are ignored")
 BossTimer.line("You fly quickly through the area!"); ok(sent[#sent] == "look", "looks again after the dash")
 BossTimer.command("find", "stop"); ok(BossTimer.hunt == nil, "find stop")
-LOG = ""; BossTimer.command("find"); feedMap({ far[1], far[4] })
-ok(LOG:find("No 👹 on the map here"), "nothing on the map")
+-- nothing in sight: north-west corner, then sweep east / south / west / south ...
+local empty = { far[1], far[4] }
+local BLOCK = "Alas, you cannot go that way...\nYour dash is halted by an obstacle.\nYou can't dash in that direction.\n[Pl: 152,065,671,629 100% | Ki: 100% | Fatigue: 1%]"
+local function say(text) for l in (text .. "\n"):gmatch("(.-)\n") do BossTimer.line(l) end end
+local DONE = "You fly quickly through the area!"
+LOG = ""; BossTimer.command("find"); sent = {}
+feedMap(empty); ok(sent[#sent] == "dash n" and LOG:find("No 👹 in sight"), "nothing in sight: dash north")
+feedMap(empty); say(DONE); ok(sent[#sent] == "dash n", "keeps going north")
+say(BLOCK); ok(sent[#sent] == "dash w" and #sent == 3, "north edge: west (once, for the three lines)")
+say(DONE); ok(sent[#sent] == "dash w", "keeps going west")
+say(BLOCK); ok(sent[#sent] == "dash e" and LOG:find("In the corner"), "corner: sweep east")
+say(DONE); ok(sent[#sent] == "dash e", "east")
+say(BLOCK); ok(sent[#sent] == "dash s", "east edge: 10 south")
+say(DONE); ok(sent[#sent] == "dash w", "then back west")
+say(BLOCK); ok(sent[#sent] == "dash s", "west edge: south again")
+say(BLOCK); ok(BossTimer.hunt == nil and LOG:find("Swept the whole map"), "bottom reached: nothing anywhere")
+-- a 👹 goes by during the sweep: look once the dash ends, then walk to it
+BossTimer.command("find"); feedMap(empty); sent = {}
+say(DONE); ok(sent[#sent] == "dash n", "searching")
+feedMap({ far[2], far[4] }); ok(#sent == 1 and LOG:find("spotted"), "spotted mid-dash: nothing sent yet")
+say(DONE); ok(sent[#sent] == "look", "dash over: look")
+show("south"); ok(sent[#sent] == "s", "and walk to it")
+show("on"); ok(BossTimer.hunt == nil, "there")
 
 print("\nBossTimer: ALL PASSED")

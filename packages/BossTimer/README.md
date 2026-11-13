@@ -34,6 +34,8 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 
 `boss find` sends `look`, finds you (🧍) and the nearest 👹 on the room map, and walks there one room at a time, reading the map again after every move (bosses wander). When the boss is 10 or more rooms away along the way it's going, it uses `dash <direction>` (10 rooms at once) and looks again once the dash is over (*You fly quickly through the area!*). When the 👹 disappears under your 🧍 you're there: *You're on the boss*.
 
-It stops when there's no 👹 on the map, when it loses sight of it, after 40 moves, or when a move brings no map back for 10 seconds (blocked). The map only shows the rooms around you, so a boss further away than that has to be found by hand first. The dash command can be changed with `lua BossTimer.dashCmd = "dash %s"`.
+**No 👹 in sight: it searches the map.** It dashes north until the dash can't go on (*Alas, you cannot go that way...* / *Your dash is halted by an obstacle.* / *You can't dash in that direction.*), then west the same way, into the north-west corner. From there it sweeps: east to the other side, one dash (10 rooms) south, back west, south again, and so on. The map shows 5 rows above and below you, so 10-room strips leave no gaps. As soon as a 👹 shows up on any map (also the ones drawn during a dash) it lets the dash finish, looks, and walks to it. If the south dash hits the bottom edge, the whole map has been swept and it says so.
+
+It also stops after 40 moves towards a boss or 150 search dashes, when a step is blocked, or when a move brings nothing back for 15 seconds. `boss find stop` stops it any time. The dash command can be changed with `lua BossTimer.dashCmd = "dash %s"`.
 
 Doesn't need any other package.
