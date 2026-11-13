@@ -1,66 +1,66 @@
 {
-  "name": "BossTimer",
-  "version": "1.6.1",
-  "title": "Boss respawn timer",
+  "name": "BossHelpers",
+  "version": "2.0.0",
+  "title": "Boss helpers: respawn timer and boss finder",
   "description": "Counts down to CKMud's boss respawn (from `uptime`), warns before it, and re-checks after each respawn. `boss find` walks to the nearest boss on the world map, sweeping the map when none is in sight. Type `boss help` for commands.",
   "author": "Bruno Mouta",
   "scripts": [
     {
-      "name": "BossTimer core",
-      "file": "src/BossTimer.lua"
+      "name": "BossHelpers core",
+      "file": "src/BossHelpers.lua"
     }
   ],
   "aliases": [
     {
       "name": "boss",
       "regex": "^boss(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nBossTimer.command(arg(matches[2]), arg(matches[3]))"
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nBossHelpers.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [
     {
-      "name": "BossTimer",
+      "name": "BossHelpers",
       "folder": true,
       "children": [
         {
-          "name": "BossTimer uptime block",
+          "name": "BossHelpers uptime block",
           "patterns": [
             {
               "type": "regex",
               "pattern": "^CKMud System Information:"
             }
           ],
-          "script": "BossTimer.blockStart()"
+          "script": "BossHelpers.blockStart()"
         },
         {
-          "name": "BossTimer respawn line",
+          "name": "BossHelpers respawn line",
           "patterns": [
             {
               "type": "regex",
               "pattern": "^\\s*Boss Respawn:\\s*(.+?)\\s*remaining"
             }
           ],
-          "script": "BossTimer.onRespawnLine(matches[2])"
+          "script": "BossHelpers.onRespawnLine(matches[2])"
         },
         {
-          "name": "BossTimer copyover",
+          "name": "BossHelpers copyover",
           "patterns": [
             {
               "type": "substring",
               "pattern": "Copyover recovery complete."
             }
           ],
-          "script": "BossTimer.onCopyover()"
+          "script": "BossHelpers.onCopyover()"
         },
         {
-          "name": "BossTimer map lines",
+          "name": "BossHelpers map lines",
           "patterns": [
             {
               "type": "regex",
               "pattern": "^.*$"
             }
           ],
-          "script": "BossTimer.line(line)"
+          "script": "BossHelpers.line(line)"
         }
       ]
     }

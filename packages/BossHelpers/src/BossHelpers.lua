@@ -1,10 +1,11 @@
--- BossTimer: counts down to CKMud's boss respawn. Type `boss help` for commands.
+-- BossHelpers: counts down to CKMud's boss respawn. Type `boss help` for commands.
 --
 -- `uptime` prints "Boss Respawn: 16 min 35 sec remaining". This package turns that
 -- into a countdown, warns before the respawn, and re-checks `uptime` by itself after
 -- each respawn (and after you log in) so the next countdown starts on its own.
-BossTimer = BossTimer or {}
-local BT = BossTimer
+BossHelpers = BossHelpers or BossTimer or {}
+BossTimer = BossHelpers                    -- the package used to be called BossTimer: old scripts keep working
+local BT = BossHelpers
 
 -- ---------------------------------------------------------------- settings
 BT.warnings   = BT.warnings or { 300, 60 }  -- seconds before the respawn to warn at
@@ -142,11 +143,11 @@ function BT.onCopyover()
   at(BT.afterCopyover, function() BT.check(true) end)
 end
 
-registerNamedEventHandler("BossTimer", "login", "sysConnectionEvent", function()
+registerNamedEventHandler("BossHelpers", "login", "sysConnectionEvent", function()
   at(BT.afterLogin, function() BT.check(true) end)
 end)
 
-registerNamedTimer("BossTimer", "unknown", BT.unknownRetry, BT.ensureKnown, true)
+registerNamedTimer("BossHelpers", "unknown", BT.unknownRetry, BT.ensureKnown, true)
 tempTimer(5, BT.ensureKnown)                -- just installed or reloaded mid-session
 
 -- ---------------------------------------------------------------- window
@@ -156,7 +157,7 @@ function BT.showWindow(show)
       name = "Boss Respawn", x = "70%", y = "40%", width = "230px", height = "60px",
       titleText = "Boss Respawn",
     })
-    BT.label = Geyser.Label:new({ name = "BossTimerLabel", x = 0, y = 0, width = "100%", height = "100%" },
+    BT.label = Geyser.Label:new({ name = "BossHelpersLabel", x = 0, y = 0, width = "100%", height = "100%" },
       BT.container.Inside)
     BT.label:setStyleSheet("background-color: #0a0a0a; qproperty-alignment: 'AlignCenter';")
   end
@@ -165,9 +166,9 @@ function BT.showWindow(show)
   end
   BT.windowOn = show
   if show then
-    registerNamedTimer("BossTimer", "window", 1, BT.refresh, true)
+    registerNamedTimer("BossHelpers", "window", 1, BT.refresh, true)
   else
-    deleteNamedTimer("BossTimer", "window")
+    deleteNamedTimer("BossHelpers", "window")
   end
   BT.refresh()
 end
@@ -188,15 +189,16 @@ end
 -- ---------------------------------------------------------------- saved settings
 -- The window, the warnings and the flash survive restarts (the window's place and size
 -- are saved by Mudlet's Adjustable.Container itself).
-BT.SAVE_FILE = getMudletHomeDir() .. "/BossTimer.lua"
+BT.SAVE_FILE = getMudletHomeDir() .. "/BossHelpers.lua"
 
 function BT.save()
   pcall(table.save, BT.SAVE_FILE, { window = BT.windowOn or false, warnings = BT.warnings, flash = BT.flash })
 end
 
 function BT.load()
-  local saved = {}
-  if not (io.exists(BT.SAVE_FILE) and pcall(table.load, BT.SAVE_FILE, saved)) then return end
+  local saved, file = {}, BT.SAVE_FILE
+  if not io.exists(file) then file = getMudletHomeDir() .. "/BossTimer.lua" end   -- settings from before the rename
+  if not (io.exists(file) and pcall(table.load, file, saved)) then return end
   if type(saved.warnings) == "table" then BT.warnings = saved.warnings end
   if saved.flash ~= nil then BT.flash = saved.flash end
   if saved.window then BT.showWindow(true) end

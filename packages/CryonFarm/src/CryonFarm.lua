@@ -8,7 +8,7 @@
 --   Cryogenic (SW)        extract (it frees the citizen first)
 --   Genetic (NW)          wait for "How..did...I..get here?", say kidnapped, smack citizen
 -- and Cryon Frigidus hands over the confession. The citizens only come back with the respawn
--- (`uptime`), so it's one run per respawn; with the BossTimer package it says when the next one is.
+-- (`uptime`), so it's one run per respawn; with the BossHelpers package it says when the next one is.
 cryon = cryon or {}
 local C = cryon
 
@@ -224,9 +224,9 @@ nextStep = function()
     (left and (" - next run after the respawn, in " .. C.fmt(left)) or " - next run after the respawn (uptime)"))
 end
 
--- Seconds to the next respawn, from the BossTimer package when it's installed
+-- Seconds to the next respawn, from the BossHelpers package when it's installed
 function C.respawnIn()
-  local bt = rawget(_G, "BossTimer")
+  local bt = rawget(_G, "BossHelpers") or rawget(_G, "BossTimer")
   local left = bt and bt.remaining and bt.remaining()
   if left and left > 0 then return left end
 end

@@ -1,4 +1,4 @@
-# BossTimer — boss respawn timer
+# BossHelpers — boss respawn timer and boss finder
 
 Command: `boss`
 
@@ -28,7 +28,7 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 | `boss find stop` | Stop walking |
 | `boss help` | List the commands |
 
-`boss window`, `boss warn` and `boss flash` are saved (in `BossTimer.lua` in your profile folder) and come back when Mudlet restarts; the window reopens where you left it.
+`boss window`, `boss warn` and `boss flash` are saved (in `BossHelpers.lua` in your profile folder) and come back when Mudlet restarts; the window reopens where you left it.
 
 ## Finding a boss on the map
 
@@ -36,6 +36,6 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 
 **No 👹 in sight: it searches the map.** It dashes north until the dash can't go on (*Alas, you cannot go that way...* / *Your dash is halted by an obstacle.* / *You can't dash in that direction.*), then west the same way, into the north-west corner. From there it sweeps: east to the other side, one dash (10 rooms) south, back west, south again, and so on. The map shows 5 rows above and below you, so 10-room strips leave no gaps. As soon as a 👹 shows up on any map (also the ones drawn during a dash) it lets the dash finish, looks, and walks to it. If the south dash hits the bottom edge, the whole map has been swept and it says so.
 
-It also stops after 40 moves towards a boss or 150 search dashes, when a step is blocked, or when a move brings nothing back for 15 seconds. `boss find stop` stops it any time. The dash command can be changed with `lua BossTimer.dashCmd = "dash %s"`.
+It also stops after 40 moves towards a boss or 150 search dashes, when a step is blocked, or when a move brings nothing back for 15 seconds. `boss find stop` stops it any time. The dash command can be changed with `lua BossHelpers.dashCmd = "dash %s"`.
 
 Doesn't need any other package.

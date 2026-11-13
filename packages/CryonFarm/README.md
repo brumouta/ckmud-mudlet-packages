@@ -24,6 +24,6 @@ Farms the **Confession of Cryon Frigidus** from the hidden lab under the Zero Ne
 6. **Cryogenic chamber** (south-west): `extract` frees the citizen from stasis, then takes the sample.
 7. **Genetic Amplification chamber** (north-west): wait for *How..did...I..get here?*, `say kidnapped`, wait for *"SMACK" him awake*, `smack citizen`. Cryon Frigidus hands over the confession.
 
-The citizens only come back with the respawn (the one `uptime` counts down to), so it's one confession per respawn. With the [BossTimer](../BossTimer) package installed it tells you after each confession how long until the next one. The Mad Scientist in the Control Room is a different quest (it uses the samples) and is ignored.
+The citizens only come back with the respawn (the one `uptime` counts down to), so it's one confession per respawn. With the [BossHelpers](../BossHelpers) package installed it tells you after each confession how long until the next one. The Mad Scientist in the Control Room is a different quest (it uses the samples) and is ignored.
 
 Moves between stops go out together (the same as typing `n;;n;;e`), and every room that comes back is checked against the route. Each step waits for the room it expects (or the game's answer) and stops with a message if it doesn't come. The route is fixed, from one run in the log. If a move ends up somewhere unexpected, the room list in `C.ROUTE` needs updating.
