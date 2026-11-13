@@ -219,7 +219,7 @@ SL.HELP = {
 }
 
 function SL.help()
-  cecho("\n<cyan>Slot machine bot (sl) commands:\n")
+  cecho("\n<cyan>Slot machine bot (slot) commands:\n")
   for _, row in ipairs(SL.HELP) do cecho(string.format("  <yellow>%-21s<white>%s\n", row[1], row[2])) end
   cecho("  <white>Lucky Tails and STR XP only come from <yellow>[VIP]<white> machines.\n")
 end
