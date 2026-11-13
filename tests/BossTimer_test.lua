@@ -190,4 +190,43 @@ BossTimer.command("window", "off")
 restart()
 ok(not BossTimer.windowOn and windows == 0, "window off stays off after a restart")
 
+-- boss find: walk to the 👹 on the world map, from real maps
+local MAPS, cur = {}, nil
+for l in io.lines("tests/fixtures/bossfind.log") do
+  local name = l:match("^## (.+)$")
+  if name then cur = name; MAPS[cur] = {} elseif cur then table.insert(MAPS[cur], l) end
+end
+local function show(name) for _, l in ipairs(MAPS[name]) do BossTimer.line(l) end end
+local function rows(name) local r, on = {}, false
+  for _, l in ipairs(MAPS[name]) do
+    if l:match("^%s*o%-%-%-") then on = not on elseif on then r[#r + 1] = l end
+  end
+  return r end
+local b = BossTimer.readMap(rows("far"))[1]
+ok(b[1] == -1 and b[2] == -1, "boss one west, one north (got " .. b[1] .. "," .. b[2] .. ")")
+b = BossTimer.readMap(rows("south"))[1]
+ok(b[1] == 0 and b[2] == 1, "boss right below")
+b = BossTimer.readMap(rows("east"))[1]
+ok(b[1] == 1 and b[2] == 0, "boss right next to me, east")
+ok(#BossTimer.readMap(rows("on")) == 0, "standing on the boss: no 👹 drawn")
+-- the walk
+sent = {}
+BossTimer.command("find"); ok(sent[#sent] == "look", "find looks first")
+show("south"); ok(sent[#sent] == "s", "walks south: " .. tostring(sent[#sent]))
+LOG = ""; show("on"); ok(LOG:find("You're on the boss"), "arrived")
+ok(BossTimer.hunt == nil, "done")
+-- far away: dash, wait for it to finish, look again
+BossTimer.command("find"); sent = {}
+local far = {}
+for i = 1, 6 do far[i] = "   ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ " end
+far[2] = "   ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 👹~ ~ "
+far[4] = "   ~ ~ ~ 🧍~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ "
+local function feedMap(r) BossTimer.line("o----------------o"); for _, l in ipairs(r) do BossTimer.line(l) end; BossTimer.line("o----------------o") end
+feedMap(far); ok(sent[#sent] == "dash e", "far east: dash (" .. tostring(sent[#sent]) .. ")")
+feedMap(far); ok(#sent == 1, "maps shown during the dash are ignored")
+BossTimer.line("You fly quickly through the area!"); ok(sent[#sent] == "look", "looks again after the dash")
+BossTimer.command("find", "stop"); ok(BossTimer.hunt == nil, "find stop")
+LOG = ""; BossTimer.command("find"); feedMap({ far[1], far[4] })
+ok(LOG:find("No 👹 on the map here"), "nothing on the map")
+
 print("\nBossTimer: ALL PASSED")

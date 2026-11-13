@@ -1,8 +1,8 @@
 {
   "name": "BossTimer",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "title": "Boss respawn timer",
-  "description": "Counts down to CKMud's boss respawn (from `uptime`), warns before it, and re-checks after each respawn. Type `boss help` for commands.",
+  "description": "Counts down to CKMud's boss respawn (from `uptime`), warns before it, and re-checks after each respawn. `boss find` walks to the nearest boss on the world map. Type `boss help` for commands.",
   "author": "Bruno Mouta",
   "scripts": [
     {
@@ -51,6 +51,16 @@
             }
           ],
           "script": "BossTimer.onCopyover()"
+        },
+        {
+          "name": "BossTimer map lines",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "BossTimer.line(line)"
         }
       ]
     }

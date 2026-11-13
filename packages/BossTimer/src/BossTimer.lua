@@ -202,6 +202,128 @@ function BT.load()
   if saved.window then BT.showWindow(true) end
 end
 
+-- ---------------------------------------------------------------- finding a boss on the map
+-- `boss find`: walk to the nearest 👹 on the world map (for bosses `pursue` can't reach).
+-- The room map is drawn between two "o----o" lines with you as 🧍. Each map cell is two
+-- columns wide (an emoji, or two plain characters like "▒░" / "~ "), so the boss's offset
+-- is (column difference / 2, row difference). Far away it dashes (10 rooms), close it walks.
+BT.dashCmd   = BT.dashCmd or "dash %s"   -- how to dash in a direction
+BT.dashFrom  = BT.dashFrom or 10         -- dash when the boss is at least this many rooms away
+BT.findSteps = BT.findSteps or 40        -- give up after this many moves
+BT.ME, BT.BOSS = "🧍", "👹"
+
+local WIDE = { [0x2757] = true, [0x2753] = true, [0x2754] = true, [0x2755] = true, [0x2B50] = true,
+  [0x2B55] = true, [0x26A1] = true, [0x26D4] = true, [0x26EA] = true, [0x26F2] = true, [0x26F3] = true,
+  [0x26F5] = true, [0x26FA] = true, [0x26FD] = true, [0x2705] = true, [0x274C] = true, [0x2728] = true,
+  [0x231A] = true, [0x231B] = true, [0x23F0] = true, [0x23F3] = true, [0x2614] = true, [0x2615] = true }
+
+-- The screen column each character starts at: { {col, char}, ... }
+function BT.cells(line)
+  local out, col, i = {}, 0, 1
+  while i <= #line do
+    local b = line:byte(i)
+    local len = b >= 0xF0 and 4 or b >= 0xE0 and 3 or b >= 0xC0 and 2 or 1
+    local ch = line:sub(i, i + len - 1)
+    local cp = b
+    if len == 2 then cp = (b % 32) * 64 + line:byte(i + 1) % 64
+    elseif len == 3 then cp = (b % 16) * 4096 + (line:byte(i + 1) % 64) * 64 + line:byte(i + 2) % 64
+    elseif len == 4 then cp = (b % 8) * 262144 + (line:byte(i + 1) % 64) * 4096 + (line:byte(i + 2) % 64) * 64 + line:byte(i + 3) % 64 end
+    local w = (cp == 0xFE0F or cp == 0x200D) and 0 or (cp >= 0x1F000 or WIDE[cp]) and 2 or 1
+    out[#out + 1] = { col, ch }
+    col = col + w
+    i = i + len
+  end
+  return out
+end
+
+-- Where 🧍 and every 👹 are in a map (a list of rows): me = {x, y}, bosses = { {dx, dy}, ... }
+function BT.readMap(rows)
+  local me, found = nil, {}
+  for y, row in ipairs(rows) do
+    for _, c in ipairs(BT.cells(row)) do
+      if c[2] == BT.ME then me = { c[1], y }
+      elseif c[2] == BT.BOSS then found[#found + 1] = { c[1], y } end
+    end
+  end
+  if not me then return nil end
+  local bosses = {}
+  for _, b in ipairs(found) do
+    bosses[#bosses + 1] = { math.floor((b[1] - me[1]) / 2 + 0.5), b[2] - me[2] }
+  end
+  table.sort(bosses, function(a, b)
+    return math.abs(a[1]) + math.abs(a[2]) < math.abs(b[1]) + math.abs(b[2])
+  end)
+  return bosses
+end
+
+-- Map capture: every line is offered; "o---o" borders open and close a map.
+local mapRows
+function BT.line(l)
+  if l:match("^%s*o%-%-%-%-%-%-%-%-%-%-+o%s*$") then
+    if mapRows and #mapRows > 0 then
+      local bosses = BT.readMap(mapRows)
+      if bosses then mapRows = nil; return BT.onMap(bosses) end
+    end
+    mapRows = {}                       -- (a border with no 🧍 inside starts again)
+  elseif mapRows then
+    mapRows[#mapRows + 1] = l
+    if #mapRows > 25 then mapRows = nil end
+  end
+  if BT.hunt and BT.hunt.dashing and l:find("quickly through the area", 1, true) then
+    BT.hunt.dashing = false
+    send("look")
+  end
+end
+
+local function dist(b) return math.max(math.abs(b[1]), math.abs(b[2])) end
+
+local function huntTimeout()
+  local h = BT.hunt
+  if h.timer then killTimer(h.timer) end
+  h.timer = tempTimer(10, function()
+    if BT.hunt == h then BT.hunt = nil; info("yellow", "Stopped looking: no map came back (blocked?)") end
+  end)
+end
+
+function BT.onMap(bosses)
+  local h = BT.hunt
+  if not h or h.dashing then return end
+  local b = bosses[1]
+  if not b then
+    BT.hunt = nil
+    if h.timer then killTimer(h.timer) end
+    if h.last and dist(h.last) <= 1 then return info("green", "You're on the boss: it's in this room") end
+    return info("yellow", h.moves == 0 and ("No " .. BT.BOSS .. " on the map here") or "Lost sight of the boss")
+  end
+  if h.moves >= BT.findSteps then
+    BT.hunt = nil
+    if h.timer then killTimer(h.timer) end
+    return info("yellow", "Gave up after " .. h.moves .. " moves")
+  end
+  local dx, dy = b[1], b[2]
+  if h.moves == 0 then
+    info("white", BT.BOSS .. " " .. math.abs(dy) .. (dy < 0 and " north" or " south") .. ", " ..
+      math.abs(dx) .. (dx < 0 and " west" or " east") .. ": on the way")
+  end
+  local dir, n
+  if math.abs(dx) >= math.abs(dy) then dir, n = dx > 0 and "e" or "w", math.abs(dx)
+  else dir, n = dy > 0 and "s" or "n", math.abs(dy) end
+  h.last, h.moves = b, h.moves + 1
+  if n >= BT.dashFrom then
+    h.dashing = true
+    send(BT.dashCmd:format(dir))
+  else
+    send(dir)
+  end
+  huntTimeout()
+end
+
+function BT.find()
+  BT.hunt = { moves = 0 }
+  send("look")
+  huntTimeout()
+end
+
 -- ---------------------------------------------------------------- `boss` alias
 BT.HELP = {
   { "boss",                 "Time left until the bosses respawn" },
@@ -209,6 +331,8 @@ BT.HELP = {
   { "boss window on|off",   "A small window with a live countdown" },
   { "boss warn <min,...>",  "When to warn before the respawn, in minutes (5,1,0.5) or seconds (30s); default 5,1" },
   { "boss flash on|off",    "Flash Mudlet's taskbar icon at the respawn" },
+  { "boss find",            "Walk to the nearest boss (👹) on the world map, dashing when it's far" },
+  { "boss find stop",       "Stop walking" },
   { "boss help",            "Show this list" },
 }
 
@@ -241,6 +365,13 @@ function BT.command(cmd, arg)
   elseif cmd == "help" then
     cecho("\n<cyan>Boss respawn timer (boss) commands:\n")
     for _, row in ipairs(BT.HELP) do cecho(string.format("  <yellow>%-22s<white>%s\n", row[1], row[2])) end
+  elseif cmd == "find" then
+    if arg == "stop" then
+      if BT.hunt and BT.hunt.timer then killTimer(BT.hunt.timer) end
+      BT.hunt = nil
+      return info("white", "Stopped looking")
+    end
+    BT.find()
   elseif cmd == "check" then
     BT.check(false)
   elseif cmd == "window" and (arg == "on" or arg == "off") then

@@ -24,8 +24,16 @@ Counts down to CKMud's boss respawn so you can be there first. The time comes fr
 | `boss window on\|off` | A small movable window with a live countdown |
 | `boss warn <times>` | When to warn before the respawn: minutes (`boss warn 10,5,1`), decimals (`boss warn 1,0.5`) or seconds (`boss warn 2,30s`). Default 5,1 |
 | `boss flash on\|off` | Flash Mudlet's taskbar icon at the respawn |
+| `boss find` | Walk to the nearest boss (👹) on the world map, for bosses `pursue` can't reach. See below |
+| `boss find stop` | Stop walking |
 | `boss help` | List the commands |
 
 `boss window`, `boss warn` and `boss flash` are saved (in `BossTimer.lua` in your profile folder) and come back when Mudlet restarts; the window reopens where you left it.
+
+## Finding a boss on the map
+
+`boss find` sends `look`, finds you (🧍) and the nearest 👹 on the room map, and walks there one room at a time, reading the map again after every move (bosses wander). When the boss is 10 or more rooms away along the way it's going, it uses `dash <direction>` (10 rooms at once) and looks again once the dash is over (*You fly quickly through the area!*). When the 👹 disappears under your 🧍 you're there: *You're on the boss*.
+
+It stops when there's no 👹 on the map, when it loses sight of it, after 40 moves, or when a move brings no map back for 10 seconds (blocked). The map only shows the rooms around you, so a boss further away than that has to be found by hand first. The dash command can be changed with `lua BossTimer.dashCmd = "dash %s"`.
 
 Doesn't need any other package.
