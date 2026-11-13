@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -205,6 +205,46 @@
             }
           ],
           "script": "gog.uiLost()"
+        },
+        {
+          "name": "gog Zenni Boost",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*You have (.+?) remaining on [\\d.]+x Zenni Boost"
+            }
+          ],
+          "script": "gog.buffLine(\"boost\", matches[2])"
+        },
+        {
+          "name": "gog Zenni Boost warning",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^Your zenni boost will expire in (.+?)!"
+            }
+          ],
+          "script": "gog.buffLine(\"boost\", matches[2])"
+        },
+        {
+          "name": "gog Temp Zenni",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*Temp: Zenni\\s*:.* for (.+?)\\.?$"
+            }
+          ],
+          "script": "gog.buffLine(\"temp\", matches[2])"
+        },
+        {
+          "name": "gog Status end",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^\\s*\\[Ki Tab Bonus\\]"
+            }
+          ],
+          "script": "gog.statusEnd()"
         },
         {
           "name": "gog Count Essence",

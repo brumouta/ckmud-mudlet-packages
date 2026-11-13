@@ -22,6 +22,7 @@ local function expect(want)
 end
 
 dofile("packages/Gogeta/src/Gogeta.lua")
+gog.needBuffs = false   -- the zenni buff checks have their own tests at the end
 -- The package.json triggers, as Lua patterns
 local TRIG = {
   { "^You have successfully tracked down (.+)!$", function(m) gog.arrived(m) end },
@@ -43,6 +44,10 @@ local TRIG = {
   { "^[%w ]+ who%?$", function() gog.noTarget() end },
   { "^%[Pl: [%d,]+ (%d+)%% ", function(m, _, l) gog.prompt(m, l) end },
   { "Lacking God Ki, you lose your heightened ultra state", function() gog.uiLost() end, plain = true },
+  { "^%s*You have (.-) remaining on [%d.]+x Zenni Boost", function(m) gog.buffLine("boost", m) end },
+  { "^Your zenni boost will expire in (.-)!", function(m) gog.buffLine("boost", m) end },
+  { "^%s*Temp: Zenni%s*:.* for (.-)%.?$", function(m) gog.buffLine("temp", m) end },
+  { "^%s*%[Ki Tab Bonus%]", function() gog.statusEnd() end },
   { "^You are dead!", function() gog.died() end },
   { "^%((%s*%d+)%) Essence from a Dying Star$", function(m) gog.countItem("essence", m) end },
   { "^Essence from a Dying Star$", function() gog.countItem("essence", "") end },
@@ -223,4 +228,38 @@ feed("[Pl: 1 30% | Ki: 100% | GK: 50% | Fatigue: 0%] [UI] "); expect("sz")
 feed("[Pl: 1 20% | Ki: 100% | GK: 50% | Fatigue: 0%] [UI] "); expect("")   -- once per 30s
 gog.panicCmd = nil
 gog.command("stop"); sent = {}
+-- Zenni buffs: both needed to start; the farm stops between rounds once one runs out
+gog.needBuffs = true
+local function status(boost, temp)
+  return " Status:\n  You feel Great.\n" .. (boost and ("  You have " .. boost .. " remaining on 2.0x Zenni Boost\n") or "") ..
+    " Affections:\n" .. (temp and ("  Temp: Zenni      : +50% zenni gains for " .. temp .. ".\n") or "") ..
+    "  Mansion: PL      : +15% PL gains for 21h 09m.\n  [Ki Tab Bonus]: 0 / 50,000"
+end
+ok(gog.duration("2h 04m") == 7440 and gog.duration("4 minutes") == 240 and gog.duration("1 hour") == 3600, "durations")
+gog.command("start"); mats(5, 5); expect("inventory | materials | status")
+feed(status(nil, "2h 04m")); expect("")
+ok(not gog.active and LOG:find("the Zenni Boost is off"), "no Zenni Boost: not started")
+gog.command("start"); mats(5, 5); expect("inventory | materials | status")
+feed(status("4 minutes", nil)); expect("")
+ok(not gog.active and LOG:find("Temp: Zenni is off"), "no Temp: Zenni: not started")
+gog.command("start"); mats(5, 5); expect("inventory | materials | status")
+feed(status("4 minutes", "2h 04m")); expect("pursue kami")
+ok(gog.active and LOG:find("Zenni Boost 4m, Temp: Zenni 2h 4m"), "both on: started")
+local function round()
+  feed(KAMI); feed(PAID); feed(LANDED); feed(TRACKED); feed("SSJ4 Goku is dead!  R.I.P.")
+  feed(FUSE); feed("SSJ4 Vegeta is dead!  R.I.P."); wait(1); sent = {}
+  feed("SSJ4 Gogeta is dead!  R.I.P.")
+end
+round(); wait(2); expect("pursue kami")          -- still on
+gog.buffEnd.boost = now                         -- (time passes: the 4 minutes are up)
+round(); expect("status")                        -- the boost looks over: check
+feed(status("30 minutes", "1h 58m")); wait(2); expect("pursue kami")   -- renewed: carry on
+ok(gog.active, "a renewed boost keeps the farm going")
+feed("Your zenni boost will expire in 1 minutes!")
+ok(gog.buffEnd.boost == now + 60, "the expiry warning updates the boost's end")
+gog.buffEnd.boost = now
+round(); expect("status")
+feed(status(nil, "1h 50m")); wait(2); expect("")
+ok(not gog.active and LOG:find("the Zenni Boost ran out"), "stops when the boost runs out")
+gog.needBuffs = false
 print("gog: ALL PASSED")

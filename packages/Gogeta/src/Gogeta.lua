@@ -23,6 +23,9 @@ G.uiMode     = G.uiMode or "ui"
 G.uiMinGk    = G.uiMinGk or 5     -- % god ki needed before trying to (re)cast it
 G.panicPl    = G.panicPl or 35    -- % powerlevel at which G.panicCmd runs during a fight (a heal / senzu)
 G.panicCmd   = G.panicCmd or nil  -- e.g. "sz": run through your aliases; nil = off
+-- Zenni buffs that must be on: the farm doesn't start without them and stops (between rounds) when
+-- one runs out. Read from `status`. false = don't check.
+if G.needBuffs == nil then G.needBuffs = true end
 
 -- ---------------------------------------------------------------- state
 G.active  = G.active or false
@@ -164,7 +167,17 @@ function G.dead(who)
     if G.limit and G.rounds >= G.limit then return G.stop() end
     if left == 0 then return G.stop("out of " .. (G.mats.essence == 0 and "Essences" or "Diamonds")) end
     G.phase = "back"
-    tempTimer(2, function() if G.active and G.phase == "back" then G.toKami() end end)
+    local function onward() if G.active and G.phase == "back" then G.toKami() end end
+    if G.needBuffs and G.buffOut() then
+      -- one looks over: `status` again (you may have renewed it), stop if it really is
+      return G.readStatus(function(ok)
+        if not G.active then return end
+        local out = G.buffOut()
+        if ok and out then return G.stop(out .. " ran out") end
+        onward()
+      end)
+    end
+    tempTimer(2, onward)
   end
 end
 
@@ -361,6 +374,66 @@ function G.countEnd()
   if c.done then c.done(rounds) end
 end
 
+-- ---------------------------------------------------------------- zenni buffs
+-- `status`: "You have 4 minutes remaining on 2.0x Zenni Boost" and, under Affections,
+-- "Temp: Zenni      : +50% zenni gains for 2h 04m." The list ends with "[Ki Tab Bonus]: ...".
+G.BUFFS = { boost = "the Zenni Boost", temp = "Temp: Zenni" }
+G.buffEnd = G.buffEnd or {}   -- buff -> os.time() it runs out
+
+-- "2h 04m", "4 minutes", "1 hour", "45m" -> seconds
+function G.duration(text)
+  local t = text:lower()
+  local h = tonumber(t:match("(%d+)%s*h")) or 0
+  local m = tonumber(t:match("(%d+)%s*m")) or 0
+  if h == 0 and m == 0 and not t:find("%d") then return nil end
+  return h * 3600 + m * 60
+end
+
+function G.buffLine(kind, text)
+  local secs = G.duration(text)
+  if not secs then return end
+  G.buffEnd[kind] = os.time() + secs
+  if G.reading then G.reading.seen[kind] = true end
+end
+
+-- The buff that's run out (by the last `status`), or nil
+function G.buffOut()
+  local now = os.time()
+  for kind, name in pairs(G.BUFFS) do
+    if not G.buffEnd[kind] or G.buffEnd[kind] <= now then return name end
+  end
+end
+
+function G.readStatus(done)
+  G.reading = { seen = {}, done = done }
+  send("status")
+  G.reading.timer = tempTimer(8, function()
+    local r = G.reading
+    G.reading = nil
+    if r then info("red", "Couldn't read status"); if r.done then r.done(false) end end
+  end)
+end
+
+-- "[Ki Tab Bonus]: 0 / 50,000": the end of `status`; a buff it didn't list is off
+function G.statusEnd()
+  local r = G.reading
+  if not r then return end
+  killTimer(r.timer)
+  G.reading = nil
+  for kind in pairs(G.BUFFS) do if not r.seen[kind] then G.buffEnd[kind] = nil end end
+  if r.done then r.done(true) end
+end
+
+local function left(kind)
+  local e = G.buffEnd[kind]
+  if not e or e <= os.time() then return "off" end
+  local m = math.floor((e - os.time()) / 60)
+  return m >= 60 and (math.floor(m / 60) .. "h " .. (m % 60) .. "m") or (m .. "m")
+end
+function G.buffSummary()
+  return "Zenni Boost " .. left("boost") .. ", Temp: Zenni " .. left("temp")
+end
+
 -- ---------------------------------------------------------------- buying Essences
 -- `gog buy <n>`: read `eshop` for the Essence's number and price (they change with the events),
 -- then `eshop buy <#>` n times, no more than the event points cover.
@@ -416,6 +489,7 @@ G.HELP = {
   { "gog resume",       "Forget the rivals being fought and carry on with the round" },
   { "gog check",        "Count your Essences and Diamonds (how many rounds you can run)" },
   { "gog ui <ui|tui|off>", "Keep Ultra Instinct (or True Ultra Instinct) up while looping (now: " .. G.uiMode .. ")" },
+  { "gog buffs [on|off]", "Show the zenni buffs; on: needed to start, the farm stops when one runs out" },
   { "gog buy <n>",      "Buy n Essences from a Dying Star from the event shop (finds its number in eshop)" },
 }
 
@@ -433,10 +507,20 @@ function G.command(c, arg)
     if G.active then return info("yellow", "Already running. gog stop first") end
     G.count(function(rounds)
       if rounds == 0 then return info("red", "Nothing to give Kami: not started") end
-      G.active, G.rounds, G.rivals, G.detour = true, 0, {}, nil
-      G.limit = (n and rounds) and math.min(n, rounds) or n or rounds
-      info("green", "Started for " .. (G.limit and (G.limit .. " rounds") or "as long as it lasts") .. ". gog stop stops.")
-      G.toKami()
+      local function go()
+        G.active, G.rounds, G.rivals, G.detour = true, 0, {}, nil
+        G.limit = (n and rounds) and math.min(n, rounds) or n or rounds
+        info("green", "Started for " .. (G.limit and (G.limit .. " rounds") or "as long as it lasts") .. ". gog stop stops.")
+        G.toKami()
+      end
+      if not G.needBuffs then return go() end
+      G.readStatus(function(ok)
+        if not ok then return info("red", "Not started: couldn't check the zenni buffs (gog buffs off to skip)") end
+        local out = G.buffOut()
+        if out then return info("red", "Not started: " .. out .. " is off (gog buffs off to farm anyway)") end
+        info("white", G.buffSummary())
+        go()
+      end)
     end)
   elseif c == "check" then G.count()
   elseif c == "resume" then
@@ -449,6 +533,12 @@ function G.command(c, arg)
     local n = tonumber(arg)
     if not n or n < 1 then return info("yellow", "gog buy <how many>") end
     G.buy(math.floor(n))
+  elseif c == "buffs" then
+    if arg == "on" or arg == "off" then
+      G.needBuffs = arg == "on"
+      return info("white", G.needBuffs and "Zenni Boost and Temp: Zenni required" or "Not checking the zenni buffs")
+    end
+    G.readStatus(function(ok) if ok then info("white", G.buffSummary()) end end)
   elseif c == "ui" then
     if arg ~= "ui" and arg ~= "tui" and arg ~= "off" then return info("yellow", "gog ui ui|tui|off (now: " .. G.uiMode .. ")") end
     G.uiMode = arg
