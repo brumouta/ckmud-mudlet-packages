@@ -5,7 +5,7 @@
 A standalone Mudlet package for CKMud that masters all your skills, and learns
 new skills once you have mastered their prerequisites. Extracted from the
 [CK](https://github.com/CKMud-Mudlet-Scripts/CK) package and fully
-self-contained — it does NOT require CK to be installed.
+self-contained - it does NOT require CK to be installed.
 
 ## Installation
 
@@ -86,12 +86,12 @@ Autolearn keeps all of its state under its own `AL` global namespace, its own
 `Autolearn` settings database, and its own `AL.*` events, so it will not
 corrupt an installed CK package. If you do run both, note that each package
 parses the prompt and MOTD independently (you may see doubled login commands),
-and you should use CK's own `autolearn` OR this package — not both at once.
+and you should use CK's own `autolearn` OR this package - not both at once.
 Recent CK versions no longer ship the autolearn feature.
 
 ## Development
 
-This is a [muddler](https://github.com/demonnic/muddler) project — run `muddler`
+This is a [muddler](https://github.com/demonnic/muddler) project - run `muddler`
 in this directory to produce `build/Autolearn.mpackage`.
 
 Before building, two checks catch the common failure modes:
@@ -102,5 +102,5 @@ cd tests && npm install && node runner.js driver.lua   # simulated Mudlet run
 ```
 
 The tests run the real package sources in a Lua VM with a stubbed Mudlet API
-and simulate connect → MSDP feed → score/learn parsing → prompt →
-`autolearn` toggle → bot attack/rest/wake cycle.
+and simulate connect -> MSDP feed -> score/learn parsing -> prompt ->
+`autolearn` toggle -> bot attack/rest/wake cycle.

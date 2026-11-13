@@ -5,7 +5,7 @@
 A standalone Mudlet package for CKMud that automates the boring bits: fishing
 and the royal cook delivery quest. Extracted from the
 [CK](https://github.com/CKMud-Mudlet-Scripts/CK) ecosystem and fully
-self-contained — it does NOT require CK to be installed.
+self-contained - it does NOT require CK to be installed.
 
 ## Installation
 
@@ -23,8 +23,8 @@ the correct protocol settings on connect, same as CK does).
 Stand at your fishing spot holding a fishing pole, then:
 
 `chores fish` - auto fishing: castout, reelin on a bite, recast, untangle.
-When fatigue drops below `chores.rest_below`% — or the mud says "You are too
-exhausted to fish right now." — it walks `chores.rest_path`, sleeps, and walks
+When fatigue drops below `chores.rest_below`% - or the mud says "You are too
+exhausted to fish right now." - it walks `chores.rest_path`, sleeps, and walks
 back via `chores.fishing_path` when rested.
 
 `chores quest` - runs the royal cook delivery every `chores.quest_period`
@@ -46,20 +46,20 @@ into the main loop (fishing between cooldowns in `both`).
 A second periodic task, the **gravedigger excavation**, runs in `quest`/`both`
 modes once configured (the cook delivery takes priority when both are due):
 travel `chores.grave_path` to Billy (default: instant transmission to gine,
-then pursue him), `say task` — repeated every few seconds until he answers,
-since `pursue` may still be walking —
+then pursue him), `say task` - repeated every few seconds until he answers,
+since `pursue` may still be walking -
 and when he names a plot ("Yer in luck <name>, plot 4 is ready to be
-excavated." — or the nag "I already done told you! I need you to go dig up
+excavated." - or the nag "I already done told you! I need you to go dig up
 burial plot 5!" when the task was already assigned) confirm a shovel with
-`locate shovel` — "a wrought iron burial
+`locate shovel` - "a wrought iron burial
 shovel" means we have one, "No matching items found" buys one from Billy with
-`buy 1` — then walk the matching `chores.grave_plot_<n>` route, `dig`, and
+`buy 1` - then walk the matching `chores.grave_plot_<n>` route, `dig`, and
 return to fishing. Unset `grave_path` disables it with a one-time hint; an
 unmapped plot or a timeout aborts cleanly to fishing. The task also needs
 1 billion base power level (Billy's requirement, read from MSDP BASE_PL before
 travelling) and is skipped with a one-time note below it.
 
-Every quest step has a timeout — if anything unexpected happens the cycle
+Every quest step has a timeout - if anything unexpected happens the cycle
 aborts and the bot returns to fishing rather than idling somewhere odd.
 
 If a cycle ever stalls, `CH feature chores.debug on` traces each step so you
@@ -109,7 +109,7 @@ the fight to you.
 
 ## Development
 
-This is a [muddler](https://github.com/demonnic/muddler) project — run `muddler`
+This is a [muddler](https://github.com/demonnic/muddler) project - run `muddler`
 in this directory to produce `build/Chores.mpackage`.
 
 Before building, two checks catch the common failure modes:

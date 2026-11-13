@@ -20,6 +20,10 @@ for mfile in packages/*/mfile; do
   else
     echo "FAIL  $pkg lint"; echo "$out" | tail -8; status=1
   fi
+  # muddler puts README.md into config.lua's description; some clients can't parse non-ASCII there
+  if bad=$(LC_ALL=C grep -n '[^ -~	]' "$pkg/README.md" 2>/dev/null); then
+    echo "FAIL  $pkg README.md is not plain ASCII (it ends up in config.lua)"; echo "$bad" | head -5; status=1
+  fi
   if ! command -v node >/dev/null 2>&1; then
     echo "SKIP  $pkg simulation (node not installed)"; continue
   fi
