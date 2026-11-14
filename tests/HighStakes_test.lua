@@ -145,15 +145,25 @@ ctx = { hole = C("[KS] [9D]"), board = {}, toCall = 200e6, pot = 300e6, stack = 
 d = hs.decide(ctx); ok(d.command == "cfold", "K9o with 8 big blinds: fold (" .. d.why .. ")")
 ctx.hole = C("[AS] [4D]"); d = hs.decide(ctx); ok(d.command == "craise all", "A4o with 8 big blinds: all in")
 
+-- Heads up against Snuggles (the hand that knocked us out)
+advice, hs.me = {}, "Vorricer"   -- (the logs above were played as Vorrac)
+for l in io.lines("tests/fixtures/highstakes3.log") do feed(l) end
+local function cmd(i) return advice[i] and advice[i].command or "none" end
+for i, a in ipairs(advice) do print("    " .. a.command .. "  (" .. a.why .. ")") end
+ok(cmd(1) == "ccall", "heads up, T4o in the small blind: complete, don't fold half a bet")
+ok(cmd(4):match("^cbet") and hs.short((cmd(4):match("(%d[%d%.]*[mb])") or "0"):upper()) <= 1e9,
+  "top pair on A-Q-10 with three diamonds: a small turn bet, not 2.8B (" .. cmd(4) .. ")")
+ok(cmd(5) == "cfold", "one pair vs an all in raise over our turn bet: fold (" .. (advice[5] and advice[5].why or "?") .. ")")
+
 -- hs go sends the advice; nothing is sent otherwise
 sent = {}
 hs.hand.turn = { toCall = 0, advice = { command = "ccheck", action = "check", why = "test" } }
 hs.command("go"); ok(sent[1] == "ccheck" and #sent == 1, "hs go sends the suggested move")
-hs.onTenSeconds("Vorrac"); ok(#sent == 1, "already moved with hs go: the warning doesn't send it again")
+hs.onTenSeconds("Vorricer"); ok(#sent == 1, "already moved with hs go: the warning doesn't send it again")
 hs.command("auto", "off")
 hs.hand.turn = { toCall = 0, advice = { command = "ccheck", action = "check", why = "test" } }
-hs.onTenSeconds("Vorrac"); ok(#sent == 1, "hs auto off: the warning only shows the advice")
-hs.command("auto", "on"); hs.onTenSeconds("Vorrac"); ok(#sent == 2 and sent[2] == "ccheck", "hs auto on: plays it")
+hs.onTenSeconds("Vorricer"); ok(#sent == 1, "hs auto off: the warning only shows the advice")
+hs.command("auto", "on"); hs.onTenSeconds("Vorricer"); ok(#sent == 2 and sent[2] == "ccheck", "hs auto on: plays it")
 hs.onTenSeconds("Someone"); ok(#sent == 2, "someone else's warning: nothing")
 hs.command("help"); hs.command("players"); hs.command("status"); hs.command("bogus")
 print("\nhs: ALL PASSED")

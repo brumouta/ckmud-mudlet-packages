@@ -13,7 +13,7 @@ HS.sims    = HS.sims or 3000      -- simulated deals per decision (more = steadi
 
 -- ---------------------------------------------------------------- state
 local function newHand()
-  return { hole = nil, board = {}, folded = {}, allin = {}, turn = nil, aggr = {}, called = {} }
+  return { hole = nil, board = {}, folded = {}, allin = {}, turn = nil, aggr = {}, called = {}, raised = {}, shoved = {} }
 end
 HS.hand    = HS.hand or newHand()
 HS.seats   = HS.seats or {}       -- players with chips, from the table display
@@ -428,7 +428,8 @@ function HS.decide(ctx)
     if ctx.toCall <= ctx.bb then
       -- nobody raised yet
       if tier <= 3 then return aggressive(ctx, 3 * ctx.bb, tname .. " " .. class .. ": raise", nil, need) end
-      if ctx.toCall > 0 and ctx.toCall <= ctx.bb / 2 and (tier == 4 or HS.completes(ctx.hole)) then
+      -- heads up the small blind is the button (last to act after the flop): see most flops
+      if ctx.toCall > 0 and ctx.toCall <= ctx.bb / 2 and (tier == 4 or ctx.nOpp == 1 or HS.completes(ctx.hole)) then
         return call(ctx, class .. ": half a bet to see a flop", nil, need)   -- small blind, limped pot
       end
       return passive(ctx, tname .. " " .. class, nil, need)
@@ -460,6 +461,13 @@ function HS.decide(ctx)
   if ctx.toCall == 0 then
     local valueBet = math.max(0.45, math.min(0.65, 1.6 / (ctx.nOpp + 1)))
     if eq >= valueBet then
+      -- one pair bets small, more so on the turn and river: a big bet only gets called (or
+      -- raised) by what beats it, and a raise would leave a choice for the whole stack
+      if mine <= 3 then
+        local size = #ctx.board == 3 and ctx.pot / 2 or ctx.pot / 3
+        size = math.min(size, ctx.stack * 0.15)
+        return aggressive(ctx, math.floor(size), made .. ": small bet for value", eq, need)
+      end
       return aggressive(ctx, math.floor(ctx.pot * 2 / 3), made .. ": bet for value", eq, need)
     end
     return passive(ctx, made .. ": check", eq, need)
@@ -543,6 +551,8 @@ function HS.onPlay(name, verb, rest)
   if #HS.hand.board >= 3 then                      -- after the flop: how they're playing this board
     if verb == "bets" or verb == "raises" then HS.hand.aggr[name] = (HS.hand.aggr[name] or 0) + 1 end
     if verb == "calls" then HS.hand.called[name] = true end
+    if verb == "raises" then HS.hand.raised[name] = true end
+    if rest and rest:find("all in", 1, true) and verb ~= "calls" then HS.hand.shoved[name] = true end
   end
   if rest and rest:find("all in", 1, true) then
     HS.hand.allin[name] = true
@@ -605,9 +615,13 @@ function HS.opponents() return math.max(1, #HS.opponentNames()) end
 -- What a player must hold, on the HS.strength scale, given how they've bet after the flop:
 -- called a bet = a pair or a draw, bet or raised once = the same, twice = top pair, three
 -- times or more (bet, bet, raise...) = two pair or better
+-- A raise over a bet says more than a bet: top pair at least, and a raise or bet that puts
+-- them all in after the flop is two pair or better (a big shove is rarely a bluff).
 function HS.minStrength(name)
-  local a = HS.hand.aggr[name] or 0
-  if a >= 3 then return 4 end
+  local h = HS.hand
+  local a = h.aggr[name] or 0
+  if a >= 3 or (h.shoved and h.shoved[name]) then return 4 end
+  if h.raised and h.raised[name] then return 3 end
   if a == 2 then return 3 end
   if a == 1 or HS.hand.called[name] then return 1 end
   return 0
