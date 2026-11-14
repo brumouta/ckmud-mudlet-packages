@@ -93,6 +93,7 @@ ok(advice[3] and advice[3].command == "ccall",
 print("    22 facing Cicada's 9.2B all in:                           " .. a(4))
 ok(advice[4] and advice[4].command == "cfold", "22 against an all in: fold")
 ok(LOG:find("<red>CFOLD") or LOG:find("<red>FOLD"), "the ten seconds warning repeats the advice in red")
+ok(sent[#sent] == "cfold" and LOG:find("Ten seconds left: playing cfold", 1, true), "and plays it")
 print("    72o on the button facing the big blind:                   " .. a(5))
 ok(advice[5] and advice[5].command == "cfold", "7-2 offsuit: fold")
 print("    J8o in the big blind facing a raise:                      " .. a(6))
@@ -148,5 +149,11 @@ ctx.hole = C("[AS] [4D]"); d = hs.decide(ctx); ok(d.command == "craise all", "A4
 sent = {}
 hs.hand.turn = { toCall = 0, advice = { command = "ccheck", action = "check", why = "test" } }
 hs.command("go"); ok(sent[1] == "ccheck" and #sent == 1, "hs go sends the suggested move")
+hs.onTenSeconds("Vorrac"); ok(#sent == 1, "already moved with hs go: the warning doesn't send it again")
+hs.command("auto", "off")
+hs.hand.turn = { toCall = 0, advice = { command = "ccheck", action = "check", why = "test" } }
+hs.onTenSeconds("Vorrac"); ok(#sent == 1, "hs auto off: the warning only shows the advice")
+hs.command("auto", "on"); hs.onTenSeconds("Vorrac"); ok(#sent == 2 and sent[2] == "ccheck", "hs auto on: plays it")
+hs.onTenSeconds("Someone"); ok(#sent == 2, "someone else's warning: nothing")
 hs.command("help"); hs.command("players"); hs.command("status"); hs.command("bogus")
 print("\nhs: ALL PASSED")

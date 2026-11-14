@@ -1,6 +1,6 @@
 {
   "name": "Casino",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "title": "Lucky Monkey Casino",
   "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp), slots (slot) and the High Stakes tournament (hs). Type `casino` for the list.",
   "author": "Bruno Mouta",

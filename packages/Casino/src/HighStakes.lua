@@ -1,13 +1,14 @@
 -- High Stakes tournament advisor (no limit Texas Hold'em). Type `hs help` for commands.
 --
 -- On your turn it shows your hand, your chance to win against the players still in,
--- the pot odds and a tight-aggressive suggestion. `hs go` sends the suggestion: it
--- never acts on its own.
+-- the pot odds and a tight-aggressive suggestion. `hs go` sends the suggestion; if the
+-- dealer warns "ten seconds" before you've moved, it sends it for you (`hs auto off` to stop that).
 hs = hs or {}
 local HS = hs
 
 -- ---------------------------------------------------------------- settings
 HS.enabled = (HS.enabled == nil) and true or HS.enabled   -- show advice on your turn
+HS.autoGo  = (HS.autoGo == nil) and true or HS.autoGo    -- play the suggestion at the ten seconds warning
 HS.sims    = HS.sims or 3000      -- simulated deals per decision (more = steadier %, slower)
 
 -- ---------------------------------------------------------------- state
@@ -675,8 +676,18 @@ function HS.show(urgent)
 end
 
 -- "The High Stakes Dealer says, 'Vorricer, ten seconds.'"
+-- Shows the advice in red and, with hs auto on, plays it so the turn isn't lost.
 function HS.onTenSeconds(name)
-  if isMe(name) and HS.hand.turn and HS.hand.turn.advice then HS.show(true) end
+  local t = HS.hand.turn
+  if not (isMe(name) and t) then return end
+  if not t.advice and HS.hand.hole then HS.advise() end   -- (advice off: work it out now)
+  if not t.advice then return end
+  HS.show(true)
+  if HS.autoGo and not t.sent then
+    t.sent = true
+    info("red", "Ten seconds left: playing " .. t.advice.command)
+    send(t.advice.command)
+  end
 end
 
 -- ---------------------------------------------------------------- `hs` alias
@@ -684,6 +695,7 @@ HS.HELP = {
   { "hs",              "Show the advice for this turn again" },
   { "hs go",           "Send the suggested move (ccall, craise 450m, cfold...)" },
   { "hs on|off",       "Show advice on your turns (default on)" },
+  { "hs auto on|off",  "At the dealer's ten seconds warning, play the suggestion for you (default on)" },
   { "hs sims <n>",     "Simulated deals per decision (default 3000; fewer is faster)" },
   { "hs players",      "How often each player went all in, and what they showed" },
   { "hs status",       "Hands seen and pots won" },
@@ -697,11 +709,15 @@ function HS.command(cmd, arg)
   elseif cmd == "help" then
     cecho("\n<cyan>High Stakes advisor (hs) commands:\n")
     for _, row in ipairs(HS.HELP) do cecho(string.format("  <yellow>%-16s<white>%s\n", row[1], row[2])) end
-    cecho("  <white>It never acts by itself: only <yellow>hs go<white> sends a move.\n")
+    cecho("  <white>It only moves by itself at the ten seconds warning (<yellow>hs auto off<white> to stop that).\n")
   elseif cmd == "go" then
     local t = HS.hand.turn
     if not (t and t.advice) then return info("yellow", "No move to send - it isn't your turn") end
+    t.sent = true
     send(t.advice.command)
+  elseif cmd == "auto" and (arg == "on" or arg == "off") then
+    HS.autoGo = arg == "on"
+    info("white", "Auto play at ten seconds " .. arg)
   elseif cmd == "on" or cmd == "off" then
     HS.enabled = cmd == "on"
     info("white", "Advice " .. cmd)

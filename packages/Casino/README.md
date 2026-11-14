@@ -151,7 +151,7 @@ Slots have no strategy, and the house wins on average. Lucky Tails (full lines o
 
 Command: `hs`
 
-Advice for the Friday **High Stakes** no limit hold'em tournament. On your turn it shows your hand, your chance to win against the players still in, the pot odds, and a tight-aggressive suggestion. **It never acts by itself**: `hs go` sends the suggestion when you agree with it.
+Advice for the Friday **High Stakes** no limit hold'em tournament. On your turn it shows your hand, your chance to win against the players still in, the pot odds, and a tight-aggressive suggestion. `hs go` sends the suggestion when you agree with it. If the dealer warns "ten seconds" and you haven't moved, it plays the suggestion for you so the turn isn't lost (`hs auto off` turns that off).
 
 ```
 [hs] KS AC  on  AD 10H 9H 6S AH
@@ -159,7 +159,7 @@ Advice for the Friday **High Stakes** no limit hold'em tournament. On your turn 
      RAISE  Three of a Kind: well ahead, raise   (hs go: craise)
 ```
 
-With ten seconds left, the dealer's warning repeats the advice in red.
+With ten seconds left, the dealer's warning repeats the advice in red and plays it (unless `hs auto off`).
 
 Tip: bind a key to `hs go` (Toolbox → Keys) so playing the suggestion is one keystroke.
 
@@ -168,6 +168,7 @@ Tip: bind a key to `hs go` (Toolbox → Keys) so playing the suggestion is one k
 | Command | Effect |
 |---|---|
 | `hs` | Show this turn's advice again |
+| `hs auto on\|off` | Play the suggestion by itself at the dealer's ten seconds warning (default on) |
 | `hs go` | Send the suggested move (`ccall`, `craise 450m`, `cbet all`, `cfold`...) |
 | `hs on` / `hs off` | Show advice on your turns (default on) |
 | `hs sims <n>` | Simulated deals per decision (default 3000) |
