@@ -21,7 +21,7 @@ FQ.HINTS = {
   cuicui   = "Walking to Cui Cui (Cui Cui can't be sensed): from the Hatch, `fq go` walks there.",
   engine   = "Walking to the Engine Hatch (from Frieza's room, or `fq go` in the Gangway by the Elite Quarters).",
   steering = "Heading to the Steering Module.",
-  revenge  = "Go to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north), then `fq go`.",
+  revenge  = "Walking to the Rejuvenation Chamber (from the Steering Hatch; elsewhere: Starboard, the room with North/South - Rejuvenation Chamber, then north).",
   comms    = "Heading to the Communications Module.",
   power    = "Heading to the Power Module.",
   comms2   = "Heading back to the Communications Officer.",
@@ -264,6 +264,16 @@ FQ.TO_ENGINE = { "n", "n", "n", "n",                      -- Gangway up to Forwa
                  "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", -- Passageways
                  "w", "s", "w", "n", "n", "n", "w" }      -- Starboard, Engine Module, Engine Hatch
 
+-- Steering Hatch -> Rejuvenation Chamber: up the Steering Module to the Port, across the
+-- Forward rooms, round to the Starboard side, 7 south to the Airbridge crossing, east, north.
+FQ.TO_REJUV = { "w", "n", "n", "n", "n",
+                "e", "n", "e", "e", "e", "e", "s", "e", "s", "e", "s", "e",
+                "s", "s", "s", "s", "s", "s", "s", "e", "n" }
+-- Dodoria's Personal Room (north of the west Elite Quarters) -> Rejuvenation Chamber
+FQ.DODORIA_TO_REJUV = { "s", "e", "n", "n", "n", "n",
+                        "e", "e", "s", "e", "s", "e", "s", "e",
+                        "s", "s", "s", "s", "s", "s", "s", "e", "n" }
+
 -- A walk that waits for each room before the next move, so a card spotted on the way
 -- can be picked up in its room
 function FQ.walkSteps(route)
@@ -375,7 +385,7 @@ end
 function FQ.steeringDone()
   if not on("steering") then return end
   FQ.setStage("revenge")
-  FQ.pursue("dying")
+  FQ.run(FQ.walkSteps(FQ.TO_REJUV))     -- the dying man can't be pursued from here
 end
 
 function FQ.dyingMan()
@@ -391,7 +401,11 @@ function FQ.dodoriaHere()
 end
 
 function FQ.dodoriaDead()
-  if on("revenge") then tempTimer(1, function() FQ.pursue("dying") end) end
+  if not on("revenge") then return end
+  tempTimer(1, function()
+    if FQ.roomName == "Dodoria's Personal Room" then FQ.run(FQ.walkSteps(FQ.DODORIA_TO_REJUV))
+    else FQ.pursue("dying") end
+  end)
 end
 
 function FQ.avenged()
@@ -492,7 +506,10 @@ function FQ.go()
       FQ.run(FQ.walkSteps(FQ.TO_ENGINE))
     else info("yellow", "Go to the Gangway between the Elite Quarters and `fq go` again") end
   elseif s == "steering" then FQ.pursue("steering")
-  elseif s == "revenge" then FQ.pursue("dying")
+  elseif s == "revenge" then
+    if FQ.roomName == "Steering Hatch" then FQ.run(FQ.walkSteps(FQ.TO_REJUV))
+    elseif FQ.roomName == "Dodoria's Personal Room" then FQ.run(FQ.walkSteps(FQ.DODORIA_TO_REJUV))
+    else FQ.pursue("dying") end
   elseif s == "comms" or s == "comms2" then FQ.pursue("communications")
   elseif s == "power" then FQ.pursue("power")
   else info("white", FQ.HINTS[s] or "") end
