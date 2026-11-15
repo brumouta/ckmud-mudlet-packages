@@ -32,7 +32,7 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 |---|---|
 | appule | Kill Appule (north or south Airlock), `get caps`, walk to the Entrance and through the hatch |
 | cuicui | Kill Cui Cui, read the door code, open Frieza's room, take and wear the armor |
-| engine | Open the Engine Hatch (all four hatch passwords), search the five lower rooms for the card, hand it over, wear the uniform |
+| engine | Open the Engine Hatch (all four hatch passwords), search the five lower rooms for the card, hand it over (by its `locate` number), wear the uniform the same way |
 | steering | `pursue steering`, open the hatch, `repair`, collect the card |
 | revenge | Walk to the dying man, `say revenge`, `pursue dodoria` and kill him, walk back |
 | comms / power / comms2 | Deliver the note, power the ship via the Electrical Engineer, deliver the crumpled note |

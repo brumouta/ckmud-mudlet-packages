@@ -73,7 +73,10 @@ fq.room("Port"); fq.command("run"); expect("")
 fq.gotPassword("6373"); fq.cuiDead(); wait(1)
 expect("n | e | e | enter 6373")
 feed("Vorrac enters a code into the computer."); expect("")
-wait(2); expect("n | get all locker | wear battle | s | w | n")
+wait(2); expect("n | get all locker | locate battle")
+feed("Your scouter scans your inventory for 'battle'...\n" .. SEP .. "\n#1. Paragus' Battle Acumen (Tier 10) [Set]\n" ..
+     "#2. Frieza's Battle Armor\n" .. SEP .. "\nTotal items displayed: 2")
+expect("wear 2.battle | s | w | n")
 -- then the walk to the Engine Hatch: one move per room
 feed("Obvious exits:"); wait(0.5); expect("n")
 -- the card lying in a room on the way: search and pick it up there, then walk on
@@ -100,7 +103,9 @@ expect("get card | n | " .. PW)
 feed(OPEN); expect("u")
 fq.engineHatch(); expect("")       -- repeated room line ignored
 fq.engineerWantsCard(); locateCards(); expect("locate card | give 3.card engineer")
-fq.gotUniform(); expect("wear engineer | pursue steering")
+fq.gotUniform(); expect("locate uniform")
+feed("Your scouter scans your inventory for 'uniform'...\n" .. SEP .. "\n#1. An Engineer's Uniform\n" .. SEP .. "\nTotal items displayed: 1")
+expect("wear 1.uniform | pursue steering")
 -- Steering: no clan, straight down
 fq.arrived("Steering Specialist"); expect("s | e")
 fq.technicianAsks(); expect(PW)

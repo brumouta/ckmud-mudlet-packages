@@ -69,6 +69,10 @@ local function nextStep()
     step.fn()
     return nextStep()
   end
+  if step.use then   -- { use = { keyword, item name, command } }: locate, act on it by number, then go on
+    local u = step.use
+    return FQ.useFromLocate(u[1], u[2], u[3], function() nextStep() end)
+  end
   if step.delay then
     runner.timer = tempTimer(step.delay, function() runner.timer = nil; nextStep() end)
     return
@@ -305,9 +309,10 @@ function FQ.cuiDead()
   if not on("cuicui") then return end
   if not FQ.password then return info("yellow", "Didn't catch the door code - type `fq code <number>` then `fq go`") end
   tempTimer(1, function()
-    -- the door takes a moment to open after the code; "wear frie" would pick Frieza's Gold earring
+    -- the door takes a moment to open after the code; wear the armor by its `locate` number
     FQ.run(concat({ "n", "e", "e", "enter " .. FQ.password, { wait = "enters a code into the computer", timeout = 10 },
-                    { delay = 2 }, "n", "get all locker", "wear battle", "s", "w" }, FQ.walkSteps(FQ.TO_ENGINE)))
+                    { delay = 2 }, "n", "get all locker", { use = { "battle", "Frieza's Battle Armor", "wear %s" } },
+                    "s", "w" }, FQ.walkSteps(FQ.TO_ENGINE)))
     FQ.setStage("engine")
   end)
 end
@@ -341,18 +346,22 @@ end
 
 function FQ.gotCard() if on("engine") then FQ.haveCard = true end end
 
--- `locate <keyword>`, then give the item by its number in that list ("give 3.card engineer"):
--- a plain "give card" can pick another card first (casino cards in a gear set ask to confirm)
-function FQ.giveFromLocate(keyword, itemName, target)
-  local trigs, timer, num = {}, nil, nil
+-- `locate <keyword>`, then act on the item by its number in that list ("give 3.card engineer",
+-- "wear 2.battle"): a plain keyword can pick the wrong item ("wear battle" floated Paragus'
+-- Battle Acumen; "give card" can pick a casino card). cmd is e.g. "give %s engineer" or "wear %s".
+function FQ.useFromLocate(keyword, itemName, cmd, done)
+  local trigs, timer, num, finished = {}, nil, nil, false
   local function finish()
+    if finished then return end
+    finished = true
     for _, id in ipairs(trigs) do killTrigger(id) end
     killTimer(timer)
-    if num then send("give " .. num .. "." .. keyword .. " " .. target)
-    else info("yellow", "Couldn't find " .. itemName .. " with `locate " .. keyword .. "` - give it by hand") end
+    if num then send(string.format(cmd, num .. "." .. keyword))
+    else info("yellow", "Couldn't find " .. itemName .. " with `locate " .. keyword .. "` - do it by hand") end
+    if done then done() end
   end
   trigs[1] = tempRegexTrigger([[^#(\d+)\. (.+)$]], function()
-    if not num and matches[3] == itemName then num = matches[2] end
+    if not num and matches[3]:sub(1, #itemName) == itemName then num = matches[2] end
   end)
   trigs[2] = tempTrigger("Total items displayed:", finish)
   timer = tempTimer(5, finish)
@@ -360,15 +369,14 @@ function FQ.giveFromLocate(keyword, itemName, target)
 end
 
 function FQ.engineerWantsCard()
-  if on("engine") then FQ.giveFromLocate("card", "Engine Module Access Card", "engineer") end
+  if on("engine") then FQ.useFromLocate("card", "Engine Module Access Card", "give %s engineer") end
 end
 
 function FQ.gotUniform()
   if not on("engine") then return end
   FQ.haveCard = false
-  send("wear engineer")
   FQ.setStage("steering")
-  FQ.pursue("steering")
+  FQ.useFromLocate("uniform", "An Engineer's Uniform", "wear %s", function() FQ.pursue("steering") end)
 end
 
 -- Steering Hatch: "We have an emergency! Are you the engineer we called for?"
