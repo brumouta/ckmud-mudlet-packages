@@ -496,6 +496,14 @@ function FQ.powerDone()
   FQ.run(concat("w", "s", FQ.hatch("u"), { { fn = function() FQ.pursue("communications") end } }))
 end
 
+-- "Communications Officer sends out an alert to make Zarbon aware of the situation."
+-- Zarbon is in the room to the west: step in a second later and he starts the interrogation
+function FQ.zarbonAlerted()
+  if not on("comms2") then return end
+  FQ.setStage("zarbon")
+  FQ.run({ { delay = 1 }, "w" })
+end
+
 function FQ.zarbonAsks()
   if not FQ.active then return end
   if FQ.stage == "comms2" then FQ.setStage("zarbon") end
@@ -572,6 +580,8 @@ function FQ.go()
     else info("yellow", "Walk to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north) - from the Steering Hatch or Dodoria's room, `fq go` walks there") end
   elseif s == "comms" or s == "comms2" then FQ.pursue("communications")
   elseif s == "power" then FQ.pursue("power")
+  elseif s == "zarbon" and (FQ.exits.West or ""):find("Communications Module", 1, true) and not FQ.exits.North then
+    send("w")                                 -- from the Officer's room to Zarbon
   else info("white", FQ.HINTS[s] or "") end
 end
 

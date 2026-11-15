@@ -36,7 +36,7 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 | steering | `pursue steering`, open the hatch, `repair`, collect the card |
 | revenge | Walk to the dying man, `say revenge`, wait 5s for Dodoria to spawn, `pursue dodoria` (retried every 5s for a minute) and kill him, walk back |
 | comms / power / comms2 | Deliver the note, power the ship via the Electrical Engineer, deliver the crumpled note |
-| zarbon | `say surrender` for each card, kill Zarbon, go down to Taiko |
+| zarbon | Step west to Zarbon a second after the Officer alerts him, `say surrender` for each card, kill Zarbon, go down to Taiko |
 
 ## Walking
 
