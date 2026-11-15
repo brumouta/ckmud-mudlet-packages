@@ -4,7 +4,7 @@ local FQ = fq
 
 -- ---------------------------------------------------------------- settings
 FQ.attack    = FQ.attack or "ss"                 -- attack used on the bosses
-FQ.giveCard  = FQ.giveCard or "give 2.card eng"  -- hands the Engine card to the Engineer
+FQ.giveCard  = "give engine engineer"            -- hands the Engine card to the Engineer ("card" can hit casino cards)
 FQ.passwords = { "dief", "epikoin", "kinitiras", "exousia" }  -- one of these opens each hatch
 
 -- Items the quest uses up: { keyword for `locate`, item name, stage that consumes it }
@@ -20,9 +20,9 @@ FQ.STAGES = { "appule", "cuicui", "engine", "steering", "revenge", "comms", "pow
 FQ.HINTS = {
   appule   = "Go to the Airlock with Appule (north or south of the Entrance to Frieza's Spaceship).",
   cuicui   = "Walking to Cui Cui (Cui Cui can't be sensed): from the Hatch, `fq go` walks there.",
-  engine   = "Walk to the Engine Hatch (Starboard -> north into the Engine Module, follow it to the room with West - Engine Hatch).",
+  engine   = "Walking to the Engine Hatch (from Frieza's room, or `fq go` in the Gangway by the Elite Quarters).",
   steering = "Heading to the Steering Module.",
-  revenge  = "Go to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north).",
+  revenge  = "Go to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north), then `fq go`.",
   comms    = "Heading to the Communications Module.",
   power    = "Heading to the Power Module.",
   comms2   = "Heading back to the Communications Officer.",
@@ -231,6 +231,7 @@ function FQ.arrived(who)
   -- revenge: tracked Dodoria or the dying man, the room triggers take it from there
 end
 
+-- "No one is around by that name." - same as no ki: say where to walk
 function FQ.noKi()
   if not FQ.active or not FQ.pursuing then return end
   info("yellow", "Can't pursue " .. FQ.pursuing .. " from here. " .. (FQ.HINTS[FQ.stage] or ""))
@@ -257,6 +258,25 @@ FQ.TO_CUI = { "n", "n", "n", "n", "n", "n", "n",   -- Passageway up to the Port
               "e", "n", "e", "n", "e", "n", "e", "e", -- Port, Forward, to the room above the Gangway
               "s", "s", "s", "s", "w", "s" }          -- Gangway, Elite Quarters, Cui Cui
 
+-- Gangway (between the two Elite Quarters) -> Engine Hatch: up to the Forward rooms,
+-- round the starboard side, all the way down the Passageways, into the Engine Module.
+FQ.TO_ENGINE = { "n", "n", "n", "n",                      -- Gangway up to Forward
+                 "e", "e", "s", "e", "s", "e", "s", "e",  -- Forward, Starboard
+                 "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", -- Passageways
+                 "w", "s", "w", "n", "n", "n", "w" }      -- Starboard, Engine Module, Engine Hatch
+
+-- A walk that waits for each room before the next move, so a card spotted on the way
+-- can be picked up in its room
+function FQ.walkSteps(route)
+  local steps = {}
+  for _, dir in ipairs(route) do
+    steps[#steps + 1] = dir
+    steps[#steps + 1] = { wait = "Obvious exits:", timeout = 15 }
+    steps[#steps + 1] = { delay = 0.5 }             -- the room's items come after the exits
+  end
+  return steps
+end
+
 function FQ.sealReleased()
   if not on("appule") then return end
   FQ.setStage("cuicui")
@@ -277,8 +297,8 @@ function FQ.cuiDead()
   if not FQ.password then return info("yellow", "Didn't catch the door code - type `fq code <number>` then `fq go`") end
   tempTimer(1, function()
     -- the door takes a moment to open after the code; "wear frie" would pick Frieza's Gold earring
-    FQ.run({ "n", "e", "e", "enter " .. FQ.password, { wait = "enters a code into the computer", timeout = 10 },
-             { delay = 2 }, "n", "get all locker", "wear battle", "s" })
+    FQ.run(concat({ "n", "e", "e", "enter " .. FQ.password, { wait = "enters a code into the computer", timeout = 10 },
+                    { delay = 2 }, "n", "get all locker", "wear battle", "s", "w" }, FQ.walkSteps(FQ.TO_ENGINE)))
     FQ.setStage("engine")
   end)
 end
@@ -292,7 +312,7 @@ end
 
 -- Engine Hatch: "An Engineer is rummaging around frantically in search of something."
 function FQ.engineHatch()
-  if not on("engine") or FQ.leg then return end
+  if not on("engine") or FQ.leg or FQ.haveCard then return end   -- with the card, the Engineer asks for it
   FQ.leg = "engine"
   FQ.run(concat(FQ.hatch("d"), { { fn = function()
     FQ.searchForCard(function(back)
@@ -301,12 +321,24 @@ function FQ.engineHatch()
   end } }))
 end
 
+-- "Engine Module Access Card was carelessly left here. (hidden)": it isn't always downstairs
+function FQ.cardSpotted()
+  if not on("engine") or FQ.haveCard then return end
+  info("green", "The Engine card is in this room")
+  local steps = { "search", { wait = "managed to uncover Engine Module Access Card", timeout = 10 }, "get card" }
+  for i = #steps, 1, -1 do table.insert(runner.queue, 1, steps[i]) end   -- before the next move
+  if not runner.trig and not runner.timer then nextStep() end           -- (not walking: do it now)
+end
+
+function FQ.gotCard() if on("engine") then FQ.haveCard = true end end
+
 function FQ.engineerWantsCard()
   if on("engine") then send(FQ.giveCard) end
 end
 
 function FQ.gotUniform()
   if not on("engine") then return end
+  FQ.haveCard = false
   send("wear engineer")
   FQ.setStage("steering")
   FQ.pursue("steering")
@@ -439,7 +471,9 @@ function FQ.go()
     -- the passwords only work at the Engine Hatch (where the Engineer rummages around)
     if FQ.roomName == "Engine Hatch" then FQ.engineHatch()
     elseif (FQ.exits.West or ""):find("Engine Hatch", 1, true) then send("w")
-    else info("yellow", FQ.HINTS.engine) end
+    elseif FQ.roomName == "Gangway" and (FQ.exits.West or ""):find("Elite Quarters", 1, true) then
+      FQ.run(FQ.walkSteps(FQ.TO_ENGINE))
+    else info("yellow", "Go to the Gangway between the Elite Quarters and `fq go` again") end
   elseif s == "steering" then FQ.pursue("steering")
   elseif s == "revenge" then FQ.pursue("dying")
   elseif s == "comms" or s == "comms2" then FQ.pursue("communications")

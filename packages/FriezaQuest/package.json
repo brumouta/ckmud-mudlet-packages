@@ -1,6 +1,6 @@
 {
   "name": "FriezaQuest",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "title": "Frieza's Spaceship quest helper",
   "description": "Automates the Frieza's Spaceship quest from Appule to the Bridge Access Card. Type `fq help` for commands.",
   "author": "Bruno Mouta",
@@ -68,6 +68,16 @@
             {
               "type": "substring",
               "pattern": "You sense no ki."
+            }
+          ],
+          "script": "fq.noKi()"
+        },
+        {
+          "name": "fq Nobody by that name",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "No one is around by that name."
             }
           ],
           "script": "fq.noKi()"
@@ -151,6 +161,26 @@
             }
           ],
           "script": "fq.engineHatch()"
+        },
+        {
+          "name": "fq Card spotted",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Engine Module Access Card was carelessly left here"
+            }
+          ],
+          "script": "fq.cardSpotted()"
+        },
+        {
+          "name": "fq Got card",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "You get Engine Module Access Card"
+            }
+          ],
+          "script": "fq.gotCard()"
         },
         {
           "name": "fq Engineer card",

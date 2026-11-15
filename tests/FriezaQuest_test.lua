@@ -67,9 +67,22 @@ fq.room("Port"); fq.command("run"); expect("")
 fq.gotPassword("6373"); fq.cuiDead(); wait(1)
 expect("n | e | e | enter 6373")
 feed("Vorrac enters a code into the computer."); expect("")
-wait(2); expect("n | get all locker | wear battle | s")
+wait(2); expect("n | get all locker | wear battle | s | w | n")
+-- then the walk to the Engine Hatch: one move per room
+feed("Obvious exits:"); wait(0.5); expect("n")
+-- the card lying in a room on the way: search and pick it up there, then walk on
+feed("Obvious exits:"); feed("Engine Module Access Card was carelessly left here. (hidden)"); fq.cardSpotted()
+wait(0.5); expect("search")
+feed("After searching around you managed to uncover Engine Module Access Card!"); expect("get card | n")
+fq.gotCard(); assert(fq.haveCard)
+for _ = 1, 40 do feed("Obvious exits:"); wait(0.5) end
+expect(table.concat(fq.TO_ENGINE, " | ", 4))
+fq.engineHatch(); expect("")               -- already holding the card: no trip downstairs
+fq.engineerWantsCard(); expect("give engine engineer")
+fq.haveCard = false; fq.cancel()
 -- engine: fq go away from the Engine Hatch doesn't shout the passwords
-fq.room("Gangway"); fq.command("go"); expect("")
+fq.room("Port"); fq.command("go"); expect("")
+fq.room("Gangway"); fq.exit("West", "Frieza's Spaceship: Elite Quarters"); fq.command("go"); expect("n"); fq.cancel()
 fq.room("Engine Module"); fq.exit("West", "Frieza's Spaceship: Engine Hatch"); fq.command("go"); expect("w")
 fq.leg = nil
 -- Engine search
@@ -80,7 +93,7 @@ feed("After searching around you managed to uncover Engine Module Access Card!")
 expect("get card | n | " .. PW)
 feed(OPEN); expect("u")
 fq.engineHatch(); expect("")       -- repeated room line ignored
-fq.engineerWantsCard(); expect("give 2.card eng")
+fq.engineerWantsCard(); expect("give engine engineer")
 fq.gotUniform(); expect("wear engineer | pursue steering")
 -- Steering: no clan, straight down
 fq.arrived("Steering Specialist"); expect("s | e")

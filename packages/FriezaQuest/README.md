@@ -40,9 +40,9 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 
 ## Done by hand
 
-- Walking to the Engine Hatch. `fq go` there (or one room east of it) runs the hatch.
-
 Cui Cui can't be sensed, so the helper walks there from the Hatch (7 north, then up the Port and Forward rooms, 4 south down the Gangway, west, south). If you're somewhere else, walk to the Hatch and `fq go`.
+
+After Frieza's room it walks on to the Engine Hatch the same way (from the Gangway between the Elite Quarters, `fq go` starts that walk too). The Engine card isn't always downstairs: if a room on the way shows "Engine Module Access Card was carelessly left here", it searches and picks it up there, and the Engineer takes it as soon as you arrive.
 
 If you have a trigger that answers "The ... seems to be closed." with `unl`/`open`/move, turn it off while doing the quest: it repeats the last command *you* typed, not the move the helper sent, and walks you the wrong way.
 - The Rejuvenation Chamber, if `pursue dying` doesn't track the dying man.
