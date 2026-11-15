@@ -4,7 +4,8 @@ function send(c) sent[#sent + 1] = c end
 function cecho(s) LOG = (LOG or "") .. s end
 function tempTrigger(t, f, n) id = id + 1; temps[id] = { t = t, f = f, n = n }; return id end
 function tempRegexTrigger(p, f, n)
-  local map = { ["^o-+o$"] = "^o%-+o$", ["^After searching around you managed to uncover (.+)!$"] = "^After searching around you managed to uncover (.+)!$" }
+  local map = { ["^o-+o$"] = "^o%-+o$", ["^After searching around you managed to uncover (.+)!$"] = "^After searching around you managed to uncover (.+)!$",
+               ["^#(\\d+)\\. (.+)$"] = "^#(%d+)%. (.+)$" }
   id = id + 1; temps[id] = { p = assert(map[p], p), f = f, n = n }; return id
 end
 function killTrigger(i) if i then temps[i] = nil end end
@@ -18,7 +19,8 @@ local function feed(text)
       if t then
         local hit = t.t and l:find(t.t, 1, true) or (t.p and l:match(t.p))
         if hit then
-          matches = { l, t.p and l:match(t.p) or nil }
+          matches = { l }
+          if t.p then for _, c in ipairs({ l:match(t.p) }) do matches[#matches + 1] = c end end
           if t.n then t.n = t.n - 1; if t.n <= 0 then temps[i] = nil end end
           t.f()
         end
@@ -37,6 +39,10 @@ local SEP = "o------------------------------------------------------------o"
 local function locate(kw, item)
   feed("Your scouter scans your inventory for '" .. kw .. "'...\n" .. SEP .. "\n" ..
        (item or "No matching items found in your inventory.") .. "\n" .. SEP)
+end
+local function locateCards()
+  feed("Your scouter scans your inventory for 'card'...\n" .. SEP .. "\n#1. the Lucky Monkey Card Gloves (Tier 10) [Set] [Gear 5]\n" ..
+       "#2. a Lucky M(*)nkey Casino VIP Card (Tier 6) [Gear 5]\n#3. Engine Module Access Card\n" .. SEP .. "\nTotal items displayed: 3")
 end
 local PW = "say dief | say epikoin | say kinitiras | say exousia"
 local OPEN = "With the voice pattern confirmed, the hatch swings open."
@@ -78,7 +84,7 @@ fq.gotCard(); assert(fq.haveCard)
 for _ = 1, 40 do feed("Obvious exits:"); wait(0.5) end
 expect(table.concat(fq.TO_ENGINE, " | ", 4))
 fq.engineHatch(); expect("")               -- already holding the card: no trip downstairs
-fq.engineerWantsCard(); expect("give engine engineer")
+fq.engineerWantsCard(); expect("locate card"); locateCards(); expect("give 3.card engineer")
 fq.haveCard = false; fq.cancel()
 -- engine: fq go away from the Engine Hatch doesn't shout the passwords
 fq.room("Port"); fq.command("go"); expect("")
@@ -93,7 +99,7 @@ feed("After searching around you managed to uncover Engine Module Access Card!")
 expect("get card | n | " .. PW)
 feed(OPEN); expect("u")
 fq.engineHatch(); expect("")       -- repeated room line ignored
-fq.engineerWantsCard(); expect("give engine engineer")
+fq.engineerWantsCard(); locateCards(); expect("locate card | give 3.card engineer")
 fq.gotUniform(); expect("wear engineer | pursue steering")
 -- Steering: no clan, straight down
 fq.arrived("Steering Specialist"); expect("s | e")

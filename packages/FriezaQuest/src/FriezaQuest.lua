@@ -4,7 +4,6 @@ local FQ = fq
 
 -- ---------------------------------------------------------------- settings
 FQ.attack    = FQ.attack or "ss"                 -- attack used on the bosses
-FQ.giveCard  = "give engine engineer"            -- hands the Engine card to the Engineer ("card" can hit casino cards)
 FQ.passwords = { "dief", "epikoin", "kinitiras", "exousia" }  -- one of these opens each hatch
 
 -- Items the quest uses up: { keyword for `locate`, item name, stage that consumes it }
@@ -332,8 +331,26 @@ end
 
 function FQ.gotCard() if on("engine") then FQ.haveCard = true end end
 
+-- `locate <keyword>`, then give the item by its number in that list ("give 3.card engineer"):
+-- a plain "give card" can pick another card first (casino cards in a gear set ask to confirm)
+function FQ.giveFromLocate(keyword, itemName, target)
+  local trigs, timer, num = {}, nil, nil
+  local function finish()
+    for _, id in ipairs(trigs) do killTrigger(id) end
+    killTimer(timer)
+    if num then send("give " .. num .. "." .. keyword .. " " .. target)
+    else info("yellow", "Couldn't find " .. itemName .. " with `locate " .. keyword .. "` - give it by hand") end
+  end
+  trigs[1] = tempRegexTrigger([[^#(\d+)\. (.+)$]], function()
+    if not num and matches[3] == itemName then num = matches[2] end
+  end)
+  trigs[2] = tempTrigger("Total items displayed:", finish)
+  timer = tempTimer(5, finish)
+  send("locate " .. keyword)
+end
+
 function FQ.engineerWantsCard()
-  if on("engine") then send(FQ.giveCard) end
+  if on("engine") then FQ.giveFromLocate("card", "Engine Module Access Card", "engineer") end
 end
 
 function FQ.gotUniform()
