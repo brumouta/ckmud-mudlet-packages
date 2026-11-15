@@ -1,6 +1,6 @@
 {
   "name": "FriezaQuest",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "title": "Frieza's Spaceship quest helper",
   "description": "Automates the Frieza's Spaceship quest from Appule to the Bridge Access Card. Type `fq help` for commands.",
   "author": "Bruno Mouta",

@@ -34,7 +34,7 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 | cuicui | Kill Cui Cui, read the door code, open Frieza's room, take and wear the armor |
 | engine | Open the Engine Hatch (all four hatch passwords), search the five lower rooms for the card, hand it over, wear the uniform |
 | steering | `pursue steering`, open the hatch, `repair`, collect the card |
-| revenge | `pursue dying`, `say revenge`, `pursue dodoria` and kill him, return |
+| revenge | Walk to the dying man, `say revenge`, `pursue dodoria` and kill him, walk back |
 | comms / power / comms2 | Deliver the note, power the ship via the Electrical Engineer, deliver the crumpled note |
 | zarbon | `say surrender` for each card, kill Zarbon, go down to Taiko |
 
@@ -44,9 +44,8 @@ Cui Cui can't be sensed, so the helper walks there from the Hatch (7 north, then
 
 After Frieza's room it walks on to the Engine Hatch the same way (from the Gangway between the Elite Quarters, `fq go` starts that walk too). The Engine card isn't always downstairs: if a room on the way shows "Engine Module Access Card was carelessly left here", it searches and picks it up there, and the Engineer takes it as soon as you arrive.
 
-After the Steering Module it walks from the Steering Hatch to the Rejuvenation Chamber (the dying man can't be pursued), and after Dodoria from his room back to the Chamber.
+After the Steering Module it walks from the Steering Hatch to the Rejuvenation Chamber (`pursue dying` never works), and after Dodoria from his room back to the Chamber.
 
 If you have a trigger that answers "The ... seems to be closed." with `unl`/`open`/move, turn it off while doing the quest: it repeats the last command *you* typed, not the move the helper sent, and walks you the wrong way.
-- The Rejuvenation Chamber, if `pursue dying` doesn't track the dying man.
 
 If a step gets stuck, finish it by hand and type `fq go`.

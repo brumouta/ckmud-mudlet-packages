@@ -227,7 +227,7 @@ function FQ.arrived(who)
     if not (FQ.exits.West or ""):find("Power Hatch", 1, true) then toHatch = { "s" } end
     FQ.run(concat(toHatch, "w", FQ.hatch("d"), "n", "e"))  -- down to the Electrical Engineer
   end
-  -- revenge: tracked Dodoria or the dying man, the room triggers take it from there
+  -- revenge: tracked Dodoria, the room triggers take it from there
 end
 
 -- "No one is around by that name." - same as no ki: say where to walk
@@ -385,7 +385,7 @@ end
 function FQ.steeringDone()
   if not on("steering") then return end
   FQ.setStage("revenge")
-  FQ.run(FQ.walkSteps(FQ.TO_REJUV))     -- the dying man can't be pursued from here
+  FQ.run(FQ.walkSteps(FQ.TO_REJUV))     -- the dying man can never be pursued
 end
 
 function FQ.dyingMan()
@@ -404,7 +404,7 @@ function FQ.dodoriaDead()
   if not on("revenge") then return end
   tempTimer(1, function()
     if FQ.roomName == "Dodoria's Personal Room" then FQ.run(FQ.walkSteps(FQ.DODORIA_TO_REJUV))
-    else FQ.pursue("dying") end
+    else info("yellow", "Walk to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north) - from the Steering Hatch or Dodoria's room, `fq go` walks there") end
   end)
 end
 
@@ -509,7 +509,7 @@ function FQ.go()
   elseif s == "revenge" then
     if FQ.roomName == "Steering Hatch" then FQ.run(FQ.walkSteps(FQ.TO_REJUV))
     elseif FQ.roomName == "Dodoria's Personal Room" then FQ.run(FQ.walkSteps(FQ.DODORIA_TO_REJUV))
-    else FQ.pursue("dying") end
+    else info("yellow", "Walk to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north) - from the Steering Hatch or Dodoria's room, `fq go` walks there") end
   elseif s == "comms" or s == "comms2" then FQ.pursue("communications")
   elseif s == "power" then FQ.pursue("power")
   else info("white", FQ.HINTS[s] or "") end
