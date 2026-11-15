@@ -27,7 +27,10 @@ local function feed(text)
   end
 end
 local function wait(s) now = now + s
-  for i, t in pairs(timers) do if t.at <= now then timers[i] = nil; t.f() end end end
+  local due = {}
+  for i, t in pairs(timers) do if t.at <= now then due[#due + 1] = i end end
+  table.sort(due)
+  for _, i in ipairs(due) do local t = timers[i]; if t then timers[i] = nil; t.f() end end end
 local function expect(w) local g = table.concat(sent, " | "); sent = {}
   assert(g == w, "\n got: " .. g .. "\nwant: " .. w); print("OK  " .. (w == "" and "(nothing)" or w)) end
 local SEP = "o------------------------------------------------------------o"
@@ -54,11 +57,21 @@ assert(fq.active and fq.stage == "appule")
 -- Appule in the south Airlock
 fq.room("Airlock"); fq.exit("South", "Entrance to Frieza's Spaceship")
 fq.appuleHere(); expect("ss appule")
-fq.appuleDead(); expect("get caps | s | e")
-fq.sealReleased(); expect("e | pursue cui")
+fq.appuleDead(); expect("get caps | s")          -- no "e" into the sealed hatch
+feed("The seals of the Hatch automatically release."); fq.sealReleased(); expect("e | " .. table.concat(fq.TO_CUI, " | "))
+assert(fq.stage == "cuicui")
+-- fq go from the Hatch walks to Cui Cui; from elsewhere it says where to go
+fq.room("Hatch"); fq.command("go"); expect(table.concat(fq.TO_CUI, " | "))
+fq.room("Port"); fq.command("run"); expect("")
 -- Cui Cui
 fq.gotPassword("6373"); fq.cuiDead(); wait(1)
-expect("n | e | e | enter 6373 | n | get all locker | wear frie | s")
+expect("n | e | e | enter 6373")
+feed("Vorrac enters a code into the computer."); expect("")
+wait(2); expect("n | get all locker | wear battle | s")
+-- engine: fq go away from the Engine Hatch doesn't shout the passwords
+fq.room("Gangway"); fq.command("go"); expect("")
+fq.room("Engine Module"); fq.exit("West", "Frieza's Spaceship: Engine Hatch"); fq.command("go"); expect("w")
+fq.leg = nil
 -- Engine search
 fq.engineHatch(); expect(PW)
 feed(OPEN); expect("d | search")

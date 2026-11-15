@@ -19,7 +19,7 @@ FQ.ITEMS = {
 FQ.STAGES = { "appule", "cuicui", "engine", "steering", "revenge", "comms", "power", "comms2", "zarbon", "done" }
 FQ.HINTS = {
   appule   = "Go to the Airlock with Appule (north or south of the Entrance to Frieza's Spaceship).",
-  cuicui   = "Walk to Cui Cui: Gangway -> west (Elite Quarters) -> south.",
+  cuicui   = "Walking to Cui Cui (Cui Cui can't be sensed): from the Hatch, `fq go` walks there.",
   engine   = "Walk to the Engine Hatch (Starboard -> north into the Engine Module, follow it to the room with West - Engine Hatch).",
   steering = "Heading to the Steering Module.",
   revenge  = "Go to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north).",
@@ -34,6 +34,7 @@ FQ.HINTS = {
 FQ.active   = FQ.active or false
 FQ.stage    = FQ.stage or "appule"
 FQ.password = FQ.password or nil
+FQ.roomName = FQ.roomName or nil  -- last "Frieza's Spaceship: <room>" seen
 FQ.exits    = {}      -- exits of the last room shown: { West = "Frieza's Spaceship: Power Hatch", ... }
 FQ.pursuing = nil     -- what we're tracking with pursue, so the arrival is handled once
 FQ.leg      = nil     -- the scripted leg currently running (guards against repeated room lines)
@@ -68,6 +69,10 @@ local function nextStep()
   if step.fn then
     step.fn()
     return nextStep()
+  end
+  if step.delay then
+    runner.timer = tempTimer(step.delay, function() runner.timer = nil; nextStep() end)
+    return
   end
   if step.wait then
     runner.trig = tempTrigger(step.wait, function()
@@ -194,7 +199,7 @@ end
 
 -- ---------------------------------------------------------------- room tracking
 function FQ.room(name)
-  FQ.exits = {}
+  FQ.roomName, FQ.exits = name, {}
 end
 
 function FQ.exit(dir, dest)
@@ -241,14 +246,21 @@ function FQ.appuleDead()
   if not on("appule") then return end
   -- Appule's Airlock is either north or south of the Entrance
   local toEntrance = FQ.exitTo("Entrance to Frieza's Spaceship") or "n"
-  FQ.run({ "get caps", toEntrance, "e" })     -- the hatch opens once it sees the capsule
+  -- the Hatch (east of the Entrance) stays sealed until the game says so: going east
+  -- before that only bumps into the closed hatch
+  FQ.run({ "get caps", toEntrance,
+           { wait = "The seals of the Hatch automatically release", timeout = 20 } })
 end
+
+-- Hatch -> Cui Cui's Personal Room. Cui Cui can't be sensed, so pursue doesn't work.
+FQ.TO_CUI = { "n", "n", "n", "n", "n", "n", "n",   -- Passageway up to the Port
+              "e", "n", "e", "n", "e", "n", "e", "e", -- Port, Forward, to the room above the Gangway
+              "s", "s", "s", "s", "w", "s" }          -- Gangway, Elite Quarters, Cui Cui
 
 function FQ.sealReleased()
   if not on("appule") then return end
-  send("e")
   FQ.setStage("cuicui")
-  FQ.pursue("cui")
+  FQ.run(concat("e", FQ.TO_CUI))
 end
 
 function FQ.cuiHere()
@@ -264,7 +276,9 @@ function FQ.cuiDead()
   if not on("cuicui") then return end
   if not FQ.password then return info("yellow", "Didn't catch the door code - type `fq code <number>` then `fq go`") end
   tempTimer(1, function()
-    FQ.run({ "n", "e", "e", "enter " .. FQ.password, "n", "get all locker", "wear frie", "s" })
+    -- the door takes a moment to open after the code; "wear frie" would pick Frieza's Gold earring
+    FQ.run({ "n", "e", "e", "enter " .. FQ.password, { wait = "enters a code into the computer", timeout = 10 },
+             { delay = 2 }, "n", "get all locker", "wear battle", "s" })
     FQ.setStage("engine")
   end)
 end
@@ -418,8 +432,14 @@ function FQ.go()
   local s = FQ.stage
   if s == "appule" then FQ.appuleHere()
   elseif s == "cuicui" then
-    if FQ.password then FQ.cuiDead() else FQ.pursue("cui") end
-  elseif s == "engine" then FQ.engineHatch()
+    if FQ.password then FQ.cuiDead()
+    elseif FQ.roomName == "Hatch" then FQ.run(FQ.TO_CUI)
+    else info("yellow", "Go to the Hatch (east of the Entrance) and `fq go` again, or walk: Gangway -> west (Elite Quarters) -> south") end
+  elseif s == "engine" then
+    -- the passwords only work at the Engine Hatch (where the Engineer rummages around)
+    if FQ.roomName == "Engine Hatch" then FQ.engineHatch()
+    elseif (FQ.exits.West or ""):find("Engine Hatch", 1, true) then send("w")
+    else info("yellow", FQ.HINTS.engine) end
   elseif s == "steering" then FQ.pursue("steering")
   elseif s == "revenge" then FQ.pursue("dying")
   elseif s == "comms" or s == "comms2" then FQ.pursue("communications")
@@ -450,7 +470,7 @@ function FQ.command(cmd, arg)
     FQ.active, FQ.leg, FQ.pursuing = false, nil, nil
     FQ.cancel()
     info("yellow", "Helper OFF")
-  elseif cmd == "go" then
+  elseif cmd == "go" or cmd == "run" then
     FQ.go()
   elseif cmd == "stage" and arg and validStage(arg) then
     FQ.setStage(arg)
