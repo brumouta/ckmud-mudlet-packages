@@ -1,6 +1,6 @@
 {
   "name": "FriezaQuest",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "title": "Frieza's Spaceship quest helper",
   "description": "Automates the Frieza's Spaceship quest from Appule to the Bridge Access Card. Type `fq help` for commands.",
   "author": "Bruno Mouta",
@@ -361,6 +361,26 @@
             }
           ],
           "script": "fq.zarbonDead()"
+        },
+        {
+          "name": "fq Zarbon here",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "[BOSS] Zarbon is here"
+            }
+          ],
+          "script": "fq.zarbonHere()"
+        },
+        {
+          "name": "fq Bridge open",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "Identity confirmed. Bridge portal opening."
+            }
+          ],
+          "script": "fq.bridgeOpen()"
         },
         {
           "name": "fq Bridge card",

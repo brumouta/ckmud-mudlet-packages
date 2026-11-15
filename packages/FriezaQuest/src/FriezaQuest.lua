@@ -15,7 +15,7 @@ FQ.ITEMS = {
 }
 
 -- Stages in quest order
-FQ.STAGES = { "appule", "cuicui", "engine", "steering", "revenge", "comms", "power", "comms2", "zarbon", "done" }
+FQ.STAGES = { "appule", "cuicui", "engine", "steering", "revenge", "comms", "power", "comms2", "zarbon", "bridge", "done" }
 FQ.HINTS = {
   appule   = "Go to the Airlock with Appule (north or south of the Entrance to Frieza's Spaceship).",
   cuicui   = "Walking to Cui Cui (Cui Cui can't be sensed): from the Hatch, `fq go` walks there.",
@@ -26,7 +26,8 @@ FQ.HINTS = {
   power    = "Heading to the Power Module.",
   comms2   = "Heading back to the Communications Officer.",
   zarbon   = "Zarbon's interrogation - the bot will hand over the cards.",
-  done     = "Bridge Access Card (Online) obtained. The rest of the quest isn't automated yet.",
+  bridge   = "Walking to the Bridge terminal (from Taiko's room or the Hatch, `fq go`), then swipe and biometrics.",
+  done     = "The Bridge is open. The rest of the quest isn't automated yet.",
 }
 
 -- ---------------------------------------------------------------- state
@@ -290,6 +291,13 @@ FQ.TO_ENGINE = { "n", "n", "n", "n",                      -- Gangway up to Forwa
                  "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", "s", -- Passageways
                  "w", "s", "w", "n", "n", "n", "w" }      -- Starboard, Engine Module, Engine Hatch
 
+-- Hatch -> the Gangway with the Bridge's Computer Terminal: up to the Forward rooms like
+-- the Cui Cui walk, then 8 south down the Gangway (past the Elite Quarters)
+FQ.TO_BRIDGE = { "n", "n", "n", "n", "n", "n", "n", "e", "n", "e", "n", "e", "n", "e", "e",
+                 "s", "s", "s", "s", "s", "s", "s", "s" }
+-- Taiko's room (the east end of the Crew Access Arm) -> Hatch
+FQ.TAIKO_TO_HATCH = { "w", "w", "w" }
+
 -- Steering Hatch -> Rejuvenation Chamber: up the Steering Module to the Port, across the
 -- Forward rooms, round to the Starboard side, 7 south to the Airbridge crossing, east, north.
 FQ.TO_REJUV = { "w", "n", "n", "n", "n",
@@ -510,8 +518,17 @@ function FQ.zarbonAsks()
   if FQ.stage == "zarbon" then send("say surrender") end
 end
 
+-- "These are duplicates...nice try!": the Holding Room is still safe at that moment; Zarbon
+-- can be attacked once the room is shown again with him in it ("[BOSS] Zarbon is here")
 function FQ.duplicates()
-  if on("zarbon") then send(FQ.attack .. " zarbon") end
+  if on("zarbon") then FQ.zarbonFight = true end
+end
+
+function FQ.zarbonHere()
+  if on("zarbon") and FQ.zarbonFight then
+    FQ.zarbonFight = false
+    send(FQ.attack .. " zarbon")
+  end
 end
 
 function FQ.zarbonDead()
@@ -520,9 +537,23 @@ end
 
 function FQ.bridgeCard()
   if not on("zarbon") then return end
+  FQ.setStage("bridge")
+  FQ.run(concat({ { delay = 1 } }, FQ.bridgeSteps(FQ.TAIKO_TO_HATCH)))
+end
+
+-- Walk (optionally from Taiko's room) to the Bridge terminal, swipe, biometrics
+function FQ.bridgeSteps(first)
+  return concat(FQ.walkSteps(concat(first or {}, FQ.TO_BRIDGE)),
+                { "swipe", { wait = "Biometrics required.", timeout = 10 }, "biometrics" })
+end
+
+-- "Identity confirmed. Bridge portal opening."
+function FQ.bridgeOpen()
+  if not on("bridge") then return end
+  FQ.cancel()
   FQ.setStage("done")
   FQ.active = false
-  info("green", "Quest automation finished")
+  info("green", "Quest automation finished - the Bridge is open")
 end
 
 -- ---------------------------------------------------------------- `fq` alias
@@ -580,6 +611,12 @@ function FQ.go()
     else info("yellow", "Walk to the Rejuvenation Chamber (Starboard, the room with North/South - Rejuvenation Chamber, then north) - from the Steering Hatch or Dodoria's room, `fq go` walks there") end
   elseif s == "comms" or s == "comms2" then FQ.pursue("communications")
   elseif s == "power" then FQ.pursue("power")
+  elseif s == "bridge" then
+    if FQ.roomName == "Hatch" then FQ.run(FQ.bridgeSteps())
+    elseif FQ.roomName == "Crew Access Arm" and FQ.exits.West and not FQ.exits.East then FQ.run(FQ.bridgeSteps(FQ.TAIKO_TO_HATCH))
+    elseif FQ.roomName == "Gangway" and FQ.exits.North and not FQ.exits.South then
+      FQ.run({ "swipe", { wait = "Biometrics required.", timeout = 10 }, "biometrics" })
+    else info("yellow", "Go to Taiko's room or the Hatch and `fq go` again") end
   elseif s == "zarbon" and (FQ.exits.West or ""):find("Communications Module", 1, true) and not FQ.exits.North then
     send("w")                                 -- from the Officer's room to Zarbon
   else info("white", FQ.HINTS[s] or "") end

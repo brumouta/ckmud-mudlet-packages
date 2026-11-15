@@ -21,7 +21,7 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 | `fq start [stage]` | Check the items, then start (from the Airlock, or a stage) |
 | `fq check` | Check the items without starting |
 | `fq go` (or `fq run`) | Re-run the current stage's step from where you're standing |
-| `fq stage <name>` | Jump to a stage: appule, cuicui, engine, steering, revenge, comms, power, comms2, zarbon, done |
+| `fq stage <name>` | Jump to a stage: appule, cuicui, engine, steering, revenge, comms, power, comms2, zarbon, bridge, done |
 | `fq code <number>` | Set Frieza's door code by hand |
 | `fq attack <cmd>` | Attack used on the bosses (default `ss`) |
 | `fq status` / `fq stop` | Show the stage / turn the helper off |
@@ -36,7 +36,8 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 | steering | `pursue steering`, open the hatch, `repair`, collect the card |
 | revenge | Walk to the dying man, `say revenge`, wait 5s for Dodoria to spawn, `pursue dodoria` (retried every 5s for a minute) and kill him, walk back |
 | comms / power / comms2 | Deliver the note, power the ship via the Electrical Engineer, deliver the crumpled note |
-| zarbon | Step west to Zarbon a second after the Officer alerts him, `say surrender` for each card, kill Zarbon, go down to Taiko |
+| zarbon | Step west to Zarbon a second after the Officer alerts him, `say surrender` for each card, attack Zarbon once the Holding Room stops being safe, kill him, go down to Taiko |
+| bridge | After Taiko hands back the Bridge Access Card (Online): walk to the Bridge terminal (the south end of the Gangway), `swipe`, `biometrics` |
 
 ## Walking
 
