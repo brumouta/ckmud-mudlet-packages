@@ -124,7 +124,11 @@ fq.steeringOnline(); expect("w | n | " .. PW); feed(OPEN); expect("u")
 fq.steeringDone(); expect("w")
 for _ = 1, 30 do feed("Obvious exits:"); wait(0.5) end
 expect(table.concat(fq.TO_REJUV, " | ", 2))
-fq.dyingMan(); fq.dodoriaNamed(); fq.dodoriaHere(); expect("say revenge | pursue dodoria | ss dodoria")
+fq.dyingMan(); fq.dodoriaNamed(); expect("say revenge")
+wait(5); expect("pursue dodoria")                     -- waits for him to spawn
+fq.noKi(); expect(""); wait(5); expect("pursue dodoria")   -- not there yet: retry
+fq.noKi(); wait(5); expect("pursue dodoria")
+fq.dodoriaHere(); expect("ss dodoria")
 fq.room("Dodoria's Personal Room"); fq.dodoriaDead(); wait(1); expect("s")
 for _ = 1, 30 do feed("Obvious exits:"); wait(0.5) end
 expect(table.concat(fq.DODORIA_TO_REJUV, " | ", 2))

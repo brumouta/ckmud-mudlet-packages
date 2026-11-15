@@ -254,6 +254,11 @@ end
 -- "No one is around by that name." - same as no ki: say where to walk
 function FQ.noKi()
   if not FQ.active or not FQ.pursuing then return end
+  if FQ.stage == "revenge" and FQ.pursuing == "dodoria" then
+    FQ.pursuing = nil
+    if FQ.retryDodoria() then return end
+    return info("yellow", "Still can't find Dodoria - look for him by hand (`pursue dodoria`)")
+  end
   info("yellow", "Can't pursue " .. FQ.pursuing .. " from here. " .. (FQ.HINTS[FQ.stage] or ""))
   FQ.pursuing = nil
 end
@@ -418,12 +423,41 @@ function FQ.dyingMan()
   if on("revenge") then send("say revenge") end
 end
 
+-- Dodoria takes a while to spawn after the dying man names him: wait, then pursue, and
+-- retry (noKi) every few seconds until he can be tracked
+FQ.DODORIA_WAIT, FQ.DODORIA_RETRY, FQ.DODORIA_TRIES = 5, 5, 12
+
+local function stopDodoriaTimer()
+  if FQ.dodoriaTimer then killTimer(FQ.dodoriaTimer); FQ.dodoriaTimer = nil end
+end
+
+local function pursueDodoriaIn(secs)
+  stopDodoriaTimer()
+  FQ.dodoriaTimer = tempTimer(secs, function()
+    FQ.dodoriaTimer = nil
+    if on("revenge") then FQ.pursue("dodoria") end
+  end)
+end
+
 function FQ.dodoriaNamed()
-  if on("revenge") then FQ.pursue("dodoria") end
+  if not on("revenge") then return end
+  FQ.dodoriaTries = 0
+  info("green", "Waiting " .. FQ.DODORIA_WAIT .. "s for Dodoria to spawn, then pursuing him")
+  pursueDodoriaIn(FQ.DODORIA_WAIT)
+end
+
+-- "You sense no ki." / "No one is around by that name." while pursuing Dodoria
+function FQ.retryDodoria()
+  FQ.dodoriaTries = (FQ.dodoriaTries or 0) + 1
+  if FQ.dodoriaTries >= FQ.DODORIA_TRIES then return false end
+  pursueDodoriaIn(FQ.DODORIA_RETRY)
+  return true
 end
 
 function FQ.dodoriaHere()
-  if on("revenge") then send(FQ.attack .. " dodoria") end
+  if not on("revenge") then return end
+  stopDodoriaTimer()
+  send(FQ.attack .. " dodoria")
 end
 
 function FQ.dodoriaDead()
