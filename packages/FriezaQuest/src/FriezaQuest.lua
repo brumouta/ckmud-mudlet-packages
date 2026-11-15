@@ -54,8 +54,9 @@ local runner = { queue = {} }
 
 function FQ.cancel()
   if runner.trig then killTrigger(runner.trig) end
+  if runner.trig2 then killTrigger(runner.trig2) end
   if runner.timer then killTimer(runner.timer) end
-  runner.trig, runner.timer, runner.queue = nil, nil, {}
+  runner.trig, runner.trig2, runner.timer, runner.queue = nil, nil, nil, {}
 end
 
 local function nextStep()
@@ -72,6 +73,22 @@ local function nextStep()
   if step.use then   -- { use = { keyword, item name, command } }: locate, act on it by number, then go on
     local u = step.use
     return FQ.useFromLocate(u[1], u[2], u[3], function() nextStep() end)
+  end
+  if step.search then   -- on the way to the Engine Hatch: search each Engine Module room for the card
+    if not (on("engine") and not FQ.haveCard and FQ.roomName == "Engine Module") then return nextStep() end
+    local function done(extra)
+      killTrigger(runner.trig); killTrigger(runner.trig2); killTimer(runner.timer)
+      runner.trig, runner.trig2, runner.timer = nil, nil, nil
+      if extra then send(extra) end
+      nextStep()
+    end
+    runner.trig = tempTrigger("You search around the area, but fail to find anything.", function() done() end)
+    runner.trig2 = tempRegexTrigger([[^After searching around you managed to uncover (.+)!$]], function()
+      done(matches[2] == "Engine Module Access Card" and "get card" or nil)
+    end)
+    runner.timer = tempTimer(10, function() done() end)
+    send("search")
+    return
   end
   if step.delay then
     runner.timer = tempTimer(step.delay, function() runner.timer = nil; nextStep() end)
@@ -286,6 +303,7 @@ function FQ.walkSteps(route)
     steps[#steps + 1] = dir
     steps[#steps + 1] = { wait = "Obvious exits:", timeout = 15 }
     steps[#steps + 1] = { delay = 0.5 }             -- the room's items come after the exits
+    steps[#steps + 1] = { search = true }           -- only in the Engine Module rooms, while looking for the card
   end
   return steps
 end

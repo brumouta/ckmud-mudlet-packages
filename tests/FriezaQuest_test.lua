@@ -89,6 +89,16 @@ expect(table.concat(fq.TO_ENGINE, " | ", 4))
 fq.engineHatch(); expect("")               -- already holding the card: no trip downstairs
 fq.engineerWantsCard(); expect("locate card"); locateCards(); expect("give 3.card engineer")
 fq.haveCard = false; fq.cancel()
+-- walking through the upper Engine Module rooms: search each one for the card
+fq.run(fq.walkSteps({ "s", "n", "n", "w" })); expect("s")
+fq.room("Starboard"); feed("Obvious exits:"); wait(0.5); expect("n")              -- not an Engine Module: no search
+fq.room("Engine Module"); feed("Obvious exits:"); wait(0.5); expect("search")
+feed("You search around the area, but fail to find anything."); expect("n")
+fq.room("Engine Module"); feed("Obvious exits:"); wait(0.5); expect("search")
+feed("After searching around you managed to uncover Engine Module Access Card!"); expect("get card | w")
+fq.gotCard(); fq.room("Engine Hatch"); feed("Obvious exits:"); wait(0.5); expect("")
+fq.engineHatch(); expect("")       -- found upstairs: no trip down
+fq.haveCard = false; fq.cancel()
 -- engine: fq go away from the Engine Hatch doesn't shout the passwords
 fq.room("Port"); fq.command("go"); expect("")
 fq.room("Gangway"); fq.exit("West", "Frieza's Spaceship: Elite Quarters"); fq.command("go"); expect("n"); fq.cancel()
