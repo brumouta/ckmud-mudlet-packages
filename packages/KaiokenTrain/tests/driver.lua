@@ -345,7 +345,17 @@ check(KT.Player.MKaioken == 10, "MKaioken from status output")
 ---------------------------------------------------------------------------
 realprint("=== PHASE: toggle on ===")
 SENT = {}
-local toggle_fn = load("KT.API.Kaioken:toggle()")
+-- enabling forgets the old mastery and asks 'status' again: before any tick, nothing is
+-- trained, then the status reply (simulated by restoring the value) brings it back
+local raw_toggle = load("KT.API.Kaioken:toggle()")
+local toggle_fn = function()
+  local m = KT.Player.MKaioken
+  raw_toggle()
+  if KT.API.Mode:is(KT.API.Mode.Kaioken) then
+    check(KT.Player.MKaioken == nil and table.contains(SENT, "status"), "enable re-reads mastery with 'status'")
+    KT.Player.MKaioken = m
+  end
+end
 ok, err = pcall(toggle_fn); check(ok, "kaioken train alias" .. (ok and "" or (" -- " .. tostring(err))))
 check(table.contains(SENT, "kaioken getmax"), "'kaioken getmax' sent")
 check(#TEMP_TRIGGERS == 1, "getmax temp trigger installed")
@@ -578,6 +588,25 @@ check(table.contains(SENT, "kaioken 120") and KT.API.Mode:is(KT.API.Mode.Interac
 ---------------------------------------------------------------------------
 -- 7. Config aliases
 ---------------------------------------------------------------------------
+-- stale mastery from another character (120) must not end training: wait for 'status'
+realprint("=== PHASE: stale mastery ===")
+KT.Player.MKaioken = 120
+KT.Player.Kaioken = 0
+KT.Player.Fatigue = 1000
+SENT = {}
+pcall(raw_toggle)
+check(KT.Player.MKaioken == nil, "old mastery forgotten on enable")
+matches = { "Syntax: Kaioken 1-48", "48" }
+pcall(TEMP_TRIGGERS[#TEMP_TRIGGERS].func)
+SENT = {}
+ok, err = tick(); check(ok, "tick unknown mastery" .. (ok and "" or (" -- " .. tostring(err))))
+check(#SENT == 0 and KT.API.Mode:is(KT.API.Mode.Kaioken), "no kaioken change and still training while mastery unknown")
+KT.Player.MKaioken = 5                              -- "You have mastered kaioken x5."
+SENT = {}
+ok, err = tick(); check(ok, "tick mastery 5" .. (ok and "" or (" -- " .. tostring(err))))
+check(table.contains(SENT, "kaioken 16"), "mastery 5: trains at 5 + 9 + 2 = 16 (sent: " .. table.concat(SENT, " | ") .. ")")
+pcall(raw_toggle)
+
 realprint("=== PHASE: config aliases ===")
 matches = { "KT features" }
 ok, err = pcall(load_pkg_file("aliases/KT_feature.lua")); check(ok, "KT features alias" .. (ok and "" or (" -- " .. tostring(err))))

@@ -44,6 +44,10 @@ The last stretch is different: once mastery + 9 + `kaioken.extra_room` reaches
 your ceiling (`kaioken getmax`, e.g. 128), it trains at the ceiling itself and
 never steps down, until mastery is 8 below it (120), then stops.
 
+Each time training is turned on it reads your mastery fresh from `status`
+(nothing is trained until it has it), so a value left over from another
+character or a rebirth can't make it think kaioken is already mastered.
+
 ## Aliases
 
 `kaioken train` - toggle kaioken auto training

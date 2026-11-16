@@ -43,8 +43,15 @@ local function do_kaioken()
         -- Don't do anything unless we are connected and have a prompt
         return
     end
+    if Player.MKaioken == nil then
+        -- mastery not read yet this session: wait for 'status' ("You have mastered
+        -- kaioken xN."), asking again every few ticks
+        kaio.waits = (kaio.waits or 0) + 1
+        if kaio.waits % 3 == 0 then send("status", false) end
+        return
+    end
     if State:is(State.NORMAL) then
-        local mkaioken = Player.MKaioken or 0
+        local mkaioken = Player.MKaioken
         local goal = kaio.max - 8
         local target = math.min(kaio.max, mkaioken + room())
         -- the last stretch: once the room reaches the ceiling, train at the ceiling itself
@@ -118,9 +125,11 @@ local function enter()
     -- Silently ask for kaioken
     send("kaioken getmax", false)
 
-    if Player.MKaioken == nil then
-        send("status", false)
-    end
+    -- Mastery left over from earlier (another character, a rebirth) would make the bot
+    -- think kaioken is already mastered: forget it and read it fresh from 'status'
+    Player.MKaioken = nil
+    kaio.waits = 0
+    send("status", false)
 
     -- Change Mode
     Mode:switch(Mode.Kaioken, exit)
