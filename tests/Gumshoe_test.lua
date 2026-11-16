@@ -739,6 +739,41 @@ wait(10)
 ok(joined() == "look | s | s | say case hard", "inside the house: walk out: " .. joined())
 respond = nil
 
+-- gum auto: after say case, the end of Jaco's briefing starts the run ---------------------
+G.auto = true
+G.newCase(); G.room = nil; sent = {}
+respond = function(c)
+  if c == "look" then tempTimer(0.2, function() gum.line("Front Steps") end) end
+end
+G.toJaco()
+wait(5)
+ok(sent[#sent] == "say case hard", "auto: said case")
+sent = {}
+feed({ "The case: Bulma's stand-in lies smashed in the Conservatory.",
+       "Lost? notebook brief shows this again and notebook commands lists every command. say abandon to Jaco" })
+wait(2)
+ok(sent[1] == "look" and G.running and G.autoChain, "auto: Jaco's briefing over, the run starts: " .. joined())
+G.stop(); respond = nil
+ok(not G.autoChain, "gum stop drops the auto accusation")
+-- the run ends sure: accuse, and again when Jaco asks to confirm
+G.newCase(); G.room = nil
+for _, k in ipairs({ "intro", "guests", "chart", "remains", "logs", "partylog", "weapon", "evidence", "plate",
+                     "first-statements", "notebook-end", "final-statements", "accuse" }) do feed(P[k]) end
+sent = {}; G.autoChain = true
+G.done(G.solve())
+ok(joined() == "accuse piccolo with gauntlet at midnight", "auto: accuses when sure: " .. joined())
+feed({ "Jaco's voice crackles over your tablet, 'You name Piccolo, with the Gauntlet, at midnight. Certain? Type accuse yes and I make the arrest.'" })
+ok(joined() == "accuse piccolo with gauntlet at midnight | accuse piccolo with gauntlet at midnight", "auto: confirms with the same accusation: " .. joined())
+-- not sure: says so instead of accusing
+G.newCase(); G.room = nil; sent = {}; G.autoChain = true; LOG = ""
+G.done(G.solve())
+ok(#sent == 0 and LOG:find("Not sure enough", 1, true), "auto: a guess is never sent")
+-- off: gum case only says case
+G.command("auto", "off")
+ok(G.auto == false, "gum auto off")
+G.run(); ok(G.autoChain == false, "off: gum run doesn't arm the accusation"); G.stop()
+G.command("auto", "on")
+
 -- gum cd: Jaco's next case, 20 minutes after the culprit dies ------------------------------
 G.clock = function() return now end
 G.nextCase = nil

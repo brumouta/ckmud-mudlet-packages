@@ -2,7 +2,7 @@
 
 Command: `gum`
 
-Solves Jaco's party cases at the Briefs house (`help mansion`). Type `gum case` to go to Jaco and open a Hard case, step inside and type `gum run`. It does the legwork, then tells you who did it. You make the arrest yourself.
+Solves Jaco's party cases at the Briefs house (`help mansion`). Type `gum case` and it does the rest: goes to Jaco, opens a Hard case, does the legwork, works out who did it and makes the accusation (sent twice: the second confirms it). It only accuses by itself when it's sure; a best guess is shown for you to decide. `gum auto off` goes back to doing each step by hand (`gum case`, `gum run`, `gum accuse` twice).
 
 ## Commands
 
@@ -18,6 +18,7 @@ Solves Jaco's party cases at the Briefs house (`help mansion`). Type `gum case` 
 | `gum cd` | How long until Jaco has a new case: 20 minutes after the case is finished (from *Case closed*, and again from the culprit's death if you kill them). It also tells you when the time is up, `gum case` warns if you go early, and the time is kept across Mudlet restarts |
 | `gum go <room>` | Walk to a room, e.g. `gum go kitchen` or `gum go lab` |
 | `gum reset` | Forget the case (a new case resets by itself) |
+| `gum auto [on\|off]` | On (the default): after `gum case`, start the run once Jaco has read the case out, and when the run ends sure of the answer, send the accusation twice (the second time confirms it). `gum run` with auto on also accuses at the end. Off: each step by hand |
 
 ## What `gum run` does
 

@@ -133,6 +133,8 @@ end
 if not G.case then G.newCase() else G.upgrade() end
 G.room = G.room
 G.gen = G.gen or 0
+-- gum auto: after gum case, run the case by itself and send a sure accusation twice (the second confirms)
+if G.auto == nil then G.auto = true end
 
 local function info(color, msg) cecho("\n<" .. color .. ">[gum] " .. msg .. "\n") end
 G.info = info
@@ -1347,7 +1349,7 @@ local function readStatements(cb)
 end
 
 local function halt(why)
-  G.running = false
+  G.running, G.autoChain = false, false
   clearWait()
   info("red", "Stopped: " .. why)
 end
@@ -1405,11 +1407,41 @@ function G.done(r)
   G.running = false
   clearWait()
   G.result = G.report(r)
+  if G.autoChain then
+    G.autoChain = false
+    G.autoAccuse(G.result)
+  end
+end
+
+-- The accusation to send, or nil (with the reason shown)
+function G.accuseLine(r)
+  if not r or not r.line then info("yellow", "Not enough to accuse anyone yet: gum solve") return end
+  local fmt = G.akw.format
+  if fmt and not fmt:find("with <weapon> at <time>$") and not fmt:find("stash <room> at <time>$")
+    and not fmt:find("with <weapon> rigged at <time>$") then
+    info("yellow", "This case wants: " .. fmt .. " - accuse by hand")
+    return
+  end
+  return r.line
+end
+
+-- gum auto: accuse, and when Jaco asks "Certain? Type accuse yes", send the same accusation again
+function G.autoAccuse(r)
+  if not (r and r.sure) then
+    return info("yellow", "Not sure enough to accuse by itself: check gum solve, then gum accuse (twice to confirm)")
+  end
+  local line = G.accuseLine(r)
+  if not line then return end
+  info("green", "Accusing: " .. line)
+  cmd(line, { { "Certain%? Type", "again" } }, 15, function(k)
+    if k == "again" then send(line, false) end
+  end)
 end
 
 function G.run(onlyQuestions)
   G.gen = G.gen + 1
   G.running, G.reread, G.onlyQuestions = true, false, onlyQuestions
+  G.autoChain = G.auto and true or false
   info("green", onlyQuestions and "Questioning everyone left. gum stop stops." or "On the case. gum stop stops; everything found so far is kept.")
   seq({
     function(nxt) cmd("look", { { "@arrived", "ok" } }, G.stepTimeout, function() nxt() end) end,
@@ -1435,7 +1467,7 @@ end
 
 function G.stop()
   G.gen = G.gen + 1
-  G.running = false
+  G.running, G.autoChain = false, false
   clearWait()
   info("yellow", "Stopped")
 end
@@ -1452,6 +1484,7 @@ G.HELP = {
   { "gum cd",           "How long until Jaco has a new case (20 minutes after the culprit dies)" },
   { "gum go <room>",    "Walk to a room in the house, e.g. gum go kitchen" },
   { "gum reset",        "Forget this case (a new case resets by itself)" },
+  { "gum auto [on|off]", "After gum case: run the case and send a sure accusation twice (on by default)" },
 }
 
 function G.help()
@@ -1519,7 +1552,16 @@ function G.toJaco(diff)
   end
   G.gen = G.gen + 1
   G.running = true
-  local function sayCase() G.running = false; send("say case " .. diff, false) end
+  local function sayCase()
+    G.running = false
+    send("say case " .. diff, false)
+    if not G.auto then return end
+    -- gum auto: once Jaco has read out the whole case, start on it
+    expect({ { "^Lost%? notebook brief", "go" } }, 20, function(k)
+      if k ~= "go" and not G.case.title then return info("yellow", "No new case from Jaco - gum case again when he has one") end
+      tempTimer(1, function() if not G.running then G.run() end end)
+    end)
+  end
   local function walkIn(first)
     if first then send(first, false) end
     for _ = 1, 6 do send("w", false) end
@@ -1615,14 +1657,11 @@ function G.command(c, arg)
   elseif c == "solve" then
     if G.running then G.result = G.report() else G.refreshAndSolve() end
   elseif c == "accuse" then
-    local r = G.solve()
-    if not r.line then return info("yellow", "Not enough to accuse anyone yet: gum solve") end
-    local fmt = G.akw.format
-    if fmt and not fmt:find("with <weapon> at <time>$") and not fmt:find("stash <room> at <time>$")
-      and not fmt:find("with <weapon> rigged at <time>$") then
-      return info("yellow", "This case wants: " .. fmt .. " - accuse by hand")
-    end
-    send(r.line, false)
+    local line = G.accuseLine(G.solve())
+    if line then send(line, false) end
+  elseif c == "auto" then
+    if arg == "on" then G.auto = true elseif arg == "off" then G.auto = false elseif arg == nil then G.auto = not G.auto end
+    info("white", "Auto (gum case, then run, then accuse twice): " .. (G.auto and "on" or "off"))
   elseif c == "status" then G.status()
   elseif c == "go" and arg then G.go(arg)
   elseif c == "case" then G.toJaco(arg)
