@@ -76,3 +76,7 @@ Cards turn up in 1 case in 8 on Easy, 1 in 4 on Normal and 1 in 2 on Hard. The K
 - **Hard cases** are read from the intro: the lab analyzer is off, so it never suggests or walks to `analyze`. The extra liar and second broken log sensor need nothing special, but only the intro of a Hard case has been seen so far.
 - **Monthly twists** (from `help mansion`): January a fast watch, February guest dolls, March a lying witness, April eggs, May Goten and Trunks run off with clues (tag them), June a storm, July a pair slips off, August dark rooms, September the moon roof, October masks, November a feast, December presents to unwrap. Only November's (the seating chart) has been seen; the others may need changes when they come.
 - **Upgrading mid-case** keeps what the case has found so far and adds anything the new version needs, so you can install a fix without starting over.
+
+## One file for Mudlet and the CKMud client
+
+`Gumshoe-plugin/` builds `gumshoe.xml`, the same Gumshoe for Mudlet and the CKMud client's plugin catalog, with `gum repeat` (open the next case by itself every 20 minutes) and, in the client, the Plugins dashboard card. See [Gumshoe-plugin/README.md](Gumshoe-plugin/README.md).
