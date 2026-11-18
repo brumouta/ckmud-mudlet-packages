@@ -50,6 +50,7 @@ tools/
   build.py                builds the single-script packages into dist/
   lint_manifests.py       checks every muddler trigger/alias actually has a script
   muddle.sh               builds the muddler packages locally
+  plugin/                 build-plugin.cjs (copied from CKMud-2D-Desktop): <Pkg>-plugin/ folders -> dist/<pkg>.xml for the CKMud client
 ```
 
 ## Building

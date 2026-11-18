@@ -17,10 +17,20 @@ jobs:
         run: for t in tests/*_test.lua; do echo "== $t"; lua5.3 "$t" || exit 1; done
       - name: Build
         run: python3 tools/build.py
+      - name: CKMud client plugins (build and test)
+        run: |
+          sudo apt-get install -y lua5.1
+          for dir in packages/*/*-plugin; do
+            pkg=$(basename "$(dirname "$dir")"); xml="dist/$(echo "$pkg" | tr 'A-Z' 'a-z').xml"
+            node tools/plugin/build-plugin.cjs -o "$xml" "$dir/head.lua" "dist/$pkg.mpackage" "$dir/tail.lua"
+            (cd "$dir" && lua5.1 test.lua "$GITHUB_WORKSPACE/$xml") || exit 1
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: mpackage-simple
-          path: dist/*.mpackage
+          path: |
+            dist/*.mpackage
+            dist/*.xml
 
   muddler:
     name: ${{ matrix.package }}

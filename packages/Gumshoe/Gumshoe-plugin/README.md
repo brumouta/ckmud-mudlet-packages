@@ -30,18 +30,15 @@ Don't edit the built script inside Mudlet: the next build would overwrite those 
 ## Rebuild and test
 
 1. Raise the version in `tail.lua` (and in `../package.json` if the game logic changed).
-2. From the root of this repository, build the package, then the plugin with the build script
-   from the CKMud-2D-Desktop repository (`scripts/build-plugin.cjs`):
+2. From the root of this repository, run the tests. `sh tests/run.sh` builds the package, then
+   `dist/gumshoe.xml` (with `tools/plugin/build-plugin.cjs`, a copy of the CKMud-2D-Desktop build
+   script), then runs `test.lua` against it in Lua 5.1. CI does the same, and the release attaches
+   `gumshoe.xml` next to the `.mpackage` files. To build by hand:
 
    ```bash
    python3 tools/build.py Gumshoe
-   node <CKMud-2D-Desktop>/scripts/build-plugin.cjs -o dist/gumshoe.xml packages/Gumshoe/Gumshoe-plugin/head.lua dist/Gumshoe.mpackage packages/Gumshoe/Gumshoe-plugin/tail.lua
-   ```
-
-3. From this folder, run the tests:
-
-   ```bash
-   lua5.1 test.lua ../../../dist/gumshoe.xml
+   node tools/plugin/build-plugin.cjs -o dist/gumshoe.xml packages/Gumshoe/Gumshoe-plugin/head.lua dist/Gumshoe.mpackage packages/Gumshoe/Gumshoe-plugin/tail.lua
+   cd packages/Gumshoe/Gumshoe-plugin && lua5.1 test.lua ../../../dist/gumshoe.xml
    ```
 
    They run the built file in stand-ins for the client's sandbox and for Mudlet (51 checks), and

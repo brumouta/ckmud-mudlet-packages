@@ -23,5 +23,7 @@ jobs:
       - run: ls -l dist
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.mpackage
+          files: |
+            dist/*.mpackage
+            dist/*.xml
           generate_release_notes: true

@@ -34,4 +34,23 @@ for mfile in packages/*/mfile; do
     echo "FAIL  $pkg simulation"; echo "$out" | tail -8; status=1
   fi
 done
+# Plugins for the CKMud client (one XML for Mudlet and the client): build from the package's
+# mpackage plus packages/<Pkg>/<Pkg>-plugin/{head,tail}.lua, then run its test.lua in Lua 5.1
+# (the client's Lua) against the built file
+for dir in packages/*/*-plugin; do
+  [ -f "$dir/test.lua" ] || continue
+  pkg=$(basename "$(dirname "$dir")")
+  if ! command -v node >/dev/null 2>&1 || ! command -v lua5.1 >/dev/null 2>&1; then
+    echo "SKIP  $dir (needs node and lua5.1)"; continue
+  fi
+  xml="dist/$(echo "$pkg" | tr 'A-Z' 'a-z').xml"
+  if ! out=$(python3 tools/build.py "$pkg" 2>&1 && node tools/plugin/build-plugin.cjs -o "$xml" "$dir/head.lua" "dist/$pkg.mpackage" "$dir/tail.lua" 2>&1); then
+    echo "FAIL  $dir build"; echo "$out" | tail -8; status=1; continue
+  fi
+  if out=$(cd "$dir" && lua5.1 test.lua "$OLDPWD/$xml" 2>&1); then
+    echo "PASS  $dir ($xml)"
+  else
+    echo "FAIL  $dir"; echo "$out" | grep -v "^ok " | tail -8; status=1
+  fi
+done
 exit $status
