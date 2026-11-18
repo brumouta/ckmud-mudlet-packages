@@ -22,8 +22,8 @@ It is built from:
   - **Both:** Repeat, via `gum repeat on|off`. After each case, it opens the next one when Jaco has
     it, 20 minutes after the last one, then runs and accuses with Auto. `gum stop` ends it.
     Right after a case it goes back to Jaco on the Front Steps and waits there. `gum repeat wait
-    <commands>` waits somewhere else instead (your travel commands, `;` between them, aliases work
-    in Mudlet), `gum repeat wait here` stays put, `gum repeat wait jaco` goes back to the default.
+    <commands>` then sends your own commands from the Front Steps (`;` between them, aliases work
+    in Mudlet), to wait somewhere else; `gum repeat wait jaco` goes back to just waiting at Jaco.
     The choice is saved in `gumshoe_repeat.lua` in the profile.
   - **Client only:** the dashboard card (settings, buttons, help, status) and plugin control.
     Gumshoe claims movement before it walks and gives it back when it stops.

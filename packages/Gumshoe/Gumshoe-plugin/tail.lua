@@ -53,7 +53,7 @@ G.command = function(c, arg)
   end
 end
 table.insert(G.HELP, { 'gum repeat [on|off]', 'Fully auto: after each case, open the next one by itself when Jaco has it (20 minutes)' })
-table.insert(G.HELP, { 'gum repeat wait [jaco|here|<commands>]', 'Where repeat waits between cases: at Jaco (default), where you are, or after your own travel commands (; between them)' })
+table.insert(G.HELP, { 'gum repeat wait [jaco|<commands>]', 'Between cases repeat goes to Jaco, then sends these commands from there (; between them). jaco: just wait at Jaco' })
 
 -- Plugin control (CKMud client): Gumshoe asks for movement before it walks, so another plugin
 -- can't steer the character at the same time, and hands it back once it stops. Every walk starts
@@ -167,8 +167,8 @@ setRepeat = function(on, from)
   end
 end
 
--- Where to wait between cases: nil goes to Jaco on the Front Steps, 'here' stays put, anything
--- else is sent as travel commands (; between them, your aliases work too). Kept in a file.
+-- Where to wait between cases: always first to Jaco on the Front Steps, then, if set, your own
+-- commands from there (; between them, your aliases work too). Kept in a file.
 local function waitFile() return getMudletHomeDir and (getMudletHomeDir() .. '/gumshoe_repeat.lua') end
 do
   local f, saved = waitFile(), {}
@@ -177,8 +177,7 @@ do
 end
 local function describeWait()
   if not rep.wait then return 'at Jaco on the Front Steps' end
-  if rep.wait == 'here' then return 'where the case ends' end
-  return 'after: ' .. rep.wait
+  return 'at Jaco on the Front Steps, then: ' .. rep.wait
 end
 setWait = function(where)
   if where ~= '' then
@@ -195,18 +194,16 @@ local function park()
   rep.park = tempTimer(3, function()
     rep.park = nil
     if not rep.on or G.running then return end
-    if rep.wait == 'here' then return end
-    if rep.wait then
-      G.info('green', 'Repeat: off to wait for the next case (' .. rep.wait .. ')')
+    G.toJaco(nil, function()
+      if not rep.wait then return G.info('green', 'Repeat: waiting with Jaco for the next case') end
+      G.info('green', 'Repeat: at Jaco, now: ' .. rep.wait)
       for part in rep.wait:gmatch('[^;]+') do
         part = part:match('^%s*(.-)%s*$')
         if part ~= '' then
           if type(expandAlias) == 'function' then expandAlias(part, false) else send(part, false) end
         end
       end
-      return
-    end
-    G.toJaco(nil, function() G.info('green', 'Repeat: waiting with Jaco for the next case') end)
+    end)
   end)
 end
 
@@ -252,8 +249,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.12.0: repeat waits at Jaco or a place of your choice, built on Gumshoe.mpackage 1.10.2).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.0',
+  -- change, so the client offers the update (1.12.1: repeat waits at Jaco, then your wait commands, built on Gumshoe.mpackage 1.10.2).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.1',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },
