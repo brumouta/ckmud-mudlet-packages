@@ -130,6 +130,14 @@ advance(1); local st = last('status')
 check('status Stopped when idle', st and st[2].state == 'Stopped', st and st[2].state)
 local okLines, e2 = pcall(function() for _, l in ipairs{'Front Steps', 'Lost? notebook brief', '', '[Pl: 1 | Ki: 100%]'} do lineIn(l) end end)
 check('every line reaches gum.line', okLines, e2)
+-- hosts that pass the line to the function instead of setting line/matches
+local function hostLine(arg) E.line, E.matches = nil, nil; for _, fn in pairs(triggers) do fn(arg) end end
+local seen, gl = {}, E.gum.line
+E.gum.line = function(l) seen[#seen + 1] = l; return gl(l) end
+local okHost, e3 = pcall(function() hostLine('Front Steps'); hostLine({ 'Kitchen' }); hostLine(nil) end)
+E.gum.line = gl
+check('line passed as text or match table, or not at all: no error', okHost and seen[1] == 'Front Steps' and seen[2] == 'Kitchen' and #seen == 2, e3 or table.concat(seen, '|'))
+check('gum.line(nil) is ignored', pcall(E.gum.line, nil))
 
 -- next-case wait without os
 E.gum.caseOver(); input('gum cd'); local cd = output()

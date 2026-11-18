@@ -15,7 +15,18 @@ G.temp = {}
 local function keep(kind, id) G.temp[#G.temp + 1] = { kind, id }; return id end
 
 -- The XML trigger "gum Every line" (^.*$): every line goes to gum.line.
-keep('trigger', tempRegexTrigger('^.*$', function() gum.line(line) end))
+-- Hosts hand the line over differently: Mudlet sets matches and line, others pass it to the
+-- function (as text or as the match table). Take whichever is there; skip the line if none is.
+local function lineText(a)
+  if type(matches) == 'table' and type(matches[1]) == 'string' then return matches[1] end
+  if type(a) == 'string' then return a end
+  if type(a) == 'table' and type(a[1]) == 'string' then return a[1] end
+  if type(line) == 'string' then return line end
+end
+keep('trigger', tempRegexTrigger('^.*$', function(a)
+  local text = lineText(a)
+  if text then gum.line(text) end
+end))
 
 -- The XML alias ^gum(?:\s+(\w+)(?:\s+(.+))?)?$ : gum [command [argument]]
 if CLIENT then
@@ -249,8 +260,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.12.1: repeat waits at Jaco, then your wait commands, built on Gumshoe.mpackage 1.10.2).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.1',
+  -- change, so the client offers the update (1.12.2: the every-line trigger takes the line however the host passes it, built on Gumshoe.mpackage 1.10.3).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.2',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },

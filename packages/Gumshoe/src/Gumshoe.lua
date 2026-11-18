@@ -526,6 +526,7 @@ local function arrived()
 end
 
 function G.line(l)
+  if type(l) ~= "string" then return end
   l = l:gsub("%s+$", "")
 
   -- the room we're in, and who stands there
