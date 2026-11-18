@@ -267,6 +267,9 @@ function G.walk(to, cb)
     for _, b in ipairs(BLOCKED) do pats[#pats + 1] = b end
     cmd(p[i].dir, pats, G.stepTimeout, function(k)
       if k == "ok" and G.room == p[i].room then return step() end
+      -- the house can move you on its own (once a case is over, the robots walk you out to the
+      -- Front Steps): landing where you were going is still a success
+      if k == "ok" and G.room == to then return cb(true) end
       info("red", "Lost the way to " .. to .. " (" .. (k == "ok" and ("ended up in " .. tostring(G.room)) or k) .. ")")
       cb(false)
     end)
@@ -1570,10 +1573,18 @@ function G.toJaco(diff)
       halt("didn't reach Jaco on the Front Steps")
     end)
   end
+  local outside
   cmd("look", { { "@arrived", "in" } }, 3, function(k)
     if k == "in" and G.room then
-      return G.walk("Front Steps", function(ok) if ok then sayCase() else G.running = false end end)
+      return G.walk("Front Steps", function(ok)
+        if ok then return sayCase() end
+        info("yellow", "Trying the way from outside the house")
+        outside()
+      end)
     end
+    outside()
+  end)
+  outside = function()
     info("green", "Off to Jaco for a " .. diff .. " case")
     cmd(G.capsuleCmd, NO_CAPSULE, 5, function(k2)
       if k2 == "ok" then return walkIn() end
@@ -1598,7 +1609,7 @@ function G.toJaco(diff)
       end
       instant()
     end)
-  end)
+  end
 end
 
 -- ---------------------------------------------------------------- the wait for the next case

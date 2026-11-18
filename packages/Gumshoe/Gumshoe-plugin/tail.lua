@@ -141,7 +141,14 @@ local function untilJaco(extra) return math.max(0, (G.cooldownLeft and G.cooldow
 rep.retry = function(delay) if rep.on then schedule(delay) end end
 
 setRepeat = function(on, from)
-  if on == rep.on then return end
+  if on == rep.on then
+    if from == 'command' then
+      local left = rep.at and math.floor(math.max(0, rep.at - getEpoch()))
+      G.info('white', 'Repeat is already ' .. (on and 'on' or 'off') .. (on and left
+        and (': next case in ' .. ('%d:%02d'):format(math.floor(left / 60), left % 60)) or ''))
+    end
+    return
+  end
   rep.on = on
   if from == 'command' and P then P.configure('repeat', on) end
   if on then
@@ -199,8 +206,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.11.0: repeat, built on Gumshoe.mpackage 1.10.0).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.11.0',
+  -- change, so the client offers the update (1.11.1: repeat, built on Gumshoe.mpackage 1.10.1).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.11.1',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },

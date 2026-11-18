@@ -738,6 +738,17 @@ gum.command("case")
 wait(10)
 ok(joined() == "look | s | s | say case hard", "inside the house: walk out: " .. joined())
 respond = nil
+-- the case is over and the robots walk you out to the Front Steps mid-walk: still arrived
+sent = {}; G.room = "Kitchen"
+respond = function(c)
+  if c == "look" then tempTimer(0.2, function() gum.line("Kitchen") end)
+  elseif c == "s" then tempTimer(0.2, function()
+    gum.line("A pair of house robots take you by the elbows and walk you out to the Front Steps."); gum.line("Front Steps") end) end
+end
+gum.command("case")
+wait(10)
+ok(joined() == "look | s | say case hard", "robots walk you out: say case anyway: " .. joined())
+respond = nil
 
 -- gum auto: after say case, the end of Jaco's briefing starts the run ---------------------
 G.auto = true
