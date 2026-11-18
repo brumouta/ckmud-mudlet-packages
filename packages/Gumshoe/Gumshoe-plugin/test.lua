@@ -106,7 +106,7 @@ check('loads without os/require/io.open', ok, err)
 if not ok then realExit(1) end
 local reg = effects[1]
 check('registers gumshoe', reg and reg[1] == 'register' and reg[2].id == 'gumshoe')
-check('help lists the 12 gum commands, gum repeat included', reg and #reg[2].help.commands == 12 and reg[2].help.commands[12].command:find('repeat') ~= nil)
+check('help lists the 13 gum commands, gum repeat included', reg and #reg[2].help.commands == 13 and reg[2].help.commands[12].command:find('repeat') ~= nil)
 check('repeat setting on the dashboard, off by default', reg and reg[2].settings[3].key == 'repeat' and reg[2].settings[3].default == false)
 check('trigger and alias recreated', next(triggers) ~= nil and next(aliases) ~= nil)
 
@@ -208,6 +208,24 @@ input('gum repeat off'); output()
 load_plugin(); E.gum.nextCase = nil; output()
 event('ck.plugin.gumshoe.ready', '{"repeat":true}'); advance(14); local soon = jacoTrips(output()); advance(1)
 check('repeat saved on: starts 15 s after login', soon == 0 and jacoTrips(output()) == 1 and count('configure', 'repeat') == 0)
+-- right after a case: go and wait at Jaco, or after your own travel commands, or stay put
+event('ck.plugin.gumshoe.control', 'granted'); advance(30); E.gum.running = false; output()
+sent = {}; E.gum.caseOver(); advance(2); local notYet = #sent
+advance(1); event('ck.plugin.gumshoe.control', 'granted'); advance(4); local park = output()
+check('right after a case: off to Jaco to wait (3 s later)', notYet == 0 and sent[1] == 'look' and park:find('Off to Jaco to wait') ~= nil, park)
+advance(30); E.gum.running = false; output()
+input('gum repeat wait w; n ;up'); local w = output()
+check('gum repeat wait <commands>: says and saves it', w:find('after: w; n ;up') ~= nil and files['/package/gumshoe_repeat.lua'].wait == 'w; n ;up', w)
+sent = {}; E.gum.caseOver(); advance(3)
+check('after a case: sends the travel commands', table.concat(sent, '|') == 'w|n|up', table.concat(sent, '|'))
+input('gum repeat wait here'); output()
+sent = {}; E.gum.caseOver(); advance(5)
+check('gum repeat wait here: stays put', #sent == 0, table.concat(sent, '|'))
+input('gum repeat wait'); local cur = output()
+check('gum repeat wait: shows where', cur:find('where the case ends') ~= nil, cur)
+input('gum repeat wait jaco'); output()
+check('gum repeat wait jaco: back to the default', files['/package/gumshoe_repeat.lua'].wait == '' and E.gum.rep.wait == nil)
+input('gum repeat off'); output()
 
 -- the same file in Mudlet
 local function count_of(t) local n = 0 for _ in pairs(t) do n = n + 1 end return n end

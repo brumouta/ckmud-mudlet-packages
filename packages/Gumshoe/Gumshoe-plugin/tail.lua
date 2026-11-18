@@ -10,7 +10,7 @@ local P
 for _, t in ipairs(G.temp or {}) do
   if t[1] == 'trigger' then killTrigger(t[2]) elseif t[1] == 'alias' then killAlias(t[2]) else killTimer(t[2]) end
 end
-if G.rep then for _, k in ipairs{ 'timer', 'watchdog' } do if G.rep[k] then killTimer(G.rep[k]) end end end
+if G.rep then for _, k in ipairs{ 'timer', 'watchdog', 'park' } do if G.rep[k] then killTimer(G.rep[k]) end end end
 G.temp = {}
 local function keep(kind, id) G.temp[#G.temp + 1] = { kind, id }; return id end
 
@@ -33,12 +33,14 @@ end
 
 G.rep = { on = false }   -- repeat (fully auto), see below
 local rep = G.rep
-local setRepeat          -- defined with the repeat section
+local setRepeat, setWait -- defined with the repeat section
 
 -- `gum auto on|off` also moves the dashboard switch; `gum repeat [on|off]` is added here.
 local command = G.command
 G.command = function(c, arg)
   if c == 'repeat' then
+    local where = arg and arg:match('^wait%s*(.-)$')
+    if where then return setWait(where) end
     if arg == 'on' then setRepeat(true, 'command') elseif arg == 'off' then setRepeat(false, 'command')
     elseif arg == nil then setRepeat(not rep.on, 'command')
     else G.info('yellow', 'gum repeat on or off') end
@@ -51,6 +53,7 @@ G.command = function(c, arg)
   end
 end
 table.insert(G.HELP, { 'gum repeat [on|off]', 'Fully auto: after each case, open the next one by itself when Jaco has it (20 minutes)' })
+table.insert(G.HELP, { 'gum repeat wait [jaco|here|<commands>]', 'Where repeat waits between cases: at Jaco (default), where you are, or after your own travel commands (; between them)' })
 
 -- Plugin control (CKMud client): Gumshoe asks for movement before it walks, so another plugin
 -- can't steer the character at the same time, and hands it back once it stops. Every walk starts
@@ -159,15 +162,58 @@ setRepeat = function(on, from)
     G.info('green', 'Repeat on: ' .. (G.running and 'the next case opens by itself when this one is done'
       or ('next case in ' .. ('%d:%02d'):format(math.floor(left / 60), left % 60))) .. '. gum repeat off to stop.')
   else
-    cancel('timer'); cancel('watchdog'); rep.at = nil
+    cancel('timer'); cancel('watchdog'); cancel('park'); rep.at = nil
     G.info('white', 'Repeat off')
   end
+end
+
+-- Where to wait between cases: nil goes to Jaco on the Front Steps, 'here' stays put, anything
+-- else is sent as travel commands (; between them, your aliases work too). Kept in a file.
+local function waitFile() return getMudletHomeDir and (getMudletHomeDir() .. '/gumshoe_repeat.lua') end
+do
+  local f, saved = waitFile(), {}
+  if f and table.load and ((io.exists and io.exists(f)) or (io.open and io.open(f))) then pcall(table.load, f, saved) end
+  if type(saved.wait) == 'string' and saved.wait ~= '' then rep.wait = saved.wait end
+end
+local function describeWait()
+  if not rep.wait then return 'at Jaco on the Front Steps' end
+  if rep.wait == 'here' then return 'where the case ends' end
+  return 'after: ' .. rep.wait
+end
+setWait = function(where)
+  if where ~= '' then
+    if where == 'jaco' or where == 'default' then rep.wait = nil else rep.wait = where end
+    local f = waitFile()
+    if f and table.save then pcall(table.save, f, { wait = rep.wait or '' }) end
+  end
+  G.info('green', 'Repeat waits for the next case ' .. describeWait())
+end
+
+-- Right after a case is over: head to where repeat waits (a few seconds, for the fight to end)
+local function park()
+  cancel('park')
+  rep.park = tempTimer(3, function()
+    rep.park = nil
+    if not rep.on or G.running then return end
+    if rep.wait == 'here' then return end
+    if rep.wait then
+      G.info('green', 'Repeat: off to wait for the next case (' .. rep.wait .. ')')
+      for part in rep.wait:gmatch('[^;]+') do
+        part = part:match('^%s*(.-)%s*$')
+        if part ~= '' then
+          if type(expandAlias) == 'function' then expandAlias(part, false) else send(part, false) end
+        end
+      end
+      return
+    end
+    G.toJaco(nil, function() G.info('green', 'Repeat: waiting with Jaco for the next case') end)
+  end)
 end
 
 local caseOver = G.caseOver
 G.caseOver = function(...)
   local r = caseOver(...)
-  if rep.on then cancel('watchdog'); schedule(untilJaco(5)) end
+  if rep.on then cancel('watchdog'); schedule(untilJaco(5)); park() end
   return r
 end
 local stopWalking = G.stop
@@ -206,8 +252,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.11.1: repeat, built on Gumshoe.mpackage 1.10.1).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.11.1',
+  -- change, so the client offers the update (1.12.0: repeat waits at Jaco or a place of your choice, built on Gumshoe.mpackage 1.10.2).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.0',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },

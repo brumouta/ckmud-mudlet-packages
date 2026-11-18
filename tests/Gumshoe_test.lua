@@ -750,6 +750,17 @@ wait(10)
 ok(joined() == "look | s | say case hard", "robots walk you out: say case anyway: " .. joined())
 respond = nil
 
+-- toJaco with a callback (repeat waits there): gets there, says no case
+sent = {}; G.room = "Kitchen"; local parked = false
+respond = function(c)
+  if c == "look" then tempTimer(0.2, function() gum.line("Kitchen") end)
+  elseif c == "s" then tempTimer(0.2, function() gum.line("Front Steps") end) end
+end
+G.toJaco(nil, function() parked = true end)
+wait(10)
+ok(parked and not G.running and joined() == "look | s", "toJaco(nil, arrived): there, no case said: " .. joined())
+respond = nil
+
 -- gum auto: after say case, the end of Jaco's briefing starts the run ---------------------
 G.auto = true
 G.newCase(); G.room = nil; sent = {}

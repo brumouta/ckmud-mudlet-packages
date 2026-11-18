@@ -1544,19 +1544,21 @@ end
 local NO_CAPSULE = { { "^Briefs Family Garden$", "ok" }, { "^You don't", "no" }, { "^You do not", "no" },
                      { "^Use what", "no" }, { "^You can't", "no" }, { "^Huh", "no" },
                      { "^You can only use", "no" } }
-function G.toJaco(diff)
+-- With `arrived`, it only gets there (no case said) and calls arrived() on the Front Steps.
+function G.toJaco(diff, arrived)
   diff = (diff or G.difficulty):lower()
   if not ({ easy = true, normal = true, hard = true })[diff] then
     return info("yellow", "gum case easy, normal or hard (default " .. G.difficulty .. ")")
   end
   local left = G.cooldownLeft and G.cooldownLeft()
-  if left and left > 0 then
+  if left and left > 0 and not arrived then
     info("yellow", "Jaco's next case should be ready in " .. mmss(left) .. " - going anyway")
   end
   G.gen = G.gen + 1
   G.running = true
   local function sayCase()
     G.running = false
+    if arrived then return arrived() end
     send("say case " .. diff, false)
     if not G.auto then return end
     -- gum auto: once Jaco has read out the whole case, start on it
@@ -1585,7 +1587,7 @@ function G.toJaco(diff)
     outside()
   end)
   outside = function()
-    info("green", "Off to Jaco for a " .. diff .. " case")
+    info("green", arrived and "Off to Jaco to wait for the next case" or ("Off to Jaco for a " .. diff .. " case"))
     cmd(G.capsuleCmd, NO_CAPSULE, 5, function(k2)
       if k2 == "ok" then return walkIn() end
       info("yellow", "No return capsule: instant transmission to Bulma, then pursue Jaco")
