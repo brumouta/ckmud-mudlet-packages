@@ -1,6 +1,6 @@
 {
   "name": "Gumshoe",
-  "version": "1.10.3",
+  "version": "1.10.4",
   "title": "Gumshoe: Briefs mansion cases",
   "description": "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it. Type `gum help` for commands.",
   "author": "Bruno Mouta",
@@ -30,7 +30,7 @@
               "pattern": "^.*$"
             }
           ],
-          "script": "gum.line(line)"
+          "script": "gum.line(type(matches) == \"table\" and matches[1] or line)"
         }
       ]
     }
