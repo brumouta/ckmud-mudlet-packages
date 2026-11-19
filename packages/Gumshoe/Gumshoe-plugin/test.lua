@@ -218,15 +218,15 @@ event('ck.plugin.gumshoe.ready', '{"repeat":true}'); advance(14); local soon = j
 check('repeat saved on: starts 15 s after login', soon == 0 and jacoTrips(output()) == 1 and count('configure', 'repeat') == 0)
 -- right after a case: go and wait at Jaco, or after your own travel commands, or stay put
 event('ck.plugin.gumshoe.control', 'granted'); advance(30); E.gum.running = false; output()
-sent = {}; E.gum.caseOver(); advance(2); local notYet = #sent
+sent = {}; E.gum.caseOver(); E.gum.onCulpritDead('Mai'); advance(1); local notYet = #sent
 advance(1); event('ck.plugin.gumshoe.control', 'granted'); advance(6); local park = output()
-check('right after a case: off to Jaco to wait (3 s later)', notYet == 0 and sent[1] == 'look' and park:find('Off to Jaco to wait') ~= nil, park)
+check('culprit dead: off to Jaco to wait (2 s later)', notYet == 0 and sent[1] == 'look' and park:find('Off to Jaco to wait') ~= nil, park)
 advance(30); E.gum.running = false; output()
 input('gum repeat wait w; n ;up'); local w = output()
 check('gum repeat wait <commands>: says and saves it', w:find('then: w; n ;up') ~= nil and files['/package/gumshoe_repeat.lua'].wait == 'w; n ;up', w)
-sent = {}; E.gum.caseOver(); advance(3); local before = table.concat(sent, '|')
+sent = {}; E.gum.caseOver(); advance(59); local before = table.concat(sent, '|'); advance(1)
 event('ck.plugin.gumshoe.control', 'granted'); advance(6); lineIn('Briefs Family Garden'); lineIn('Front Steps'); advance(1)
-check('after a case: to Jaco first, then the commands from there', before == '' and table.concat(sent, '|') == 'look|use mansion|w|w|w|w|w|w|w|n|up', table.concat(sent, '|'))
+check('no culprit death seen: to Jaco a minute after the case, then the commands from there', before == '' and table.concat(sent, '|') == 'look|use mansion|w|w|w|w|w|w|w|n|up', table.concat(sent, '|'))
 advance(30); E.gum.running = false; output()
 input('gum repeat wait'); local cur = output()
 check('gum repeat wait: shows where', cur:find('at Jaco on the Front Steps, then: w; n ;up') ~= nil, cur)

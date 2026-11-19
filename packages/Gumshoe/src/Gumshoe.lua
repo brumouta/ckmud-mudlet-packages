@@ -790,8 +790,13 @@ function G.line(l)
   end
   if verdict2 then G.closedAt = G.clock(); G.caseOver() end
   -- the case is finished once the culprit is dead: the 20 minutes count from then
+  -- (the culprit dies as "Mai, caught red handed is dead!")
   local dead = l:match("^(.-) is dead!")
-  if dead and has(G.guests, dead) and G.closedAt and G.clock() - G.closedAt < 15 * 60 then G.caseOver() end
+  dead = dead and (dead:match("^(.-), caught red handed$") or dead)
+  if dead and has(G.guests, dead) and G.closedAt and G.clock() - G.closedAt < 15 * 60 then
+    G.caseOver()
+    if G.onCulpritDead then G.onCulpritDead(dead) end
+  end
 
   check(l)
 end
@@ -1577,7 +1582,7 @@ function G.toJaco(diff, arrived)
     end)
   end
   local outside
-  -- Inside the house: once a case is over, any step takes you out (the house robots walk you to
+  -- Back to Jaco after a case (arrived set), inside the house: once a case is over, any step takes you out (the house robots walk you to
   -- the Front Steps). So look where we are and take one step, toward Jaco when there's a way,
   -- else through any open exit. Still inside after it (a case on): walk the rest of the way.
   local function stepOut()
@@ -1602,7 +1607,14 @@ function G.toJaco(diff, arrived)
     end)
   end
   cmd("look", { { "@arrived", "in" } }, 5, function(k)
-    if k == "in" and G.room then return stepOut() end
+    if k == "in" and G.room then
+      if arrived then return stepOut() end   -- back to Jaco after a case: one step out
+      return G.walk("Front Steps", function(ok)
+        if ok then return sayCase() end
+        info("yellow", "Trying the way from outside the house")
+        outside()
+      end)
+    end
     outside()
   end)
   outside = function()

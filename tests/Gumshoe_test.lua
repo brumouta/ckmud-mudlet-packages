@@ -750,7 +750,7 @@ wait(10)
 ok(joined() == "look | s | say case hard", "robots walk you out: say case anyway: " .. joined())
 respond = nil
 
--- after a case: one step through any exit (no known way from here), the robots walk you out
+-- back to Jaco after a case: one step through any exit (no known way from here), the robots walk you out
 sent = {}; G.room = "East Corridor"; local savedPath = G.path
 G.path = function() return nil end
 respond = function(c)
@@ -758,10 +758,11 @@ respond = function(c)
   elseif c ~= "say case hard" then tempTimer(0.2, function()
     gum.line("A pair of house robots take you by the elbows and walk you out to the Front Steps."); gum.line("Front Steps") end) end
 end
-gum.command("case")
+local back = false
+G.toJaco(nil, function() back = true end)
 wait(10)
 G.path = savedPath
-ok(#sent == 3 and sent[1] == "look" and sent[3] == "say case hard" and G.room == "Front Steps", "no way known: any exit, out to Jaco: " .. joined())
+ok(back and #sent == 2 and sent[1] == "look" and G.room == "Front Steps", "back to Jaco after a case: look, one step, out: " .. joined())
 respond = nil
 
 -- toJaco with a callback (repeat waits there): gets there, says no case
@@ -823,7 +824,10 @@ wait(5 * 60)
 feed({ "Krillin is dead!  R.I.P." })
 LOG = ""; G.command("cooldown")
 ok(LOG:find("Next case in 15:00", 1, true), "someone who isn't a guest dying changes nothing")
-feed({ "Piccolo is dead!  R.I.P." })
+local downs = {}; G.onCulpritDead = function(n) downs[#downs + 1] = n end
+feed({ "Piccolo, caught red handed is dead!  R.I.P." })
+G.onCulpritDead = nil
+ok(downs[1] == "Piccolo", "the culprit's death, as the game says it, is seen")
 LOG = ""; G.command("cd")
 ok(LOG:find("Next case in 20:00", 1, true), "the culprit dies: the 20 minutes start again from there")
 LOG = ""; wait(20 * 60)

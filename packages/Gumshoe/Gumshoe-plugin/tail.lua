@@ -199,10 +199,11 @@ setWait = function(where)
   G.info('green', 'Repeat waits for the next case ' .. describeWait())
 end
 
--- Right after a case is over: head to where repeat waits (a few seconds, for the fight to end)
-local function park()
+-- After a case: once the culprit is dead (the fight is over), head back to Jaco and wait there.
+-- If no death is seen within a minute of Case closed, go anyway.
+local function park(delay)
   cancel('park')
-  rep.park = tempTimer(3, function()
+  rep.park = tempTimer(delay, function()
     rep.park = nil
     if not rep.on or G.running then return end
     G.toJaco(nil, function()
@@ -221,9 +222,10 @@ end
 local caseOver = G.caseOver
 G.caseOver = function(...)
   local r = caseOver(...)
-  if rep.on then cancel('watchdog'); schedule(untilJaco(5)); park() end
+  if rep.on then cancel('watchdog'); schedule(untilJaco(5)); park(60) end
   return r
 end
+G.onCulpritDead = function() if rep.on then park(2) end end
 local stopWalking = G.stop
 G.stop = function(...)
   local r = stopWalking(...)
@@ -260,8 +262,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.12.3: one step out of the house to Jaco, built on Gumshoe.mpackage 1.10.5).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.3',
+  -- change, so the client offers the update (1.12.4: back to Jaco once the culprit is dead, built on Gumshoe.mpackage 1.10.6).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.4',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },
