@@ -750,6 +750,20 @@ wait(10)
 ok(joined() == "look | s | say case hard", "robots walk you out: say case anyway: " .. joined())
 respond = nil
 
+-- after a case: one step through any exit (no known way from here), the robots walk you out
+sent = {}; G.room = "East Corridor"; local savedPath = G.path
+G.path = function() return nil end
+respond = function(c)
+  if c == "look" then tempTimer(0.2, function() gum.line("East Corridor") end)
+  elseif c ~= "say case hard" then tempTimer(0.2, function()
+    gum.line("A pair of house robots take you by the elbows and walk you out to the Front Steps."); gum.line("Front Steps") end) end
+end
+gum.command("case")
+wait(10)
+G.path = savedPath
+ok(#sent == 3 and sent[1] == "look" and sent[3] == "say case hard" and G.room == "Front Steps", "no way known: any exit, out to Jaco: " .. joined())
+respond = nil
+
 -- toJaco with a callback (repeat waits there): gets there, says no case
 sent = {}; G.room = "Kitchen"; local parked = false
 respond = function(c)

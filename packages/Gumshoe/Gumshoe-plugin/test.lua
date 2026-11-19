@@ -219,13 +219,13 @@ check('repeat saved on: starts 15 s after login', soon == 0 and jacoTrips(output
 -- right after a case: go and wait at Jaco, or after your own travel commands, or stay put
 event('ck.plugin.gumshoe.control', 'granted'); advance(30); E.gum.running = false; output()
 sent = {}; E.gum.caseOver(); advance(2); local notYet = #sent
-advance(1); event('ck.plugin.gumshoe.control', 'granted'); advance(4); local park = output()
+advance(1); event('ck.plugin.gumshoe.control', 'granted'); advance(6); local park = output()
 check('right after a case: off to Jaco to wait (3 s later)', notYet == 0 and sent[1] == 'look' and park:find('Off to Jaco to wait') ~= nil, park)
 advance(30); E.gum.running = false; output()
 input('gum repeat wait w; n ;up'); local w = output()
 check('gum repeat wait <commands>: says and saves it', w:find('then: w; n ;up') ~= nil and files['/package/gumshoe_repeat.lua'].wait == 'w; n ;up', w)
 sent = {}; E.gum.caseOver(); advance(3); local before = table.concat(sent, '|')
-event('ck.plugin.gumshoe.control', 'granted'); advance(4); lineIn('Briefs Family Garden'); lineIn('Front Steps'); advance(1)
+event('ck.plugin.gumshoe.control', 'granted'); advance(6); lineIn('Briefs Family Garden'); lineIn('Front Steps'); advance(1)
 check('after a case: to Jaco first, then the commands from there', before == '' and table.concat(sent, '|') == 'look|use mansion|w|w|w|w|w|w|w|n|up', table.concat(sent, '|'))
 advance(30); E.gum.running = false; output()
 input('gum repeat wait'); local cur = output()

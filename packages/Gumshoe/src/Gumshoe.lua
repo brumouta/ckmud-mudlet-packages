@@ -1577,14 +1577,32 @@ function G.toJaco(diff, arrived)
     end)
   end
   local outside
-  cmd("look", { { "@arrived", "in" } }, 3, function(k)
-    if k == "in" and G.room then
-      return G.walk("Front Steps", function(ok)
-        if ok then return sayCase() end
-        info("yellow", "Trying the way from outside the house")
-        outside()
-      end)
+  -- Inside the house: once a case is over, any step takes you out (the house robots walk you to
+  -- the Front Steps). So look where we are and take one step, toward Jaco when there's a way,
+  -- else through any open exit. Still inside after it (a case on): walk the rest of the way.
+  local function stepOut()
+    if G.room == "Front Steps" then return sayCase() end
+    local p = G.path(G.room, "Front Steps")
+    local dir = p and p[1] and p[1].dir
+    if not dir then
+      for _, e in ipairs(G.EXITS[G.room] or {}) do if not e.lock or G.open[e.lock] then dir = e.dir; break end end
     end
+    if not dir then info("yellow", "No way out of " .. tostring(G.room) .. ": trying from outside the house"); return outside() end
+    cmd(dir, { { "^Front Steps$", "out" }, { "@arrived", "moved" } }, G.stepTimeout, function(k)
+      if k == "out" or G.room == "Front Steps" then return sayCase() end
+      if k == "moved" then
+        return G.walk("Front Steps", function(ok)
+          if ok then return sayCase() end
+          info("yellow", "Trying the way from outside the house")
+          outside()
+        end)
+      end
+      info("yellow", "Trying the way from outside the house")
+      outside()
+    end)
+  end
+  cmd("look", { { "@arrived", "in" } }, 5, function(k)
+    if k == "in" and G.room then return stepOut() end
     outside()
   end)
   outside = function()

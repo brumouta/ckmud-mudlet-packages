@@ -260,8 +260,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.12.2: the every-line trigger takes the line however the host passes it, built on Gumshoe.mpackage 1.10.3).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.2',
+  -- change, so the client offers the update (1.12.3: one step out of the house to Jaco, built on Gumshoe.mpackage 1.10.5).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.3',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },
