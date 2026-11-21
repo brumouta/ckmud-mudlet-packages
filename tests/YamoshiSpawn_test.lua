@@ -351,3 +351,112 @@ out = {}; temps, timers = {}, {}
 quizLine(QUIZ[5][1]); ys.command("stop")
 assert(next(timers) == nil and next(temps) == nil, "ys stop ends a quiz search")
 print("QUIZ AND YS PORTAL PASSED")
+
+-- ---------------------------------------------------------------- ys spirits (Spirit Realm battlefields)
+RE[ys.EXIT_LINE] = function(l)
+  local d, to = l:match("^(%a+)%s+%-%s+(.+)$")
+  if d and ({ North = 1, East = 1, South = 1, West = 1, Up = 1, Down = 1 })[d] then matches = { l, d, to }; return true end
+end
+local SR = {}   -- the realm: "x,y" -> { name, evil = n, righteous = n }
+local function sr(x, y, name, kind, n) SR[x .. "," .. y] = { name = name, x = x, y = y, evil = 0, righteous = 0 }; if kind then SR[x .. "," .. y][kind] = n end end
+for _, p in ipairs({ { -3, 0 }, { -2, 0 }, { -3, 1 }, { -2, 1 }, { 2, 0 }, { 3, 0 }, { 2, 1 }, { 3, 1 } }) do sr(p[1], p[2], "An ancient battlefield") end
+sr(-1, 0, "a small corridor"); sr(0, 0, "an intersection"); sr(1, 0, "a small corridor")
+sr(0, 1, "a small corridor"); sr(0, 2, "An isolation chamber")
+SR["-3,1"].evil, SR["-2,0"].evil = 2, 1
+SR["3,1"].righteous, SR["2,0"].righteous = 1, 2
+local FRAG = "3,0"
+local SPIRIT = { evil = "Evil Saiyan Spirit", righteous = "Righteous Saiyan Spirit" }
+local DIRS = { n = { 0, 1, "North" }, s = { 0, -1, "South" }, e = { 1, 0, "East" }, w = { -1, 0, "West" } }
+local at, slipped, grabbed, entered, searched = "0,0", false, 0, {}, {}
+local function show(hideMobs)
+  local r = SR[at]; entered[at] = true
+  say(r.name); say("Obvious exits:")
+  for _, d in ipairs({ "n", "e", "s", "w" }) do
+    local m = DIRS[d]; local to = SR[(r.x + m[1]) .. "," .. (r.y + m[2])]
+    if to then say(string.format("%-5s -  %s", m[3], to.name)) end
+  end
+  say("")
+  if not hideMobs then
+    for kind, name in pairs(SPIRIT) do
+      local n = r[kind]
+      if n == 1 then say("[BOSS] " .. name .. " is standing here.") elseif n > 1 then say("[BOSS] [" .. n .. "] " .. name .. " is standing here.") end
+    end
+  end
+end
+local log2 = {}
+function send(c)
+  log2[#log2 + 1] = c
+  local kind = c:match("^sense (%a+)$")
+  if kind then
+    if SR[at][kind] > 0 then return say("You're already in the same room!!") end
+    local where
+    for k, r in pairs(SR) do if r[kind] > 0 then where = k; break end end
+    if not where then return say(ys.NO_ONE) end
+    at = where
+    say("You concentrate and sense " .. SPIRIT[kind] .. "'s ki.")
+    if kind == "righteous" and not slipped then slipped = true; return show(true) end   -- it walked off as we came
+    return show()
+  end
+  local ak = c:match("^ss (%a+)$")
+  if ak then
+    if SR[at][ak] > 0 then SR[at][ak] = SR[at][ak] - 1; return say(SPIRIT[ak] .. " is dead!  R.I.P.") end
+    return say("Death Beam who?")
+  end
+  if c == "look" then return show() end
+  local m = DIRS[c]
+  if m then
+    local r = SR[at]; local to = (r.x + m[1]) .. "," .. (r.y + m[2])
+    if SR[to] then at = to; return show() end
+    return say("Alas, you cannot go that way...")
+  end
+  if c == "search" then searched[at] = true; return say(at == FRAG and grabbed == 0 and ys.FRAGMENT_FOUND or ys.FRAGMENT_MISSED) end
+  if c == "get fragment" then grabbed = grabbed + 1 end
+end
+local function runFor(secs)
+  pump()
+  for _ = 1, secs * 2 do
+    now = now + 0.5
+    local due = {}
+    for i, t in pairs(timers) do if t.at <= now then due[#due + 1] = i end end
+    table.sort(due)
+    for _, i in ipairs(due) do local t = timers[i]; if t then timers[i] = nil; t.f(); pump() end end
+  end
+end
+temps, timers, LOG = {}, {}, ""
+ys.attack = "ss"; ys.fragments = true
+ys.command("spirits")
+runFor(120)
+local evilLeft, rightLeft = 0, 0
+for _, r in pairs(SR) do evilLeft = evilLeft + r.evil; rightLeft = rightLeft + r.righteous end
+assert(evilLeft == 0 and rightLeft == 0, "spirits left: " .. evilLeft .. " evil, " .. rightLeft .. " righteous")
+local firstRight, lastEvil
+for i, c in ipairs(log2) do
+  if c == "ss righteous" and not firstRight then firstRight = i end
+  if c == "ss evil" then lastEvil = i end
+end
+assert(lastEvil < firstRight, "evils first, then the righteous")
+assert(grabbed == 1, "the fragment was picked up: " .. grabbed)
+assert(not entered["0,2"], "went into the isolation chamber")
+assert(next(timers) == nil and next(temps) == nil, "ys spirits left triggers/timers behind")
+assert(LOG:find("fragment found", 1, true), "says it found the fragment")
+print("    " .. table.concat(log2, " "))
+-- no fragment anywhere: every room searched once, then it says so
+for _, r in pairs(SR) do r.evil, r.righteous = 0, 0 end
+FRAG, log2, searched, at, LOG = "none", {}, {}, "-3,0", ""
+ys.command("search")
+runFor(120)
+local n = 0; for k in pairs(searched) do n = n + 1 end
+assert(n == 12 and not searched["0,2"], "searched " .. n .. " of the 12 battlefield, corridor and intersection rooms")
+assert(LOG:find("searched all 12 rooms, no fragment", 1, true), LOG)
+assert(next(timers) == nil and next(temps) == nil, "ys search left triggers/timers behind")
+-- fragments off: kill, but no searching
+SR["2,1"].evil = 1; log2, LOG = {}, ""
+ys.fragments = false
+ys.command("spirits")
+runFor(30)
+for _, c in ipairs(log2) do assert(c ~= "search", "searched with fragments off") end
+assert(SR["2,1"].evil == 0 and next(temps) == nil and next(timers) == nil, "fragments off: killed and finished")
+-- ys stop mid-hunt
+SR["2,1"].evil = 1; ys.command("spirits"); ys.command("stop")
+assert(next(timers) == nil and next(temps) == nil, "ys stop ends ys spirits")
+print("YS SPIRITS PASSED")

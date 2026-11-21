@@ -473,6 +473,144 @@ function YS.portal(search)
   searchRoom(1)
 end
 
+-- ---------------------------------------------------------------- `ys spirits` (the Spirit Realm)
+-- The ancient battlefields: Evil Saiyan Spirits on the west side, Righteous ones on the east.
+-- sense takes you to one; kill it, sense again, until "No one is around by that name." Evils
+-- first, then the righteous. Then, with ys fragments on, search every room for the fragment.
+YS.SPIRITS = { { "evil", "Evil Saiyan Spirit" }, { "righteous", "Righteous Saiyan Spirit" } }
+YS.NO_ONE = "No one is around by that name."
+YS.SEARCH_ROOMS = { ["An ancient battlefield"] = true, ["a small corridor"] = true, ["an intersection"] = true }
+YS.spiritTries = YS.spiritTries or 15   -- senses in a row that find nobody to hit before giving up
+
+local sp = {}
+local function spClear()
+  for _, id in ipairs(sp.trigs or {}) do killTrigger(id) end
+  if sp.timer then killTimer(sp.timer) end
+  sp.trigs, sp.timer = {}, nil
+end
+function YS.spiritsStop() spClear(); sp = {} end
+local function spWait(timeout, fn) if sp.timer then killTimer(sp.timer) end; sp.timer = tempTimer(timeout, function() sp.timer = nil; fn() end) end
+local function spOn(text, fn) sp.trigs[#sp.trigs + 1] = tempTrigger(text, fn) end
+
+local huntKind, searchAll
+
+local function huntNext()
+  sp.kind = sp.kind + 1
+  local k = YS.SPIRITS[sp.kind]
+  if not k then
+    spClear()
+    info("green", "ys spirits: the battlefields are clear")
+    if YS.fragments then return searchAll() end
+    sp = {}
+    return
+  end
+  info("white", "ys spirits: hunting " .. k[2] .. "s")
+  huntKind(k)
+end
+
+huntKind = function(k)
+  spClear()
+  sp.state, sp.misses = nil, 0
+  local function sense()
+    sp.misses = sp.misses + 1
+    if sp.misses > YS.spiritTries then
+      YS.spiritsStop()
+      return info("yellow", "ys spirits: sensed " .. YS.spiritTries .. " times without finding a " .. k[2] .. " to hit - finish by hand")
+    end
+    sp.state = "sensing"
+    send("sense " .. k[1])
+    spWait(4, sense)          -- went somewhere with nobody to hit (it moved): sense again
+  end
+  local function attack()
+    sp.state, sp.misses = "attacking", 0
+    send(YS.attack .. " " .. k[1])
+    spWait(90, sense)
+  end
+  spOn(YS.NO_ONE, function() if sp.state == "sensing" then huntNext() end end)
+  spOn("You're already in the same room!!", function() if sp.state == "sensing" then attack() end end)
+  spOn(k[2] .. " is standing here", function() if sp.state == "sensing" then attack() end end)
+  spOn(k[2] .. " is dead!", function() if sp.state == "attacking" then sp.state = "dead"; spWait(0.5, sense) end end)
+  spOn(" who?", function() if sp.state == "attacking" then sense() end end)   -- "Death Beam who?": it's gone
+  sense()
+end
+
+function YS.spirits()
+  YS.spiritsStop()
+  sp = { kind = 0 }
+  huntNext()
+end
+
+-- Search every room: walk them one by one (depth first, by the exits each room lists, keeping
+-- to YS.SEARCH_ROOMS), search each, and stop at the first fragment.
+local MOVE = { north = { 0, 1, 0, "n", "s" }, south = { 0, -1, 0, "s", "n" }, east = { 1, 0, 0, "e", "w" },
+               west = { -1, 0, 0, "w", "e" }, up = { 0, 0, 1, "u", "d" }, down = { 0, 0, -1, "d", "u" } }
+YS.EXIT_LINE = [[^(North|East|South|West|Up|Down)\s+-\s+(.+)$]]
+
+searchAll = function()
+  spClear()
+  sp = { pos = { 0, 0, 0 }, seen = {}, back = {}, searches = 0, trigs = {} }
+  local key = function(p) return p[1] .. "," .. p[2] .. "," .. p[3] end
+  local step
+  local function arrive(cb)      -- wait for the room's exits, then cb(exits)
+    local exits, collecting = {}, false
+    sp.trigs[#sp.trigs + 1] = tempTrigger("Obvious exits:", function()
+      collecting = true
+      spWait(0.5, function() spClear(); cb(exits) end)
+    end)
+    sp.trigs[#sp.trigs + 1] = tempRegexTrigger(YS.EXIT_LINE, function()
+      if collecting then exits[#exits + 1] = { dir = matches[2]:lower(), to = (matches[3] or ""):gsub("%s+$", "") } end
+    end)
+    spWait(8, function() YS.spiritsStop(); info("yellow", "ys spirits: lost track of the rooms - search the rest by hand") end)
+  end
+  local function moveOn(exits)
+    for _, e in ipairs(exits) do
+      local m = MOVE[e.dir]
+      if m and YS.SEARCH_ROOMS[e.to] then
+        local np = { sp.pos[1] + m[1], sp.pos[2] + m[2], sp.pos[3] + m[3] }
+        if not sp.seen[key(np)] then
+          sp.back[#sp.back + 1] = m[5]; sp.pos = np
+          send(m[4])
+          return arrive(step)
+        end
+      end
+    end
+    local b = table.remove(sp.back)
+    if not b then
+      local n = sp.searches
+      YS.spiritsStop()
+      return info("yellow", "ys spirits: searched all " .. n .. " rooms, no fragment")
+    end
+    for _, m in pairs(MOVE) do if m[4] == b then sp.pos = { sp.pos[1] + m[1], sp.pos[2] + m[2], sp.pos[3] + m[3] } end end
+    send(b)
+    arrive(moveOn)
+  end
+  step = function(exits)
+    sp.seen[key(sp.pos)] = true
+    sp.searches = sp.searches + 1
+    local done = false
+    local function after(found)
+      if done then return end
+      done = true
+      spClear()
+      if found then
+        local n = sp.searches
+        send(YS.GRAB)
+        YS.spiritsStop()
+        return info("green", "ys spirits: fragment found in room " .. n .. " searched")
+      end
+      moveOn(exits)
+    end
+    sp.trigs[#sp.trigs + 1] = tempTrigger(YS.FRAGMENT_FOUND, function() after(true) end)
+    sp.trigs[#sp.trigs + 1] = tempTrigger(YS.FRAGMENT_MISSED, function() after(false) end)
+    spWait(YS.portalDelay, function() after(false) end)
+    send(YS.SEARCH)
+  end
+  info("white", "ys spirits: searching every room for the fragment")
+  send("look")
+  arrive(step)
+end
+function YS.searchRooms() YS.spiritsStop(); searchAll() end
+
 -- ---------------------------------------------------------------- `ys` alias
 YS.HELP = {
   { "ys help",          "Show this list" },
@@ -483,6 +621,8 @@ YS.HELP = {
   { "ys stage <name>",  "Set the stage: " .. table.concat(YS.STAGES, ", ") },
   { "ys attack <cmd>",  "Attack used on the bosses (default ss)" },
   { "ys portal",        "Walk the switches and portals (with fragments on: searching until a fragment turns up)" },
+  { "ys spirits",       "Spirit Realm battlefields: sense and kill every Evil, then every Righteous Saiyan Spirit, then search every room (fragments on)" },
+  { "ys search",        "Search every battlefield room for the fragment (stops at the first)" },
   { "ys fragments [on|off]", "Search for memory fragments on the portal walk and before each quiz answer (default on)" },
 }
 
@@ -524,9 +664,14 @@ function YS.command(cmd, arg)
     YS.cancel()
     YS.portalStop()
     quizWaitStop()
+    YS.spiritsStop()
     info("yellow", "Helper OFF")
   elseif cmd == "stage" and arg and validStage(arg) then
     YS.setStage(arg)
+  elseif cmd == "spirits" then
+    YS.spirits()
+  elseif cmd == "search" then
+    YS.searchRooms()
   elseif cmd == "portal" then
     YS.portal(YS.fragments)
   elseif cmd == "fragments" or cmd == "fragment" then
