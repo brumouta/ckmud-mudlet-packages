@@ -48,6 +48,7 @@ local function feed(l)
   if l:find("The High Stakes Dealer pitches two cards to each player.", 1, true) then hs.newHand() end
   local h, sb, bb = l:match("Hand (%d+), blinds ([%d,]+) and ([%d,]+)%.")
   if h then hs.onHandStart(h, sb, bb) end
+  local btn = l:match("New hand! (%S+) has the button%."); if btn then hs.onButton(btn) end
   local hole = l:match("^%s*Your cards: (.+)$"); if hole then hs.onHole(hole) end
   local st, sc = l:match("^The High Stakes Dealer says, 'The (%a+): (.+)'")
   if st then hs.onStreet(st, sc) end
@@ -166,4 +167,16 @@ hs.onTenSeconds("Vorricer"); ok(#sent == 1, "hs auto off: the warning only shows
 hs.command("auto", "on"); hs.onTenSeconds("Vorricer"); ok(#sent == 2 and sent[2] == "ccheck", "hs auto on: plays it")
 hs.onTenSeconds("Someone"); ok(#sent == 2, "someone else's warning: nothing")
 hs.command("help"); hs.command("players"); hs.command("status"); hs.command("bogus")
+
+-- KJo on the button (4 players): open it, then call a small raise the pot pays for -----------
+advice, hs.me = {}, "Vorricer"
+hs.seats = { "Jericho", "SirSmilezzz", "Snuggles", "Vorricer" }
+for l in io.lines("tests/fixtures/highstakes4.log") do feed(l) end
+ok(advice[1] and advice[1].command:find("^craise") ~= nil, "KJo on the button, nobody raised: raise (" .. a(1) .. ")")
+ok(advice[2] and advice[2].command == "ccall", "KJo, 200M to call into 1B after a min raise and a call: call (" .. a(2) .. ")")
+hs.button = "Snuggles"; hs.seats = { "A", "B", "C", "D", "E", "Vorricer" }
+local ko = hs.decide({ hole = C("[KS] [JD]"), board = {}, toCall = 200e6, pot = 300e6, stack = 11e9, bb = 200e6, nOpp = 5,
+  minRaise = 400e6, noLimit = true, sims = 500, players = 6, button = false })
+ok(ko.command == "cfold", "KJo at a 6 player table, not on the button: still folds (" .. ko.why .. ")")
+
 print("\nhs: ALL PASSED")

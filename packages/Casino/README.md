@@ -185,8 +185,8 @@ Tip: bind a key to `hs go` (Toolbox → Keys) so playing the suggestion is one k
 - playable: small pairs, suited aces, KTs, QTs, T9s, 98s, KJo, ATo, QJo
 
 Then:
-- **Nobody has raised yet:** raise to 3 big blinds with good hands or better. From the small blind, complete for half a bet with a playable hand, any suited hand, any ace or king, or connected cards (8-7, 9-7...). Fold the rest.
-- **Facing a raise:** re-raise premium hands to 3×. Call with strong or good hands if it costs at most 10% of your stack. Otherwise fold.
+- **Nobody has raised yet:** raise to 3 big blinds with good hands or better, and with playable hands too when you have the button or 4 or fewer players are left. From the small blind, complete for half a bet with a playable hand, any suited hand, any ace or king, or connected cards (8-7, 9-7...). Fold the rest.
+- **Facing a raise:** re-raise premium hands to 3×. Call with strong or good hands if it costs at most 10% of your stack. A playable hand calls too when your chance against the raisers (top 30% of hands) beats the pot odds, as with a min raise into a big pot. A min raise counts as a raise even though it leaves the big blind only one big blind to call. Otherwise fold.
 - **Facing an all in, or a bet over a third of your stack:** assume they hold a top-25% hand. Call only when your chance against that range beats the pot odds, or with a premium hand. With a premium hand it moves all in if it can.
 - **Your stack is 10 big blinds or less:** all in with any tier hand or any ace, otherwise fold.
 

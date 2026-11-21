@@ -425,9 +425,14 @@ function HS.decide(ctx)
       end
       return passive(ctx, class .. " with " .. math.floor(m) .. " big blinds: fold and wait", nil, need)
     end
-    if ctx.toCall <= ctx.bb then
-      -- nobody raised yet
+    if ctx.toCall <= ctx.bb and not ctx.raised then
+      -- nobody raised yet (a min raise also leaves the big blind one big blind to call)
       if tier <= 3 then return aggressive(ctx, 3 * ctx.bb, tname .. " " .. class .. ": raise", nil, need) end
+      -- playable hands open too from the button, or at a short table (4 players or fewer):
+      -- only the blinds (or a couple of players) are left to beat
+      if tier == 4 and (ctx.button or (ctx.players and ctx.players <= 4)) then
+        return aggressive(ctx, 3 * ctx.bb, tname .. " " .. class .. (ctx.button and " on the button" or " at a short table") .. ": raise", nil, need)
+      end
       -- heads up the small blind is the button (last to act after the flop): see most flops
       if ctx.toCall > 0 and ctx.toCall <= ctx.bb / 2 and (tier == 4 or ctx.nOpp == 1 or HS.completes(ctx.hole)) then
         return call(ctx, class .. ": half a bet to see a flop", nil, need)   -- small blind, limped pot
@@ -437,6 +442,12 @@ function HS.decide(ctx)
     -- facing a raise
     if tier == 1 then return aggressive(ctx, 3 * ctx.toCall, "premium " .. class .. ": re-raise", nil, need) end
     if tier <= 3 and ctx.toCall <= ctx.stack * 0.1 then return call(ctx, tname .. " " .. class .. " vs a raise", nil, need) end
+    -- a playable hand calls a small raise when the pot pays for it (against a raiser's range)
+    if tier == 4 and ctx.toCall <= ctx.stack * 0.1 then
+      local eq = HS.equity(ctx.hole, ctx.board, ctx.nOpp, 0.3, ctx.sims)
+      if eq >= need + 0.03 then return call(ctx, tname .. " " .. class .. " vs a raise: the pot odds say call", eq, need) end
+      return passive(ctx, tname .. " " .. class .. " vs a raise: not the odds", eq, need)
+    end
     return passive(ctx, tname .. " " .. class .. " vs a raise", nil, need)
   end
 
@@ -489,6 +500,9 @@ function HS.newHand()
   HS.hand = newHand()
   HS.stats.hands = HS.stats.hands + 1
 end
+
+-- "New hand! Vorricer has the button." (comes before the cards, so kept outside HS.hand)
+function HS.onButton(name) HS.button = name end
 
 function HS.onHandStart(handNo, sb, bb)
   HS.handNo = tonumber(handNo)
@@ -548,6 +562,7 @@ function HS.onPlay(name, verb, rest)
   if name == "Everyone" then return end            -- "Everyone folds. Cicada takes the pot..."
   seat(name)
   if verb == "folds" then HS.hand.folded[name] = true end
+  if #HS.hand.board < 3 and verb == "raises" then HS.hand.preRaise = true end   -- someone raised preflop
   if #HS.hand.board >= 3 then                      -- after the flop: how they're playing this board
     if verb == "bets" or verb == "raises" then HS.hand.aggr[name] = (HS.hand.aggr[name] or 0) + 1 end
     if verb == "calls" then HS.hand.called[name] = true end
@@ -662,6 +677,8 @@ function HS.advise()
     hole = h.hole, board = h.board, toCall = t.toCall, pot = t.pot or (t.toCall * 2), stack = math.max(stack, 1),
     bb = HS.bb, nOpp = HS.opponents(), minRaise = t.minRaise, betOffer = t.betOffer,
     canCheck = t.canCheck, noLimit = t.noLimit, facingAllin = facingAllin, sims = HS.sims,
+    players = #HS.seats > 0 and #HS.seats or nil, button = HS.button ~= nil and isMe(HS.button),
+    raised = HS.hand.preRaise,
   }
   ctx.oppMins = {}
   for i, name in ipairs(HS.opponentNames()) do ctx.oppMins[i] = HS.minStrength(name) end
