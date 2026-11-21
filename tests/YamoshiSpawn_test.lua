@@ -240,7 +240,7 @@ assert(ys.stage == "done" and not ys.active, "ended at stage " .. ys.stage)
 assert(not (LOG or ""):find("Timed out"), "a wait timed out")
 print("\nFULL YAMOSHI RUN PASSED: " .. #sent .. " commands, 0 invalid moves, " .. (state.refusals or 0) .. " maze refusals")
 
--- ---------------------------------------------------------------- quiz and yamoportal
+-- ---------------------------------------------------------------- quiz and ys portal
 local out = {}
 function send(c) out[#out + 1] = c end
 local function quizLine(l)
@@ -259,6 +259,8 @@ local QUIZ = {
   { "Tetsusai asks, 'When he battled the Evil Saiyans, what form did Yamoshi achieve?'", "SSJ" },
   { "Tetsusai says, 'After his death he did this for a millenia seeking out comrades in arms.'", "Wander" },
 }
+assert(ys.fragments == true, "fragments on by default")
+ys.command("fragments", "off")
 for _, qa in ipairs(QUIZ) do
   out = {}
   assert(quizLine(qa[1]) == qa[2], "quiz: " .. qa[1])
@@ -266,6 +268,26 @@ for _, qa in ipairs(QUIZ) do
 end
 out = {}
 assert(quizLine("Tetsukai says, 'Welcome, traveller.'") == nil and #out == 0, "unknown line answered")
+
+-- ys fragments on: search before answering, get fragment if found, then the answer
+ys.command("fragments", "on")
+local function fireT(text) for _, t in pairs(temps) do if t.t == text then t.f(); return true end end end
+out = {}; temps, timers = {}, {}
+assert(quizLine(QUIZ[1][1]) == "ritual")
+assert(table.concat(out, ",") == "search", "fragments on: search first: " .. table.concat(out, ","))
+fireT(ys.FRAGMENT_FOUND)
+assert(table.concat(out, ",") == "search,get fragment,say ritual", "found: grab, then answer: " .. table.concat(out, ","))
+assert(next(timers) == nil and next(temps) == nil, "quiz search left triggers/timers behind")
+out = {}
+quizLine(QUIZ[2][1])
+quizLine(QUIZ[3][1])   -- a second question while the search is out: answered with it, one search
+fireT(ys.FRAGMENT_MISSED)
+assert(table.concat(out, ",") == "search,say namek,say blue", "missed: answers: " .. table.concat(out, ","))
+out = {}
+quizLine(QUIZ[4][1])
+local k = next(timers); local t = timers[k]; timers[k] = nil; t.f()   -- no answer to the search
+assert(table.concat(out, ",") == "search,say death", "no search answer: answer anyway: " .. table.concat(out, ","))
+assert(next(timers) == nil and next(temps) == nil, "quiz search left triggers/timers behind")
 
 -- the walk, as the alias would play out: fire the search timers, optionally find a fragment
 local function walkPortal(foundInRoom, silentRoom)
@@ -281,7 +303,7 @@ local function walkPortal(foundInRoom, silentRoom)
     else fire(ys.FRAGMENT_MISSED) end
     room = room + 1
   end
-  assert(next(timers) == nil and next(temps) == nil, "yamoportal left triggers/timers behind")
+  assert(next(timers) == nil and next(temps) == nil, "ys portal left triggers/timers behind")
   local searches = 0
   local grabs, grabbedAt = 0, nil
   for i, c in ipairs(out) do
@@ -314,8 +336,18 @@ for _, t in pairs(temps) do if t.t == ys.FRAGMENT_MISSED then t.f() end end
 assert(table.concat(out, ",") == "search,press switch,press switch,enter portal,search")
 ys.command("stop")
 assert(next(timers) == nil and next(temps) == nil, "ys stop leaves the walk running")
-out = {}; ys.portal(false)
-assert(#out == 15, "yamoportal no sends " .. #out)
+ys.command("fragments", "off")
+out = {}; ys.command("portal")
+assert(#out == 15, "ys portal with fragments off sends " .. #out)
 for _, c in ipairs(out) do assert(c ~= "search" and c ~= "get fragment") end
 assert(table.concat(out, ",") == "press switch,press switch,enter portal,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal,press switch,enter portal,press switch,press switch,enter portal")
-print("QUIZ AND YAMOPORTAL PASSED")
+ys.command("fragments", "on")
+out = {}; temps, timers = {}, {}
+ys.command("portal")
+assert(table.concat(out, ",") == "search", "ys portal with fragments on searches first")
+ys.command("stop")
+assert(next(timers) == nil and next(temps) == nil, "ys stop ends the portal walk")
+out = {}; temps, timers = {}, {}
+quizLine(QUIZ[5][1]); ys.command("stop")
+assert(next(timers) == nil and next(temps) == nil, "ys stop ends a quiz search")
+print("QUIZ AND YS PORTAL PASSED")

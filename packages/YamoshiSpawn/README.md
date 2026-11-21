@@ -14,7 +14,8 @@ Runs the three trials in the Temple of the Ancient Saiyajins and the ritual that
 | `ys stage <name>` | Set the stage: memory, perception, power, ritual, done |
 | `ys attack <cmd>` | Attack used on the bosses (default `ss`) |
 | `ys status` / `ys stop` | Show the stage / turn the helper off |
-| `yamoportal [no]` | Walk the switch-and-portal rooms, `search` in each and move on as soon as the search answers; once a fragment turns up, `get fragment` and send the rest of the walk at once (`no` skips the searches) |
+| `ys portal` | Walk the switch-and-portal rooms. With fragments on, `search` in each and move on as soon as the search answers; once a fragment turns up, `get fragment` and send the rest of the walk at once. With fragments off, it just walks |
+| `ys fragments [on\|off]` | Search for memory fragments (default on): on the portal walk, and before each of Tetsukai's quiz answers (`search`, `get fragment` if found, then the answer). Saved across restarts |
 
 ## Tetsukai's quiz
 

@@ -8,6 +8,16 @@ YS.attack = YS.attack or "ss"        -- attack used on the bosses
 YS.vortex = "enter vortex"           -- the swirling vortexes from the hallways into the trials
 YS.exit   = "up"                     -- the way back out; the vortex doesn't take you out of a trial
 
+-- ys fragments on|off: search for memory fragments on the portal walk and before each quiz
+-- answer. Kept in a file in the profile, so it survives a restart.
+local function settingsFile() return getMudletHomeDir and (getMudletHomeDir() .. "/yamoshispawn.lua") end
+if YS.fragments == nil then
+  YS.fragments = true
+  local f, saved = settingsFile(), {}
+  if f and table.load and io.open(f) then pcall(table.load, f, saved) end
+  if saved.fragments ~= nil then YS.fragments = saved.fragments end
+end
+
 YS.STAGES = { "memory", "perception", "power", "ritual", "done" }
 YS.HINTS = {
   memory     = "Trial of Memory (west hallway): four flames, then Warlord Kaizor.",
@@ -353,20 +363,48 @@ YS.QUIZ = {
   { "seeking out comrades in arms",                      "Wander" },
 }
 
+-- With ys fragments on, every answer waits for a search first (and get fragment if it finds one)
+local quizWait = {}
+local function quizWaitStop()
+  for _, id in ipairs(quizWait.trigs or {}) do killTrigger(id) end
+  if quizWait.timer then killTimer(quizWait.timer) end
+  quizWait = {}
+end
+YS.quizWaitStop = quizWaitStop
+
+local function searchThenAnswer(answer)
+  if quizWait.queue then   -- a search is already out: answer this one with it
+    quizWait.queue[#quizWait.queue + 1] = answer
+    return
+  end
+  local function finish(found)
+    local queue = quizWait.queue or {}
+    quizWaitStop()
+    if found then send(YS.GRAB) end
+    for _, a in ipairs(queue) do send("say " .. a) end
+  end
+  quizWait.queue = { answer }
+  quizWait.trigs = {
+    tempTrigger(YS.FRAGMENT_FOUND, function() finish(true) end),
+    tempTrigger(YS.FRAGMENT_MISSED, function() finish(false) end),
+  }
+  quizWait.timer = tempTimer(YS.portalDelay, function() quizWait.timer = nil; finish(false) end)
+  send(YS.SEARCH)
+end
+
 function YS.quiz(question)
   for _, qa in ipairs(YS.QUIZ) do
     if question:find(qa[1], 1, true) then
-      send("say " .. qa[2])
+      if YS.fragments then searchThenAnswer(qa[2]) else send("say " .. qa[2]) end
       return qa[2]
     end
   end
 end
 
--- ---------------------------------------------------------------- `yamoportal` alias
--- The switch-and-portal walk. Each room is searched and the walk moves on as soon as the
--- search answers; once a fragment turns up it's picked up and the rest of the walk is sent
--- straight away.
--- `yamoportal no` skips the searches.
+-- ---------------------------------------------------------------- `ys portal`
+-- The switch-and-portal walk. With ys fragments on, each room is searched and the walk moves on
+-- as soon as the search answers; once a fragment turns up it's picked up and the rest of the
+-- walk is sent straight away. With ys fragments off it just walks.
 YS.FRAGMENT_FOUND = "After searching around you managed to uncover a fragment of memories!"
 YS.FRAGMENT_MISSED = "You search around the area, but fail to find anything."
 YS.SEARCH = "search"
@@ -411,7 +449,7 @@ end
 searchRoom = function(i)
   if i > #YS.PORTAL_ROOMS then
     YS.portalStop()
-    return info("yellow", "yamoportal: no fragment found")
+    return info("yellow", "ys portal: no fragment found")
   end
   walk.room = i
   send(YS.SEARCH)
@@ -427,7 +465,7 @@ function YS.portal(search)
       if not room then return end
       YS.portalStop()
       send(YS.GRAB)
-      info("green", "yamoportal: fragment found - skipping the other searches")
+      info("green", "ys portal: fragment found - skipping the other searches")
       sendRooms(room)
     end),
     tempTrigger(YS.FRAGMENT_MISSED, missed),
@@ -444,13 +482,14 @@ YS.HELP = {
   { "ys status",        "Show the current stage" },
   { "ys stage <name>",  "Set the stage: " .. table.concat(YS.STAGES, ", ") },
   { "ys attack <cmd>",  "Attack used on the bosses (default ss)" },
-  { "yamoportal [no]",  "Walk the switches and portals, searching until a fragment turns up (no: skip the searches)" },
+  { "ys portal",        "Walk the switches and portals (with fragments on: searching until a fragment turns up)" },
+  { "ys fragments [on|off]", "Search for memory fragments on the portal walk and before each quiz answer (default on)" },
 }
 
 function YS.help()
   cecho("\n<cyan>Yamoshi spawn helper (ys) commands:\n")
   for _, row in ipairs(YS.HELP) do
-    cecho(string.format("  <yellow>%-18s<white>%s\n", row[1], row[2]))
+    cecho(string.format("  <yellow>%-22s<white>%s\n", row[1], row[2]))
   end
 end
 
@@ -459,6 +498,7 @@ function YS.status()
   cecho("  <white>Helper: " .. (YS.active and "<green>ON" or "<red>OFF") .. "<white>\n")
   cecho("  <white>Stage:  " .. YS.stage .. " - " .. (YS.HINTS[YS.stage] or "") .. "\n")
   cecho("  <white>Attack: " .. YS.attack .. "\n")
+  cecho("  <white>Fragments: " .. (YS.fragments and "<green>ON" or "<red>OFF") .. "<white>\n")
 end
 
 local function validStage(name)
@@ -483,9 +523,19 @@ function YS.command(cmd, arg)
     YS.active, YS.leg = false, nil
     YS.cancel()
     YS.portalStop()
+    quizWaitStop()
     info("yellow", "Helper OFF")
   elseif cmd == "stage" and arg and validStage(arg) then
     YS.setStage(arg)
+  elseif cmd == "portal" then
+    YS.portal(YS.fragments)
+  elseif cmd == "fragments" or cmd == "fragment" then
+    if arg == "on" then YS.fragments = true elseif arg == "off" then YS.fragments = false
+    elseif arg == nil then YS.fragments = not YS.fragments
+    else return info("yellow", "ys fragments on or off") end
+    local f = settingsFile()
+    if f and table.save then pcall(table.save, f, { fragments = YS.fragments }) end
+    info("white", "Fragments: " .. (YS.fragments and "on - ys portal and the quiz search first" or "off - no searching"))
   elseif cmd == "attack" and arg then
     YS.attack = arg
     info("white", "Attack set to '" .. arg .. "'")
