@@ -1,0 +1,38 @@
+{
+  "name": "MoroQuest",
+  "version": "1.1.0",
+  "title": "Moro questline helper",
+  "description": "The Moro questline for Agent Merus: decodes the scrambled prisoner manifest and posts the wanted bulletins at all five spaceports (recall, Zeno Button, vortexes), fighting off rivals on the way. Type `moro help`.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "MoroQuest",
+      "file": "src/MoroQuest.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "moro",
+      "regex": "^moro(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nmoro.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "MoroQuest",
+      "folder": true,
+      "children": [
+        {
+          "name": "moro Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "moro.line(type(matches) == \"table\" and matches[1] or line)"
+        }
+      ]
+    }
+  ]
+}
