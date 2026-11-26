@@ -10,6 +10,7 @@ Helpers for the Moro questline (Agent Merus, Galactic Patrol). Type `moro help`.
 | `moro decode a d <words>` | Decode words by hand with any key |
 | `moro bulletins [planet]` | Post the wanted bulletins at every spaceport still to do (or just one planet) |
 | `moro comms` | Go to the Station's comms deck for the recorded transmission (runs by itself after the last bulletin) |
+| `moro space <cmd>` | What gets you somewhere you can `leave` into space (default `crecall`, the Galactic Federation clan hall) |
 | `moro attack <cmd>` | Attack used on rivals that jump you on the way (default `de`) |
 | `moro stop` | Stop the bulletin or comms run |
 
@@ -39,7 +40,7 @@ again (the pursue, or the flight).
 
 ## The recorded transmission
 
-After the fifth bulletin it heads to the Station's comms deck: `recall` (Galactic Federation
-HeadQuarters), `leave`, fly to the Galactic Patrol Station (number read from `survey`), `enter`,
+After the fifth bulletin it heads to the Station's comms deck: `crecall` (the Galactic Federation
+clan hall; change it with `moro space`), `leave`, fly to the Galactic Patrol Station (number read from `survey`), `enter`,
 then `n n w` to the Communications Deck, where Jaco's recording plays. It shows the landmark it
 gives for the Prison Planet (landmark 12 on the Space Map survey).

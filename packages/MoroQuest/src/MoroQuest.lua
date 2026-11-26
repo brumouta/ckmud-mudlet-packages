@@ -3,13 +3,14 @@
 --    3 forward), so moving each letter back gives the five names to decipher.
 -- 2. The wanted bulletins: post them at the spaceports of Earth, Vegeta, Namek, Iceria and Konats,
 --    by recall, the Zeno Button and the Grand Atrium's vortexes (no ship).
--- 3. The recorded transmission: fly from Galactic Federation HQ to the Galactic Patrol Station and
+-- 3. The recorded transmission: clan recall (`crecall`, Galactic Federation HQ), leave, fly to the Galactic Patrol Station and
 --    walk to its Communications Deck, where Jaco's recording plays (landmark for the Prison Planet).
 moro = moro or {}
 local M = moro
 
 M.auto   = (M.auto == nil) and false or M.auto   -- send the decipher commands as soon as the manifest is read
 M.attack = M.attack or "de"                      -- used on rivals that jump you on the way
+M.space  = M.space or "crecall"                  -- gets you somewhere you can `leave` into space (clan recall)
 M.names  = M.names or {}
 
 local function info(color, msg) cecho("\n<" .. color .. ">[moro] " .. msg .. "\n") end
@@ -220,16 +221,17 @@ function M.bulletins(planet)
 end
 
 -- ---------------------------------------------------------------- 3. the recorded transmission
--- recall lands in Galactic Federation HeadQuarters; leave into space, fly to the Patrol Station
+-- M.space (crecall: the Galactic Federation clan hall) then `leave` into space; fly to the Patrol Station
 -- (from `survey`), enter its hangar and walk n, n, w to the Communications Deck, where it plays.
-M.COMMS = { "recall", "leave",
+M.COMMS = { "leave",
   { survey = "Galactic Patrol Station", arrive = "You have arrived at Galactic Patrol Station." },
   "enter", { wait = "Patrol Station Hangar" }, "n", "n", "w",
   { wait = "The recording ends with coordinates", timeout = 60 } }
 
 function M.comms()
   M.stop()
-  run = { active = true, tried = {}, trigs = {}, planet = "the comms deck", i = 1, leg = M.COMMS }
+  run = { active = true, tried = {}, trigs = {}, planet = "the comms deck", i = 1, leg = { M.space } }
+  for _, s in ipairs(M.COMMS) do run.leg[#run.leg + 1] = s end
   run.finish = function()
     clear(); run.active = false; run.leg = nil
     info("green", "Transmission played: next is the Prison Planet"
@@ -286,6 +288,7 @@ M.HELP = {
   { "moro decode a d <words>", "Decode words by hand with a key" },
   { "moro bulletins [planet]", "Post the wanted bulletins at every spaceport still to do (or one planet)" },
   { "moro comms",              "Go to the Station's comms deck for the recorded transmission (after the bulletins)" },
+  { "moro space <cmd>",       "Command that takes you somewhere you can leave into space (default crecall)" },
   { "moro attack <cmd>",       "Attack used on rivals that jump you on the way (default de)" },
   { "moro stop",               "Stop the bulletin or comms run" },
 }
@@ -307,6 +310,7 @@ function M.command(c, arg)
     info("green", table.concat(out, ", "))
   elseif c == "bulletins" or c == "post" then M.bulletins(arg)
   elseif c == "comms" or c == "transmission" then M.comms()
+  elseif c == "space" and arg then M.space = arg; info("white", "To space: " .. arg .. ", then leave")
   elseif c == "attack" and arg then M.attack = arg; info("white", "Rival attack: " .. arg)
   elseif c == "stop" then M.stop()
   else M.help() end

@@ -70,7 +70,9 @@ local ORDER = { "Earth", "Vegeta", "Namek", "Iceria", "Konats" }
 local left = { Earth = true, Vegeta = true, Namek = true, Iceria = true, Konats = true }
 local walked, planet, area, rivalDone, surveyNo = {}, nil, nil, false, {}
 local VORTEX = { ["s,s"] = "Earth", ["s,e,e"] = "Vegeta", ["s,w,w"] = "Namek", ["n,w,w"] = "Iceria", ["n,e,e"] = "Konats" }
-local SURVEY = { Space = { "Earth", "Namek", "Vegeta", "Iceria", "Konats", "Yardrat", "Arlia", "Kanassa", "Planet Zeno", "Galactic Patrol Station" },
+local SURVEY = { Space = { "Galactic Federation HeadQuarters", "Planet Earth", "Installation 04", "Planet Vegeta", "Lucky M(*)nkey Casino",
+                   "Planet Iceria", "Golia Clan Starship", "Planet Konats", "Planet Namek", "Galactic Patrol Station",
+                   "Brigade Anchorage", "Prison Planet", "Withered Planet" },
                  Namek = { "Kami's Lookout", "Guru's Compound" }, Iceria = { "Clifftop Village", "Crystal Grotto", "Iron Maiden Heights", "Frostblight Cavern", "City of Zero Nexus" } }
 local path = {}
 local function leftText()
@@ -81,7 +83,8 @@ local function leftText()
   return table.concat(l, ", ", 1, #l - 1) .. " and " .. l[#l]
 end
 respond = function(c)
-  if c == "recall" then path = {}; planet = nil; say("Galactic Federation HeadQuarters")
+  if c == "recall" then path = {}; planet = nil
+  elseif c == "crecall" then path = {}; planet = nil; say("Galactic Federation HeadQuarters")
   elseif c == "leave" then planet = "Space"
   elseif c == "press button" then say("A Grand Atrium")
   elseif c == "enter vortex" then planet = VORTEX[table.concat(path, ",")]; assert(planet, "no vortex at " .. table.concat(path, ",")); say("You step through the portal.")
@@ -93,7 +96,11 @@ respond = function(c)
       say("The recording ends with coordinates: the Prison Planet, landmark 12 on the Space Map survey.")
     end
   elseif c == "survey" then
-    for i, a in ipairs(SURVEY[planet]) do say(string.format("%2d. %s, go North", i, a)) end
+    say("Nearby Locations:")
+    for i, a in ipairs(SURVEY[planet]) do
+      say(i == 1 and planet == "Space" and (" 1. " .. a .. " (you are here)") or string.format("%2d. %s, go East", i, a))
+    end
+    say("Use the 'survey <area number> fly' to navigate a specific area.")
   elseif c:match("^survey (%d+) fly$") then
     local n = tonumber(c:match("^survey (%d+) fly$")); area = SURVEY[planet][n]
     say("- " .. area .. ", go North.")
@@ -124,7 +131,7 @@ local s = table.concat(sent, "|")
 ok(s:find("survey 2 fly", 1, true) and s:find("survey 5 fly", 1, true), "survey numbers read from the list")
 ok(s:find("de transform|pursue guide", 1, true), "rival: fought, then the pursue again")
 ok(LOG:find("All five bulletins posted", 1, true), "says what's next")
-ok(s:find("recall|leave|survey|survey 10 fly|enter|n|n|w", 1, true), "then on to the comms deck: " .. s:sub(-50))
+ok(s:find("crecall|leave|survey|survey 10 fly|enter|n|n|w", 1, true), "then on to the comms deck: " .. s:sub(-50))
 ok(moro.landmark == 12 and LOG:find("Prison Planet, landmark 12", 1, true), "transmission played: Prison Planet, landmark 12")
 ok(next(temps) == nil and next(timers) == nil, "nothing left running")
 -- only what's still to post, and a single planet
