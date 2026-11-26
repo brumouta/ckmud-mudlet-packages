@@ -117,9 +117,12 @@ end
 takeAssignment = function()
   run.stage = "assignment"
   send("say containment")
-  -- Rusk explains it all ("'Study containment' in the records room..."); carry on either way
+  -- Rusk explains it all ("'Study containment' in the records room..."), or once you've had that,
+  -- "Bring me a coupler that has passed all three cards..."; carry on either way
   waitFor("Rusk's instructions", 4, function(l)
-    if l:find("^Chief Rusk says, ''Study containment'") then checkCoupler(); return true end
+    if l:find("^Chief Rusk says, ''Study containment'") or l:find("^Chief Rusk says, 'Bring me a coupler") then
+      checkCoupler(); return true
+    end
   end, function() checkCoupler() end)
 end
 
@@ -218,9 +221,10 @@ function C.start()
   if C.travel == "" then return pursue() end
   run.stage = "travel"
   for c in C.travel:gmatch("[^;]+") do send(c) end
-  -- `leave` from the clan hall: "You fly up into the air." then the space room
+  -- `leave` from the clan hall shows the space room, ending "You can 'land' here."
+  -- ("You fly up into the air." first when you weren't flying)
   waitFor("space", 10, function(l)
-    if l == "You fly up into the air." then setTimer(1, pursue); return true end
+    if l == "You can 'land' here." then setTimer(1, pursue); return true end
   end, pursue)
 end
 

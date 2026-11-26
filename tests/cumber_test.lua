@@ -1,7 +1,8 @@
 -- cumber: Rusk's containment assignment. Run from the repo root: lua tests/cumber_test.lua
 local now, id, timers, inbox, sent = 0, 0, {}, {}, {}
 local respond
-function send(c) sent[#sent + 1] = c; if respond then respond(c) end end
+local at = {}  -- when each command was first sent
+function send(c) sent[#sent + 1] = c; at[c] = at[c] or now; if respond then respond(c) end end
 function cecho(s) LOG = (LOG or "") .. s end
 function tempTimer(d, f) id = id + 1; timers[id] = { at = now + d, f = f }; return id end
 function killTimer(i) if i then timers[i] = nil end end
@@ -62,13 +63,18 @@ local function world(startCard, opts)
   rivalOnce, flubOnce = opts.rival, opts.flub
   respond = function(c)
     if c == "crecall" then here = "Galactic Federation HeadQuarters"; say(here)
-    elseif c == "leave" then assert(here == "Galactic Federation HeadQuarters", "leave outside the clan hall"); here = "space"; say("You fly up into the air."); say("Galactic Federation HeadQuarters")
+    elseif c == "leave" then  -- already flying, as in the game log: no "You fly up into the air."
+      assert(here == "Galactic Federation HeadQuarters", "leave outside the clan hall"); here = "space"
+      say("Galactic Federation HeadQuarters"); say("Gravity: Vacuum    Regen: Normal"); say("You can 'land' here.")
     elseif c == "pursue rusk" then
       assert(here ~= "The dark expanse of space" or not opts.mustTravel, "pursue before going to space")
       if rivalOnce then rivalOnce = false; say("Turnip the Saiyan flies out of nowhere and attacks you!"); return end
       say("You begin tracking Chief Rusk's ki..."); here = "Guard Withdrawal Post"; say(here); say("You have successfully tracked down Chief Rusk!")
     elseif c == "de turnip" then say("Turnip the Saiyan is dead!  R.I.P.")
-    elseif c == "say containment" then say("You say, 'containment'"); say("Chief Rusk says, ''Study containment' in the records room. 'Read west plate' and 'read east plate'...'")
+    elseif c == "say containment" then
+      say("You say, 'containment'")
+      if opts.briefed then say("Chief Rusk says, 'Bring me a coupler that has passed all three cards. A lost one can be reissued against your work record; a failed load test begins again at the first card.'")
+      else say("Chief Rusk says, ''Study containment' in the records room. 'Read west plate' and 'read east plate' at their coil access walks.'") end
     elseif c == "say coupler" then
       say("You say, 'coupler'")
       if card > 3 then paid = true; say("Chief Rusk says, 'Three load records, correctly reproduced without confusing the feeds. Here are 500,000 zenni and 40 tokens.'")
@@ -105,13 +111,15 @@ local function world(startCard, opts)
   end
 end
 
-world(1, { rival = true, flub = true, mustTravel = true })
+world(1, { rival = true, flub = true, mustTravel = true, briefed = true }); at = {}
 here = "Somewhere on Earth"
 LOG, sent = "", {}
 cumber.command("start")
 run(120)
 local s = table.concat(sent, "|")
 ok(s:find("^crecall|leave|pursue rusk"), "goes to space first: crecall, leave, then pursue")
+ok(at["pursue rusk"] - at["leave"] <= 2 and at["look testcoupler"] - at["say containment"] <= 1,
+   "no waiting out timeouts: pursues once in space, looks once Rusk answers")
 ok(paid and here == "Guard Withdrawal Post", "assignment handed in to Rusk")
 ok(done["study containment"] and done["read west plate"] and done["read east plate"] and done["inspect cooling loop"] and done["vent coupler"], "studied, read both plates, inspected and vented")
 ok(s:find("pursue rusk|de turnip|pursue rusk|say containment|look testcoupler", 1, true), "rival on the pursue: fought, then Rusk pursued again")
