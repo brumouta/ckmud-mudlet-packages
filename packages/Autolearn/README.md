@@ -107,8 +107,8 @@ Recent CK versions no longer ship the autolearn feature.
 
 ## Development
 
-This is a [muddler](https://github.com/demonnic/muddler) project - run `muddler`
-in this directory to produce `build/Autolearn.mpackage`.
+The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
+needed: `python3 ../../tools/build.py Autolearn` writes `../../dist/Autolearn.mpackage`.
 
 Before building, two checks catch the common failure modes:
 

@@ -2,8 +2,10 @@
 """Build Mudlet packages from packages/<name>/package.json into dist/<name>.mpackage.
 
 Usage:
-    python3 tools/build.py            # build every package
+    python3 tools/build.py            # build every package (both kinds)
     python3 tools/build.py FriezaQuest     # build just one
+
+Packages with an mfile instead of package.json (the muddler layout) are built by tools/muddle.py.
 
 A .mpackage is a zip holding config.lua (name, version, ...) and <name>.xml
 (the triggers, aliases and scripts in Mudlet's export format).
@@ -100,10 +102,15 @@ def build(name):
 
 
 def main(names):
+    import muddle
     if not names:
         names = sorted(d for d in os.listdir(PACKAGES) if os.path.isfile(os.path.join(PACKAGES, d, "package.json")))
+        names += muddle.all_names()
     for name in names:
-        build(name)
+        if os.path.isfile(os.path.join(PACKAGES, name, "mfile")):
+            muddle.Package(name).build()
+        else:
+            build(name)
 
 
 if __name__ == "__main__":

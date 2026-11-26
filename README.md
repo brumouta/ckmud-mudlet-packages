@@ -45,9 +45,9 @@ There are two kinds of package, built differently:
 
 ```
 packages/
-  Autolearn/ Buffs/ Chat/ Chores/ Health/ KaiokenTrain/ Score/     muddler projects
+  Autolearn/ Buffs/ Chat/ Chores/ Health/ KaiokenTrain/ Score/     muddler-layout projects (built without muddler)
     mfile                 name, version, author
-    src/                  triggers/aliases/scripts as muddler JSON + .lua files
+    src/                  triggers/aliases/scripts as muddler-style JSON + .lua files, resources/ bundled as is
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
   BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases, scripts
@@ -56,27 +56,22 @@ packages/
 tests/                    Lua tests for the single-script packages + run.sh for everything
 docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
 tools/
-  build.py                builds the single-script packages into dist/
+  build.py                builds every package into dist/
+  muddle.py               the muddler-layout half of build.py (no muddler or Java needed)
   lint_manifests.py       checks every muddler trigger/alias actually has a script
-  muddle.sh               builds the muddler packages locally
   plugin/                 build-plugin.cjs (copied from CKMud-2D-Desktop): <Pkg>-plugin/ folders -> dist/<pkg>.xml for the CKMud client
 ```
 
 ## Building
 
-**Single-script packages** (Python 3 only):
+Python 3 only, for both kinds of package:
 
 ```bash
 python3 tools/build.py          # all of them -> dist/
 python3 tools/build.py FriezaQuest    # just one
 ```
 
-**Muddler packages** (needs Java). This downloads [muddler](https://github.com/demonnic/muddler) into `~/.cache/muddler` the first time, the same release CI uses:
-
-```bash
-sh tools/muddle.sh              # all four -> packages/<Package>/build/<Package>.mpackage
-sh tools/muddle.sh Score        # just one
-```
+The packages with an `mfile` keep [muddler](https://github.com/demonnic/muddler)'s project layout, but [tools/muddle.py](tools/muddle.py) builds them, so neither muddler nor Java is needed. It covers the muddler features these packages use and stops the build on any other, so nothing is dropped silently. Its output was checked against muddler 1.1.0's for all seven: the same triggers, aliases, scripts and bundled files.
 
 ## Testing
 
@@ -84,10 +79,10 @@ sh tools/muddle.sh Score        # just one
 sh tests/run.sh
 ```
 
-Needs Lua 5.1+, Python 3 and Node (Node is only used for the muddler packages; their tests are skipped without it). What it covers:
+Needs Lua 5.1+, Python 3 and Node (Node only runs the simulation tests of Autolearn, Chores, KaiokenTrain and Score, and builds the CKMud client plugins; those are skipped without it). What it covers:
 
 - **Blackjack, CryonFarm, DataLords2, FriezaQuest, Gumshoe, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test. Gumshoe reads a real case and runs a whole one in a fake Briefs house. CryonFarm does a whole run in a fake lab built from the log's exits.
-- **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted, because muddler silently ships an empty script if a trigger's `.lua` file is missing. Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
+- **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted (every trigger and alias needs a script; `tools/muddle.py` refuses to build without one too). Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
 
 ## Versioning
 

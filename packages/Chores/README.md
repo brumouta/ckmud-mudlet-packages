@@ -109,8 +109,8 @@ the fight to you.
 
 ## Development
 
-This is a [muddler](https://github.com/demonnic/muddler) project - run `muddler`
-in this directory to produce `build/Chores.mpackage`.
+The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
+needed: `python3 ../../tools/build.py Chores` writes `../../dist/Chores.mpackage`.
 
 Before building, two checks catch the common failure modes:
 

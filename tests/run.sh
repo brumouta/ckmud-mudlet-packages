@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run every test from the repo root: sh tests/run.sh
 #   - Lua tests for the simple packages (tests/*_test.lua)
-#   - manifest lint + Node simulation tests for the muddler packages (packages/*/mfile)
+#   - manifest lint, build (tools/muddle.py) + Node simulation tests for the mfile packages
 cd "$(dirname "$0")/.." || exit 1
 status=0
 
@@ -15,7 +15,7 @@ done
 
 for mfile in packages/*/mfile; do
   pkg=$(dirname "$mfile")
-  # the muddler packages carry a copy of the shared updater: keep it identical
+  # the mfile packages carry a copy of the shared updater: keep it identical
   if ! cmp -s tools/shared/CKMudUpdate.lua "$pkg/src/scripts/CKMudUpdate.lua"; then
     echo "FAIL  $pkg/src/scripts/CKMudUpdate.lua differs from tools/shared/CKMudUpdate.lua (copy it over)"; status=1
   fi
@@ -24,9 +24,15 @@ for mfile in packages/*/mfile; do
   else
     echo "FAIL  $pkg lint"; echo "$out" | tail -8; status=1
   fi
-  # muddler puts README.md into config.lua's description; some clients can't parse non-ASCII there
+  # a missing mfile description means README.md goes into config.lua; some clients can't parse non-ASCII there
   if bad=$(LC_ALL=C grep -n '[^ -~	]' "$pkg/README.md" 2>/dev/null); then
     echo "FAIL  $pkg README.md is not plain ASCII (it ends up in config.lua)"; echo "$bad" | head -5; status=1
+  fi
+  name=$(basename "$pkg")
+  if out=$(python3 tools/muddle.py "$name" 2>&1); then
+    echo "PASS  $pkg build"
+  else
+    echo "FAIL  $pkg build"; echo "$out" | tail -8; status=1
   fi
   if [ ! -f "$pkg/tests/runner.js" ]; then
     echo "SKIP  $pkg simulation (no tests)"; continue

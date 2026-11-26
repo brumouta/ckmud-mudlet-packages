@@ -84,8 +84,8 @@ also shows gravity, so turn `score.prompt_gravity` off if you run both.
 
 ## Development
 
-This is a [muddler](https://github.com/demonnic/muddler) project - run `muddler`
-in this directory to produce `build/Score.mpackage`.
+The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
+needed: `python3 ../../tools/build.py Score` writes `../../dist/Score.mpackage`.
 
 ```
 python3 ../../tools/lint_manifests.py src

@@ -7,15 +7,15 @@ on:
   workflow_call:        # reused by the release workflow
 
 jobs:
-  simple:
-    name: Single-script packages (MSDP, BossHelpers, Casino, DataLords2, FriezaQuest, YamoshiSpawn, Gumshoe, CryonFarm, Gogeta, MoroQuest, Majerska)
+  build:
+    name: Build every package, Lua tests, client plugins
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y lua5.3
       - name: Test
         run: for t in tests/*_test.lua; do echo "== $t"; lua5.3 "$t" || exit 1; done
-      - name: Build
+      - name: Build (every package, no muddler or Java)
         run: python3 tools/build.py
       - name: CKMud client plugins (build and test)
         run: |
@@ -27,13 +27,13 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: mpackage-simple
+          name: mpackage-all
           path: |
             dist/*.mpackage
             dist/*.xml
 
-  muddler:
-    name: ${{ matrix.package }}
+  simulate:
+    name: ${{ matrix.package }} (lint + simulation)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -50,11 +50,3 @@ jobs:
         if: hashFiles(format('packages/{0}/tests/runner.js', matrix.package)) != ''
         working-directory: packages/${{ matrix.package }}/tests
         run: npm install --no-audit --no-fund && node runner.js driver.lua
-      - name: Muddle
-        uses: demonnic/build-with-muddler@main
-        with:
-          workingDir: packages/${{ matrix.package }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mpackage-${{ matrix.package }}
-          path: packages/${{ matrix.package }}/build/${{ matrix.package }}.mpackage
