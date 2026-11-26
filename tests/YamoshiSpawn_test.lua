@@ -210,10 +210,15 @@ local function pump()
     local flame = l:match("^The Guardian of Memories says, '.-The Flame of (%a+)%.'")
     if flame and (l:find("sequence begins with") or l:find("Then comes") or l:find("Followed by") or l:find("And finally,")) then ys.flameNamed(flame) end
     for _, p in ipairs(PERM) do if l:find(p[1], 1, true) then p[2]() end end
-    local ids = {}; for i in pairs(temps) do ids[#ids + 1] = i end; table.sort(ids)
-    for _, i in ipairs(ids) do
+    -- like Mudlet, a trigger made while this line is being matched also gets to match it
+    local last = 0
+    while true do
+      local i
+      for k in pairs(temps) do if k > last and (not i or k < i) then i = k end end
+      if not i then break end
+      last = i
       local t = temps[i]
-      if t and ((t.t and l:find(t.t, 1, true)) or (t.re and t.re(l))) then
+      if (t.t and l:find(t.t, 1, true)) or (t.re and t.re(l)) then
         if t.n then t.n = t.n - 1; if t.n <= 0 then temps[i] = nil end end
         t.f()
       end

@@ -519,17 +519,19 @@ huntKind = function(k)
     end
     sp.state = "sensing"
     send("sense " .. k[1])
-    spWait(4, sense)          -- went somewhere with nobody to hit (it moved): sense again
+    spWait(2.5, sense)        -- went somewhere with nobody to hit (it moved): sense again
   end
   local function attack()
     sp.state, sp.misses = "attacking", 0
     send(YS.attack .. " " .. k[1])
     spWait(90, sense)
   end
-  spOn(YS.NO_ONE, function() if sp.state == "sensing" then huntNext() end end)
+  -- the next kind starts after this line: its own triggers would otherwise see this same
+  -- "No one is around" (Mudlet runs a trigger made mid-line on that line) and skip it
+  spOn(YS.NO_ONE, function() if sp.state == "sensing" then sp.state = "next"; spWait(0, huntNext) end end)
   spOn("You're already in the same room!!", function() if sp.state == "sensing" then attack() end end)
   spOn(k[2] .. " is standing here", function() if sp.state == "sensing" then attack() end end)
-  spOn(k[2] .. " is dead!", function() if sp.state == "attacking" then sp.state = "dead"; spWait(0.5, sense) end end)
+  spOn(k[2] .. " is dead!", function() if sp.state == "attacking" then sp.state = "dead"; spWait(0, sense) end end)
   spOn(" who?", function() if sp.state == "attacking" then sense() end end)   -- "Death Beam who?": it's gone
   sense()
 end
