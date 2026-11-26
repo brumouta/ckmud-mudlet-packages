@@ -1,8 +1,16 @@
 name: Release
 
+# Builds every package (via ci.yml) and publishes them as a GitHub release.
+# Either push a tag (git tag v1.2.0 && git push origin v1.2.0) or use "Run workflow" on the
+# Actions tab and type the version; the tag is then created for you.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. v1.0.0"
+        required: true
 
 permissions:
   contents: write
@@ -23,6 +31,8 @@ jobs:
       - run: ls -l dist
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.version || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: |
             dist/*.mpackage
             dist/*.xml
