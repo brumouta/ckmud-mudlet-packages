@@ -13,7 +13,7 @@ self-contained - it does NOT require CK to be installed.
 
 **Requires the [MSDP](../MSDP) package**, which supplies the stats this package reads. Install it first.
 
-After installation the `AL update` alias will take care of updating the script.
+After installation, `al update` updates it.
 
 You must turn on `msdp` in settings to use this script (the package enforces
 the correct protocol settings on connect, same as CK does). Also while you are
@@ -21,26 +21,33 @@ there disable MSSP and GMCP.
 
 ## Usage
 
-`autolearn <target> <path>` - Start the auto learn process using <target> to
-train every skill until it's mastered. `<path>` is the walk from the target to
-your rest spot (an isolation tank), e.g. `autolearn elder n;n;n;n;w`. Androids
-can leave it out. Run `autolearn` again to turn it off.
+Set it up once (it's saved), then start and stop it:
 
-**The way back comes from that path:** `crecall`, then the path backwards with
-every step reversed. `autolearn elder n;n;n;n;w` walks back with
-`crecall;e;s;s;s;s`, and prints it when it starts. It's used after resting,
-after training portal/instant transmission (they teleport you to king kai), and
-when the target isn't there. A path with a step that isn't a direction
-(`enter vort`) can't be walked back, so then portal/instant aren't trained.
+```
+al target elder          what to train on
+al path n;n;n;n;w        the walk from the target to your rest spot (an isolation tank)
+al recall crecall;w      optional: reach the tank from any room instead of walking the path
+al setup                 check what's set and what's missing
+al start                 start learning
+al stop                  stop
+```
 
-The path takes `;`, commas, spaces or counts (`n;n;n;n;w`, `n n n n w`,
-`4n w`). Type it with a single `;`: Mudlet splits what you type at `;;` before
-the alias sees it, so `autolearn elder n;;n;;w` would send the `n`s as moves.
+`al start elder n;n;n;n;w` sets and saves both in one go. Androids rest where they are, so they
+don't need a path. `al status` says whether it's learning, on what, and how many skills are left.
+`AL` and `autolearn` work as well as `al`, and the old `autolearn <target> <path>` still starts it
+(and saves them); a bare `autolearn` turns it on or off.
 
-To rest, the bot walks the path to the tank and back. Or set
-`learning.recall_isolation` to a way to the tank that works from any room
-(mine is `crecall;w`) and it uses that instead:
-`AL constant learning.recall_isolation="crecall;w"`.
+**The way back comes from the path:** `crecall`, then the path backwards with every step
+reversed. `al path n;n;n;n;w` walks back with `crecall;e;s;s;s;s` (`al setup` shows it). It's used
+after resting, after training portal/instant transmission (they teleport you to king kai), and
+when the target isn't there. A path with a step that isn't a direction (`enter vort`) can't be
+walked back, so then portal/instant aren't trained.
+
+The path takes `;`, commas, spaces or counts (`n;n;n;n;w`, `n n n n w`, `4n w`). Type it with a
+single `;`: Mudlet splits what you type at `;;` before the alias sees it.
+
+To rest, the bot walks the path to the tank and back. With `al recall` set (mine is `crecall;w`)
+it recalls to the tank from wherever it is instead.
 
 The bot needs to know your skills and race: it sends `learn` and `score` when
 it sees the MOTD, and again when you toggle `autolearn` on. If your race shows
@@ -52,7 +59,7 @@ By default ki attacks come first, then fatigue attacks, AoE, buffs, heals, ultra
 other skills (powersense, multiform, scan, instant, ...). Whatever you can't afford right now
 waits while the others train. To train some skills first, list them in order:
 
-`AL priority multiform, kamehameha, roundhouse` (`AL priority` shows the list, `AL priority clear` empties it)
+`al priority multiform, kamehameha, roundhouse` (`al priority` shows the list, `al priority clear` empties it)
 
 Names are the ones `learn` shows (or the short command, `kame`). Spaces don't matter (`power up` = `powerup`).
 When you set it, each name is checked against your skills and any that isn't one is
@@ -67,28 +74,28 @@ clones pile up (that also dismisses any other followers you have).
 With Gumshoe's `gum repeat` on (`gumshoe.xml`), learning steps aside for every case: just before
 Gumshoe heads to Jaco it pauses, lets a fight end and wakes you if you're resting. Once Gumshoe is
 back at Jaco after the case, learning starts again and gets back the way resting does: the
-`learning.recall_isolation` recall, a rest, then your path back to the target. That instead of the
-`gum repeat wait` commands. For that it needs `learning.recall_isolation` set and a path when you
-start (`autolearn elder n;n;w`); without them it stays off after the case and says so.
-`AL feature learning.pause_for_gumshoe off` turns this off.
+`al recall` recall, a rest, then your path back to the target, instead of the `gum repeat wait`
+commands. For that it needs `al recall` and `al path` set; without them it stays off after the
+case and says so. `al stop` while it's paused keeps it off. `al gumshoe off` turns this off.
 
-## Aliases
+## Commands
 
-`autolearn <target> <speedwalk>` - toggle auto learning
-
-`AL` - get a list of Autolearn commands
-
-`AL features` - list feature flags
-
-`AL feature <name> <on|off>` - turn a feature on/off (e.g. `learning.use_zeta`)
-
-`AL constants` - list script constants (these survive resetProfile())
-
-`AL constant <name>=<value>` - set a script constant
-
-`AL priority [skills|clear]` - skills to train first, in order (e.g. `AL priority multiform, kamehameha`)
-
-`AL update` - update Autolearn from github latest
+| Command | What it does |
+|---|---|
+| `al` / `al help` | The commands |
+| `al setup` | What's set and what's missing |
+| `al target <mob>` | What to train on (saved) |
+| `al path <steps>` | From the target to your rest spot (saved; `al path clear` empties it) |
+| `al recall <commands>\|off` | Reach the rest spot from any room (saved) |
+| `al start [target [path]]` | Start learning, with the saved setup or what's given (saved too) |
+| `al stop` | Stop learning |
+| `al status` | Learning or not, on what, how many skills left |
+| `al priority [skills\|clear]` | Skills to train first, in order |
+| `al gumshoe on\|off` | Pause for Gumshoe's `gum repeat` cases (default on) |
+| `al zeta on\|off` | Use zeta on the target |
+| `al features` / `al feature <name> on\|off` | Every feature switch |
+| `al constants [prefix]` / `al constant <name> = <value>` | Every setting (these survive resetProfile()) |
+| `al update` | Update Autolearn to the latest release |
 
 ## Running alongside CK
 

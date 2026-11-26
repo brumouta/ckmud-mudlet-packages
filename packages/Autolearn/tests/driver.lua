@@ -326,12 +326,28 @@ end
 for _, s in ipairs({
   "scripts/Utils.lua", "scripts/Core.lua", "scripts/Attacks.lua", "scripts/Damage.lua",
   "scripts/Fight.lua", "scripts/StateMachine.lua", "scripts/SendQueue.lua",
-  "scripts/Skills.lua", "scripts/Modes.lua", "scripts/Racials.lua", "scripts/Learning.lua", "scripts/Gumshoe.lua",
+  "scripts/Skills.lua", "scripts/Modes.lua", "scripts/Racials.lua", "scripts/Learning.lua", "scripts/Gumshoe.lua", "scripts/Commands.lua",
   "scripts/Event Handlers/MSDP.lua", "scripts/Event Handlers/Prompt_Events.lua",
   "scripts/Event Handlers/Connection_Events.lua",
 }) do run_script(s) end
 
 check(AL ~= nil, "AL global namespace exists")
+
+-- Type a line into the real `al` alias (regex and script from aliases.json)
+local AL_ALIAS = (function()
+  local src = readfile(ROOT .. "/aliases/aliases.json")
+  local script = src:match('"script": "(.-)"%s*}')
+  script = script:gsub('\\n', "\n"):gsub('\\"', '"')
+  return load(script)
+end)()
+local function al(text)
+  local word0, rest0 = text:match("^(%S+)%s*(.-)%s*$")
+  assert(word0 == "AL" or word0 == "Al" or word0 == "al" or word0 == "autolearn", "not an al line: " .. text)
+  local w, r = rest0:match("^(%S+)%s*(.-)$")
+  matches = { text, word0, w or "", (r ~= "" and r) or "" }
+  local ok, err = pcall(AL_ALIAS)
+  check(ok, "alias: " .. text .. (ok and "" or (" -- " .. tostring(err))))
+end
 check(AL and AL.API and AL.API.Learning and AL.API.Learning.toggle ~= nil, "AL.API.Learning:toggle exists")
 
 ---------------------------------------------------------------------------
@@ -950,7 +966,7 @@ do
   check(first() == "kame troll", "a mastered priority skill is skipped (got " .. first() .. ")")
   -- the alias
   matches = { "AL priority rescue, multiform", "rescue, multiform" }
-  ok, err = pcall(load_pkg_file("aliases/AL_priority.lua")); check(ok, "AL priority alias" .. (ok and "" or (" -- " .. tostring(err))))
+  al("AL priority rescue, multiform")
   check(ck:constant("learning.priority") == "rescue, multiform", "AL priority sets the list")
   -- names are checked against your skills
   Lr["powerup"], Lr["multiform"] = true, true
@@ -959,8 +975,7 @@ do
         "a misspelt name is reported with a suggestion (power up = powerup, kamehameha = kame)")
   check(u[2] and u[2].name == "zzzzzz" and u[2].suggestion == nil, "no suggestion when nothing is close")
   LOG = {}
-  matches = { "AL priority multifrom", "multifrom" }
-  ok, err = pcall(load_pkg_file("aliases/AL_priority.lua"))
+  al("AL priority multifrom"); ok = true
   local said = table.concat(LOG, "\n")
   check(ok and said:find("Not one of your skills: 'multifrom'", 1, true) and said:find("did you mean 'multiform'", 1, true),
         "AL priority warns about it (log: " .. said .. ")")
@@ -969,8 +984,7 @@ do
   check(L.check_priority("multiform") == nil, "can't check before learn was read")
   P.Skills.Learned = saved_learned
   Lr["powerup"] = nil
-  matches = { "AL priority clear", "clear" }
-  ok, err = pcall(load_pkg_file("aliases/AL_priority.lua"))
+  al("al priority clear"); ok = true
   check(ok and ck:constant("learning.priority") == "", "AL priority clear empties it")
   Lr["multiform"], M["multiform"], Lv["multiform"], Lr["iron will"], Lv["iron will"] = nil, nil, nil, nil, nil
   P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl = table.unpack(saved)
@@ -1020,19 +1034,54 @@ do
   gum, tempTimer = nil, realTimer
 end
 
-realprint("=== PHASE: config aliases ===")
-matches = { "AL features" }
-ok, err = pcall(load_pkg_file("aliases/AL_feature.lua")); check(ok, "AL features alias" .. (ok and "" or (" -- " .. tostring(err))))
-matches = { "AL feature learning.use_zeta on", "learning.use_zeta", "on" }
-ok, err = pcall(load_pkg_file("aliases/AL_feature_toggle.lua")); check(ok, "AL feature toggle alias" .. (ok and "" or (" -- " .. tostring(err))))
-check(require(PKG):feature("learning.use_zeta") == true, "feature persisted to on")
-matches = { "AL constants", nil }
-ok, err = pcall(load_pkg_file("aliases/AL_constant.lua")); check(ok, "AL constants alias" .. (ok and "" or (" -- " .. tostring(err))))
-matches = { 'AL constant learning.recall_isolation="recall;s"', "learning.recall_isolation", '"recall;s"' }
-ok, err = pcall(load_pkg_file("aliases/AL_constant_set.lua")); check(ok, "AL constant set alias" .. (ok and "" or (" -- " .. tostring(err))))
-check(require(PKG):constant("learning.recall_isolation") == "recall;s", "constant persisted")
-matches = { "AL" }
-ok, err = pcall(load_pkg_file("aliases/AL_Help.lua")); check(ok, "AL help alias" .. (ok and "" or (" -- " .. tostring(err))))
+realprint("=== PHASE: the al command ===")
+do
+  local ck, Mode = require(PKG), AL.API.Mode
+  local function said() local t = table.concat(LOG, "\n"); LOG = {}; return t end
+  if Mode:is(Mode.Learning) then Mode:switch(Mode.Interactive) end
+  LOG = {}
+  al("al"); local h = said()
+  check(h:find("al start", 1, true) and h:find("al setup", 1, true) and h:find("al recall", 1, true), "al: the help")
+  al("al bogus"); check(said():find("Unknown command: al bogus", 1, true), "al <unknown>: says so, shows the help")
+  -- one setup, saved
+  ck:set_constant("learning.target", ""); ck:set_constant("learning.path", ""); ck:set_constant("learning.recall_isolation", "")
+  al("al start"); check(not Mode:is(Mode.Learning) and said():find("Nothing to train on yet", 1, true), "al start with nothing set: says what to set")
+  al("al target troll"); al("al path n;n;w"); al("al recall crecall;w"); said()
+  check(ck:constant("learning.target") == "troll" and ck:constant("learning.path") == "n;n;w"
+        and ck:constant("learning.recall_isolation") == "crecall;w", "al target / path / recall: saved")
+  al("al setup"); local st = said()
+  check(st:find("troll", 1, true) and st:find("way back: crecall;e;s;s", 1, true) and st:find("Ready: al start", 1, true), "al setup: shows it, ready (" .. st .. ")")
+  al("al start"); check(Mode:is(Mode.Learning) and AL.API.Learning.target == "troll" and AL.API.Learning:return_path() == "crecall;e;s;s", "al start: learns with the saved setup")
+  al("al start"); check(said():find("Already learning", 1, true), "al start again: already learning")
+  al("al status"); check(said():find("Learning on troll", 1, true), "al status")
+  al("al stop"); check(not Mode:is(Mode.Learning), "al stop")
+  al("al stop"); check(said():find("Not learning", 1, true), "al stop again: not learning")
+  al("al start elder s;s"); check(Mode:is(Mode.Learning) and ck:constant("learning.target") == "elder" and ck:constant("learning.path") == "s;s", "al start <target> <path>: saves them too")
+  al("AL stop")
+  -- the old ways still work
+  al("autolearn troll n;n"); check(Mode:is(Mode.Learning) and AL.API.Learning.target == "troll" and ck:constant("learning.path") == "n;n", "autolearn <target> <path>: starts and saves")
+  al("autolearn"); check(not Mode:is(Mode.Learning), "bare autolearn: off")
+  al("autolearn"); check(Mode:is(Mode.Learning), "bare autolearn: on again with the saved setup")
+  al("autolearn stop"); check(not Mode:is(Mode.Learning), "autolearn stop")
+  -- switches, features and constants
+  al("al gumshoe off"); check(ck:feature("learning.pause_for_gumshoe") == false, "al gumshoe off")
+  al("al gumshoe on"); check(ck:feature("learning.pause_for_gumshoe") == true, "al gumshoe on")
+  al("al features"); check(said():find("learning.use_zeta", 1, true), "al features lists them")
+  al("AL feature learning.use_zeta on"); check(ck:feature("learning.use_zeta") == true, "AL feature <name> on")
+  al("al zeta off"); check(ck:feature("learning.use_zeta") == false, "al zeta off")
+  al("AL constants"); check(said():find("learning.recall_isolation", 1, true), "AL constants lists them")
+  al('AL constant learning.recall_isolation="recall;s"'); check(ck:constant("learning.recall_isolation") == "recall;s", "AL constant name=value")
+  al('al constant learning.recall_isolation = "crecall;w"'); check(ck:constant("learning.recall_isolation") == "crecall;w", "al constant name = value")
+  al("al recall off"); check(ck:constant("learning.recall_isolation") == "", "al recall off")
+  -- stopping while paused for Gumshoe: it doesn't start again afterwards
+  al("al recall crecall;w"); al("al start")
+  gum = { rep = {}, hold = function() end, release = function() end }
+  raiseEvent("gumshoe.repeat.starting"); al("al status")
+  check(said():find("Paused for Gumshoe", 1, true), "al status: paused for Gumshoe")
+  al("al stop"); raiseEvent("gumshoe.repeat.done")
+  check(not Mode:is(Mode.Learning), "al stop while paused: stays off after the case")
+  gum = nil
+end
 
 ---------------------------------------------------------------------------
 -- Summary

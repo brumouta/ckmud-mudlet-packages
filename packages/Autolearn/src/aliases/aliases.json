@@ -1,36 +1,7 @@
 [
     {
-        "name": "AL Help",
-        "regex": "^AL$"
-    },
-    {
-        "name": "AL feature",
-        "regex": "^AL features?$"
-    },
-    {
-        "name": "AL feature toggle",
-        "regex": "^AL feature (.+) (on|off)$"
-    },
-    {
-        "name": "AL constant",
-        "regex": "^AL constants? ?(?: ([a-zA-Z_\\.-]+))?$"
-    },
-    {
-        "name": "AL constant set",
-        "regex": "^AL constants? ([a-zA-Z_\\.-]+)\\s*=\\s*(.+)$"
-    },
-    {
-        "name": "AL priority",
-        "regex": "^AL priority(?: (.+))?$"
-    },
-    {
-        "name": "AL update",
-        "regex": "^AL update$",
-        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Autolearn.mpackage\")"
-    },
-    {
-        "name": "learning",
-        "regex": "^autolearn(?: ([A-Za-z0-9,]+)(?: (.+))?)?$",
-        "script": "AL.API.Learning:toggle(matches[2], matches[3])"
+        "name": "al",
+        "regex": "^(AL|Al|al|autolearn)(?:\\s+(\\S+)(?:\\s+(.+?))?)?\\s*$",
+        "script": "local function arg(s) if s and s ~= \"\" then return s end end\nAL.API.command(arg(matches[3]), arg(matches[4]), matches[2] == \"autolearn\")"
     }
 ]

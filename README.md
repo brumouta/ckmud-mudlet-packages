@@ -5,7 +5,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | Package | Command | What it does |
 |---|---|---|
 | [MSDP](packages/MSDP) | `msdp` | **Install this first.** Subscribes to every MSDP variable CKMud offers and shares the values (plus your name, race and base PL from `score`) with the packages below. |
-| [Autolearn](packages/Autolearn) | `autolearn`, `AL` | Masters all your skills and learns new ones once their prerequisites are mastered. |
+| [Autolearn](packages/Autolearn) | `al help` | Masters all your skills and learns new ones once their prerequisites are mastered. |
 | [Chores](packages/Chores) | `chores fish\|quest\|both\|off`, `CH` | Automates fishing, the royal cook delivery quest and the gravedigger excavation. |
 | [KaiokenTrain](packages/KaiokenTrain) | `kaioken train`, `KT` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
 | [Score](packages/Score) | `score`, `SC` | A richer `score`: real numbers, damage at every boost level, item tier progress, training hints. |
