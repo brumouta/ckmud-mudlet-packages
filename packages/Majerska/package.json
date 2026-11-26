@@ -1,0 +1,38 @@
+{
+  "name": "Majerska",
+  "version": "1.0.0",
+  "title": "Majerska's Cursed Canopy boss clearer",
+  "description": "Travels to Majerska's Cursed Canopy on Earth (recall, Zeno Button, vortex, survey), reads `where` and kills every boss, weakest first, fighting off rivals. Type `maj help`.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "Majerska",
+      "file": "src/Majerska.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "maj",
+      "regex": "^maj(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nmaj.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Majerska",
+      "folder": true,
+      "children": [
+        {
+          "name": "maj Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "maj.line(type(matches) == \"table\" and matches[1] or line)"
+        }
+      ]
+    }
+  ]
+}
