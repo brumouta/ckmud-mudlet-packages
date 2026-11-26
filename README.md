@@ -15,6 +15,9 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [BossHelpers](packages/BossHelpers) | `boss help` | Counts down to the **boss respawn** (from `uptime`), warns 5 and 1 minutes before, and re-checks by itself after each respawn. |
 | [YamoshiSpawn](packages/YamoshiSpawn) | `ys help` | Runs the three Temple trials and the ritual that **summons Yamoshi**. |
 | [MoroQuest](packages/MoroQuest) | `moro help` | The Moro questline: decodes Merus's **prisoner manifest** and posts the **wanted bulletins** at all five spaceports. |
+| [Buffs](packages/Buffs) | `autobuff help`, `buffwnd` | *By Penguin.* Keeps your buffs up, recasting each as it wears off, with a timer window. |
+| [Chat](packages/Chat) | `chatwnd` | *By Penguin.* A tabbed chat window for OOC, tells, group, auctions, events and says. |
+| [Health](packages/Health) | none | *By Penguin.* Your current and max powerlevel from MSDP, for other scripts (`HP`). |
 | [Majerska](packages/Majerska) | `maj help` | Travels to **Majerska's Cursed Canopy** on Earth and kills every boss there, weakest first. |
 | [Gumshoe](packages/Gumshoe) | `gum help` | Solves Jaco's **Briefs mansion** party cases: walks the house, searches, questions, opens the sealed rooms and names who did it. |
 | [CryonFarm](packages/CryonFarm) | `cryon help` | Farms the **Confession of Cryon Frigidus** in Iceria's hidden lab: the four DNA samples, the fields and the smack. |
@@ -38,7 +41,7 @@ There are two kinds of package, built differently:
 
 ```
 packages/
-  Autolearn/ Chores/ KaiokenTrain/ Score/     muddler projects
+  Autolearn/ Buffs/ Chat/ Chores/ Health/ KaiokenTrain/ Score/     muddler projects
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler JSON + .lua files
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)

@@ -1,0 +1,78 @@
+[
+    {
+        "name": "chatwnd",
+        "regex": "^chatwnd (save|load|font|fontSize|blink|blankLine|timestamp|show|hide)(?: (.+))?$"
+    },
+    {
+        "name": "chatwnd gag",
+        "regex": "^chatwnd gag (.+)"
+    },
+    {
+        "name": "chatwnd ungag",
+        "regex": "^chatwnd ungag (.+)"
+    },
+    {
+        "name": "chatwnd gaglist",
+        "regex": "^chatwnd gaglist$"
+    },
+    {
+        "name": "chatwnd notify",
+        "regex": "^chatwnd notify (.*)"
+    },
+    {
+        "name": "chatwnd unnotify",
+        "regex": "^chatwnd unnotify (.*)"
+    },
+    {
+        "name": "chatwnd addtab",
+        "regex": "^chatwnd addtab (\\w+)( \\d+)?$"
+    },
+    {
+        "name": "chatwnd remtab",
+        "regex": "^chatwnd remtab (.+)"
+    },
+    {
+        "name": "chatwnd float",
+        "regex": "^chatwnd float$"
+    },
+    {
+        "name": "chatwnd image",
+        "regex": "^chatwnd image (show|hide)$"
+    },
+    {
+        "name": "chatwnd border",
+        "regex": "^chatwnd border (.+)$"
+    },
+    {
+        "name": "chatwnd tabtext",
+        "regex": "^chatwnd tabtext (.+)$"
+    },
+    {
+        "name": "chatwnd label",
+        "regex": "^chatwnd label (.+)$"
+    },
+    {
+        "name": "chatwnd color",
+        "regex": "^chatwnd color (\\w+) (.+)"
+    },
+    {
+        "name": "chatwnd color usage",
+        "regex": "^chatwnd color$"
+    },
+    {
+        "name": "chatwnd usage",
+        "regex": "^chatwnd( usage)?$"
+    },
+    {
+        "name": "chatwnd title",
+        "regex": "^chatwnd title (.+)"
+    },
+    {
+        "name": "chatwnd lock",
+        "regex": "^chatwnd lock$"
+    },
+    {
+        "name": "chatwnd unlock",
+        "regex": "^chatwnd unlock$"
+    }
+]

@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [Autolearn, Chores, KaiokenTrain, Score]
+        package: [Autolearn, Chores, KaiokenTrain, Score, Buffs, Chat, Health]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,6 +47,7 @@ jobs:
       - name: Lint manifests
         run: python3 tools/lint_manifests.py packages/${{ matrix.package }}/src
       - name: Simulation tests
+        if: hashFiles(format('packages/{0}/tests/runner.js', matrix.package)) != ''
         working-directory: packages/${{ matrix.package }}/tests
         run: npm install --no-audit --no-fund && node runner.js driver.lua
       - name: Muddle

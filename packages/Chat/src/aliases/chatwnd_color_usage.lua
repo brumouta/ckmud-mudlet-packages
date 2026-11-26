@@ -1,0 +1,17 @@
+local chat = Chat
+local echo = chat.helpers.echo
+local validOptions = table.keys(chat.config)
+table.sort(validOptions)
+local validOptionsString = table.concat(validOptions, ", ")
+echo("Usage information for changing chatwnd colors")
+echo()
+echo("chatwnd color <option> <color>")
+echo("Color can be anything you would use in CSS, such as 'rgb(128,128,128)', '#888888', or 'grey'")
+echo("examples:")
+echo("  * chatwnd color activeBorder goldenrod")
+echo("    * changes the border around the active tab to goldenrod")
+echo("  * chatwnd color activeColor #00ff00")
+echo("    * changes the color of the active tab to green")
+echo()
+echo("Valid options are " .. validOptionsString)
+echo("Remember to use 'chatwnd save' to make your changes permanent, or 'chatwnd load' to undo them and reset back to what you previously saved.")

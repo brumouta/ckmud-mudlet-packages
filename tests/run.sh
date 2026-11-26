@@ -24,6 +24,9 @@ for mfile in packages/*/mfile; do
   if bad=$(LC_ALL=C grep -n '[^ -~	]' "$pkg/README.md" 2>/dev/null); then
     echo "FAIL  $pkg README.md is not plain ASCII (it ends up in config.lua)"; echo "$bad" | head -5; status=1
   fi
+  if [ ! -f "$pkg/tests/runner.js" ]; then
+    echo "SKIP  $pkg simulation (no tests)"; continue
+  fi
   if ! command -v node >/dev/null 2>&1; then
     echo "SKIP  $pkg simulation (node not installed)"; continue
   fi

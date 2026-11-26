@@ -1,0 +1,9 @@
+{
+    "package": "Chat",
+    "title": "Chat",
+    "version": "26.06.15",
+    "author": "Penguin",
+    "icon": "android21.jpg",
+    "description": "# Standalone Chat\r\n\r\n## EMCO Chat\r\n\r\nSets up triggers to log ooc/racetalk/etc to EMCO\r\n\r\n## Installation\r\n\r\nInstall the `Chat.mpackage` directly in Mudlet - no other packages required.\r\n\r\n## Usage\r\n\r\nBrief introduction to the overall usage. Then break it down to specifics\r\n\r\n## Aliases\r\n\r\n`chat`\r\n",
+    "outputFile": true
+}
