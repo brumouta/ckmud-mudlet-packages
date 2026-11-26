@@ -567,6 +567,7 @@ FQ.HELP = {
   { "fq stage <name>",    "Jump to a stage: " .. table.concat(FQ.STAGES, ", ") },
   { "fq code <number>",   "Set Frieza's door code by hand" },
   { "fq attack <cmd>",    "Attack used on the bosses (default ss)" },
+  { "fq update",          "Update FriezaQuest to the latest release" },
 }
 
 function FQ.help()

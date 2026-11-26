@@ -14,6 +14,7 @@ local cmds = {
   {"autobuff delbuff <skill>",           "remove a custom buff entirely"},
   {"autobuff settag <skill> <tag>",      "set the race tag for a buff (e.g. Angel, Demon, all)"},
   {"autobuff help",                      "show this help"},
+  {"autobuff update",                    "update Buffs to the latest release"},
   {"buffwnd",                            "toggle the buff status window"},
   {"buffwnd show / hide",                "open or close the buff status window"},
   {"buffwnd float",                      "toggle docked / floating window"},

@@ -33,7 +33,11 @@ Paste this into Mudlet's input line, replacing `<Package>` with a name from the 
 lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/<Package>.mpackage")
 ```
 
-Or download the `.mpackage` from the [latest release](../../releases/latest) and use **Toolbox → Package Manager → Install**. To upgrade, uninstall the old version first (Autolearn, Chores, KaiokenTrain and Score also have an `<prefix> update` alias, e.g. `SC update`).
+Or download the `.mpackage` from the [latest release](../../releases/latest) and use **Toolbox → Package Manager → Install**.
+
+## Updating
+
+Every package has an update command: its command followed by `update`, e.g. `maj update`, `al update`, `SC update`, `CH update`, `KT update`, `casino update`, `autobuff update`, `chatwnd update` or `health update`. It downloads the package from the latest release first and only then swaps it in, so if the download fails (offline, or the repository isn't public) your installed copy stays as it is. Older copies installed as `dl2` or `gumshoe` are replaced too. The shared code is [tools/shared/CKMudUpdate.lua](tools/shared/CKMudUpdate.lua).
 
 ## Repository layout
 
@@ -103,7 +107,7 @@ Bump the version of each package you changed, commit, then tag:
 git tag v2026.10.21 && git push --tags
 ```
 
-The release workflow runs every test, builds all eight packages and attaches them to a GitHub release. That's what the install links and the `update` aliases download.
+The release workflow runs every test, builds every package and attaches them to a GitHub release. That's what the install links and the `update` aliases download.
 
 ## Credits and license
 

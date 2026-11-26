@@ -18,6 +18,8 @@ from xml.sax.saxutils import escape
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACKAGES = os.path.join(ROOT, "packages")
 DIST = os.path.join(ROOT, "dist")
+# Added to every package: CKMudUpdate("<Package>"), behind each package's `<prefix> update`
+UPDATE_SCRIPT = {"name": "CKMud update", "file": os.path.join(ROOT, "tools", "shared", "CKMudUpdate.lua")}
 
 PATTERN_TYPES = {"substring": 0, "regex": 1, "startOfLine": 2, "exactMatch": 3}
 FLAGS = ('isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" '
@@ -82,7 +84,7 @@ def build(name):
     xml = ('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE MudletPackage>\n<MudletPackage version="1.001">\n'
            "\t<TriggerPackage>\n" + "".join(trigger_xml(t, 2) for t in m["triggers"]) + "\t</TriggerPackage>\n"
            "\t<AliasPackage>\n" + "".join(alias_xml(a) for a in m["aliases"]) + "\t</AliasPackage>\n"
-           "\t<ScriptPackage>\n" + "".join(script_xml(pkg_dir, s) for s in m["scripts"]) + "\t</ScriptPackage>\n"
+           "\t<ScriptPackage>\n" + "".join(script_xml(pkg_dir, s) for s in [UPDATE_SCRIPT] + m["scripts"]) + "\t</ScriptPackage>\n"
            "</MudletPackage>\n")
     config = (f"mpackage = [[{m['name']}]]\nauthor = [[{m['author']}]]\ntitle = [[{m['title']}]]\n"
               f"description = [[{m['description']}]]\nversion = [[{m['version']}]]\n"

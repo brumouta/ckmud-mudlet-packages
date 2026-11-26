@@ -15,6 +15,10 @@ done
 
 for mfile in packages/*/mfile; do
   pkg=$(dirname "$mfile")
+  # the muddler packages carry a copy of the shared updater: keep it identical
+  if ! cmp -s tools/shared/CKMudUpdate.lua "$pkg/src/scripts/CKMudUpdate.lua"; then
+    echo "FAIL  $pkg/src/scripts/CKMudUpdate.lua differs from tools/shared/CKMudUpdate.lua (copy it over)"; status=1
+  fi
   if out=$(python3 tools/lint_manifests.py "$pkg/src" 2>&1); then
     echo "PASS  $pkg lint"
   else

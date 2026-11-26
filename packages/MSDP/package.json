@@ -1,6 +1,6 @@
 {
   "name": "MSDP",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "title": "MSDP data for CKMud packages",
   "description": "Subscribes to every MSDP variable CKMud offers and shares the values with the other packages, plus name, race and base PL from your score sheet. Type `msdp` for commands.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "msdp",
       "regex": "^msdp(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nMSDP.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"MSDP\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\nMSDP.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

@@ -491,6 +491,7 @@ G.HELP = {
   { "gog ui <ui|tui|off>", "Keep Ultra Instinct (or True Ultra Instinct) up while looping (now: " .. G.uiMode .. ")" },
   { "gog buffs [on|off]", "Show the zenni buffs; on: needed to start, the farm stops when one runs out" },
   { "gog buy <n>",      "Buy n Essences from a Dying Star from the event shop (finds its number in eshop)" },
+  { "gog update",       "Update Gogeta to the latest release" },
 }
 
 function G.help()

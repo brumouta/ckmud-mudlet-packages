@@ -544,6 +544,7 @@ DL.HELP = {
   { "dl2 tokens reset",      "Start a new session count now" },
   { "dl2 limit <n>|off",     "Per-session token limit for the loop, e.g. dl2 limit 200k (default 100,000)" },
   { "dl2 off",               "Stop the event automation now" },
+  { "dl2 update",            "Update DataLords2 to the latest release" },
 }
 
 function DL.help()

@@ -1,1 +1,7 @@
-[]
+[
+    {
+        "name": "health update",
+        "regex": "^health update$",
+        "script": "CKMudUpdate(\"__PKGNAME__\")"
+    }
+]

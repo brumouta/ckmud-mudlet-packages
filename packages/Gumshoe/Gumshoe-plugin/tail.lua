@@ -63,6 +63,8 @@ G.command = function(c, arg)
     if not G.auto and rep.on then setRepeat(false, 'command') end
   end
 end
+-- the client updates plugins itself: no gum update here
+for i = #G.HELP, 1, -1 do if G.HELP[i][1] == 'gum update' then table.remove(G.HELP, i) end end
 table.insert(G.HELP, { 'gum repeat [on|off]', 'Fully auto: after each case, open the next one by itself when Jaco has it (20 minutes)' })
 table.insert(G.HELP, { 'gum repeat wait [jaco|<commands>]', 'Between cases repeat goes to Jaco, then sends these commands from there (; between them). jaco: just wait at Jaco' })
 
@@ -295,8 +297,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.13.0: other packages, like Autolearn, can pause around a repeat case; built on Gumshoe.mpackage 1.10.6).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.13.0',
+  -- change, so the client offers the update (1.13.1: gum update left out, the client updates plugins itself; built on Gumshoe.mpackage 1.10.7).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.13.1',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },

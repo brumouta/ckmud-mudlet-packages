@@ -1,6 +1,6 @@
 {
   "name": "YamoshiSpawn",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "title": "Yamoshi spawn quest helper",
   "description": "Runs the three Temple trials (Memory, Perception, Power) and the ritual that summons Yamoshi. Type `ys help` for commands.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "ys",
       "regex": "^ys(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nys.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"YamoshiSpawn\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\nys.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

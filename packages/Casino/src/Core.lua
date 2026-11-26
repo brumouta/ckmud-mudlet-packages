@@ -104,6 +104,7 @@ function C.help()
   cecho("  <yellow>casino status<white>  every game at a glance, Lucky Tails and XP this session\n")
   cecho("  <yellow>casino stop<white>    stop every bot\n")
   cecho("  <yellow>casino reset<white>   clear the casino-wide Lucky Tails and XP\n")
+  cecho("  <yellow>casino update<white>  update Casino to the latest release\n")
 end
 
 function C.status()

@@ -624,6 +624,7 @@ YS.HELP = {
   { "ys spirits",       "Spirit Realm battlefields: sense and kill every Evil, then every Righteous Saiyan Spirit, then search every room (fragments on)" },
   { "ys search",        "Search every battlefield room for the fragment (stops at the first)" },
   { "ys fragments [on|off]", "Search for memory fragments on the portal walk and before each quiz answer (default on)" },
+  { "ys update",             "Update YamoshiSpawn to the latest release" },
 }
 
 function YS.help()

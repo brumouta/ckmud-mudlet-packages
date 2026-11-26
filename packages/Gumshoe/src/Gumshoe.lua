@@ -1494,6 +1494,7 @@ G.HELP = {
   { "gum go <room>",    "Walk to a room in the house, e.g. gum go kitchen" },
   { "gum reset",        "Forget this case (a new case resets by itself)" },
   { "gum auto [on|off]", "After gum case: run the case and send a sure accusation twice (on by default)" },
+  { "gum update",        "Update Gumshoe to the latest release" },
 }
 
 function G.help()

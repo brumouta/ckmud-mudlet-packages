@@ -258,6 +258,7 @@ C.HELP = {
   { "cryon resume",         "Carry on from where it stopped (fix things by hand first, then resume)" },
   { "cryon attack <cmd>",   "What kills an Electromagnetic Field (now: " .. C.attack .. ")" },
   { "cryon status",         "Where it is, confessions this session" },
+  { "cryon update",         "Update CryonFarm to the latest release" },
 }
 
 function C.help()

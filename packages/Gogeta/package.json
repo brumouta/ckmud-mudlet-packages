@@ -1,6 +1,6 @@
 {
   "name": "Gogeta",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, and repeats. Type `gog help` for commands.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "gog",
       "regex": "^gog(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\ngog.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"Gogeta\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\ngog.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

@@ -1,6 +1,6 @@
 {
   "name": "MoroQuest",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "title": "Moro questline helper",
   "description": "The Moro questline for Agent Merus: decodes the scrambled prisoner manifest and posts the wanted bulletins at all five spaceports (recall, Zeno Button, vortexes), fighting off rivals on the way, then goes to the comms deck for the recorded transmission. Type `moro help`.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "moro",
       "regex": "^moro(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nmoro.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"MoroQuest\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\nmoro.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

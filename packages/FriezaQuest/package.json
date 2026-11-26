@@ -1,6 +1,6 @@
 {
   "name": "FriezaQuest",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "title": "Frieza's Spaceship quest helper",
   "description": "Automates the Frieza's Spaceship quest from Appule to the Bridge Access Card. Type `fq help` for commands.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "fq",
       "regex": "^fq(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nfq.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"FriezaQuest\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\nfq.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

@@ -22,7 +22,7 @@
     {
         "name": "CH update",
         "regex": "^CH update$",
-        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Chores.mpackage\")"
+        "script": "CKMudUpdate(\"__PKGNAME__\")"
     },
     {
         "name": "chores",

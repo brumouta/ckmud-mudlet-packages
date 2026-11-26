@@ -227,10 +227,7 @@ COMMANDS.constants = function(arg)
     list_constants(trim(arg))
 end
 COMMANDS.constant = COMMANDS.constants
-COMMANDS.update = function()
-    uninstallPackage("__PKGNAME__")
-    installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Autolearn.mpackage")
-end
+COMMANDS.update = function() CKMudUpdate("__PKGNAME__") end
 
 -- word: the first word after al/autolearn; rest: everything after it; legacy: typed as `autolearn`
 function API.command(word, rest, legacy)

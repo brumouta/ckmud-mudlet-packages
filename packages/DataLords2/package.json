@@ -1,6 +1,6 @@
 {
   "name": "DataLords2",
-  "version": "3.9.0",
+  "version": "3.9.1",
   "title": "Data Lords v2.0 event automation",
   "description": "Runs the Data Lords v2.0 boss chain when you request the event, pauses for rivals and resumes. Type `dl2 help` for commands.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "dl2",
       "regex": "^dl2(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\ndl2.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"DataLords2\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\ndl2.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

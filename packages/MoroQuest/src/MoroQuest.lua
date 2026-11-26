@@ -291,6 +291,7 @@ M.HELP = {
   { "moro space <cmd>",       "Command that takes you somewhere you can leave into space (default crecall)" },
   { "moro attack <cmd>",       "Attack used on rivals that jump you on the way (default de)" },
   { "moro stop",               "Stop the bulletin or comms run" },
+  { "moro update",             "Update MoroQuest to the latest release" },
 }
 function M.help()
   cecho("\n<cyan>Moro questline (moro):\n")

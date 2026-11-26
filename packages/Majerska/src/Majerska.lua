@@ -203,6 +203,7 @@ J.HELP = {
   { "maj kill",         "Already inside: read where and kill every boss" },
   { "maj attack <cmd>", "Attack used on bosses and rivals (now: " .. J.attack .. ")" },
   { "maj stop",         "Stop" },
+  { "maj update",       "Update Majerska to the latest release" },
 }
 function J.help()
   cecho("\n<cyan>Majerska's Cursed Canopy (maj):\n")

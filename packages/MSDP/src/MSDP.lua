@@ -204,6 +204,7 @@ function M.command(cmd, arg)
     cecho("  <yellow>msdp show     <white>All current values\n")
     cecho("  <yellow>msdp report   <white>Subscribe to every variable again\n")
     cecho("  <yellow>msdp debug on|off  <white>Say when updates start arriving\n")
+    cecho("  <yellow>msdp update   <white>Update MSDP to the latest release\n")
   elseif cmd == "status" then
     local count = 0
     for _ in pairs(M._fromServer or {}) do count = count + 1 end

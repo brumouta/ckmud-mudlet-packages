@@ -1,5 +1,10 @@
 [
     {
+        "name": "chatwnd update",
+        "regex": "^chatwnd update$",
+        "script": "CKMudUpdate(\"__PKGNAME__\")"
+    },
+    {
         "name": "chatwnd",
         "regex": "^chatwnd (save|load|font|fontSize|blink|blankLine|timestamp|show|hide)(?: (.+))?$"
     },

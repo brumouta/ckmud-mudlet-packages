@@ -27,6 +27,6 @@
     {
         "name": "SC update",
         "regex": "^SC update$",
-        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Score.mpackage\")"
+        "script": "CKMudUpdate(\"__PKGNAME__\")"
     }
 ]

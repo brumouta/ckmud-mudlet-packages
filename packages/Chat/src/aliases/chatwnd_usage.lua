@@ -2,6 +2,7 @@ local chat = Chat
 local echo = chat.helpers.echo
 local aliases = {
   ["chatwnd save"] = "saves your config to disk",
+  ["chatwnd update"] = "update Chat to the latest release",
   ["chatwnd load"] = "loads your config from disk",
   ["chatwnd addtab <tabname>"] = "adds a tab to your chat",
   ["chatwnd remtab <tabname>"] = "removes a tab from your chat",

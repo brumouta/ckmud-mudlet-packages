@@ -401,6 +401,7 @@ BT.HELP = {
   { "boss find",            "Walk to the nearest boss (👹) on the world map; none in sight: sweep the map with dash" },
   { "boss find stop",       "Stop walking" },
   { "boss help",            "Show this list" },
+  { "boss update",          "Update BossHelpers to the latest release" },
 }
 
 -- "5,1,0.5" or "10 2 30s" -> seconds, largest first, without duplicates or zero.

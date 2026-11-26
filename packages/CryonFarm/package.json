@@ -1,6 +1,6 @@
 {
   "name": "CryonFarm",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "title": "Confession of Cryon Frigidus farm",
   "description": "Farms the Confession of Cryon Frigidus: from the Blizzards Edge Inn on Iceria to the hidden lab, the four DNA samples (killing the Electromagnetic Fields on the way) and the kidnapped citizen's smack. Type `cryon help` for commands.",
   "author": "Bruno Mouta",
@@ -14,7 +14,7 @@
     {
       "name": "cryon",
       "regex": "^cryon(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
-      "script": "local function arg(s) if s and s ~= \"\" then return s end end\ncryon.command(arg(matches[2]), arg(matches[3]))"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"CryonFarm\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\ncryon.command(arg(matches[2]), arg(matches[3]))"
     }
   ],
   "triggers": [

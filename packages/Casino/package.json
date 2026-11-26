@@ -1,6 +1,6 @@
 {
   "name": "Casino",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "title": "Lucky Monkey Casino",
   "description": "Casino bots and advisors in one package: blackjack (bj), video poker (vp), slots (slot) and the High Stakes tournament (hs). Type `casino` for the list.",
   "author": "Bruno Mouta",
@@ -30,7 +30,7 @@
     {
       "name": "casino",
       "regex": "^casino(?:\\s+(\\w+))?$",
-      "script": "casino.command(matches[2] ~= \"\" and matches[2] or nil)"
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"Casino\") end\ncasino.command(matches[2] ~= \"\" and matches[2] or nil)"
     },
     {
       "name": "cjoin",

@@ -22,7 +22,7 @@
     {
         "name": "KT update",
         "regex": "^KT update$",
-        "script": "uninstallPackage(\"__PKGNAME__\")\ninstallPackage(\"https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/KaiokenTrain.mpackage\")"
+        "script": "CKMudUpdate(\"__PKGNAME__\")"
     },
     {
         "name": "kaioken train",
