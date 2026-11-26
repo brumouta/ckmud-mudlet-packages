@@ -61,7 +61,10 @@ local function world(startCard, opts)
   here, card, dial, done, paid = "The dark expanse of space", startCard, {}, {}, false
   rivalOnce, flubOnce, haveCoupler = opts.rival, opts.flub, opts.coupler ~= false
   respond = function(c)
-    if c == "pursue rusk" then
+    if c == "crecall" then here = "Galactic Federation HeadQuarters"; say(here)
+    elseif c == "leave" then assert(here == "Galactic Federation HeadQuarters", "leave outside the clan hall"); here = "space"; say("You fly up into the air."); say("Galactic Federation HeadQuarters")
+    elseif c == "pursue rusk" then
+      assert(here ~= "The dark expanse of space" or not opts.mustTravel, "pursue before going to space")
       if rivalOnce then rivalOnce = false; say("Turnip the Saiyan flies out of nowhere and attacks you!"); return end
       say("You begin tracking Chief Rusk's ki..."); here = "Guard Withdrawal Post"; say(here); say("You have successfully tracked down Chief Rusk!")
     elseif c == "de turnip" then say("Turnip the Saiyan is dead!  R.I.P.")
@@ -103,11 +106,13 @@ local function world(startCard, opts)
   end
 end
 
-world(1, { rival = true, flub = true })
+world(1, { rival = true, flub = true, mustTravel = true })
+here = "Somewhere on Earth"
 LOG, sent = "", {}
 cumber.command("start")
 run(120)
 local s = table.concat(sent, "|")
+ok(s:find("^crecall|leave|pursue rusk"), "goes to space first: crecall, leave, then pursue")
 ok(paid and here == "Guard Withdrawal Post", "assignment handed in to Rusk")
 ok(done["study containment"] and done["read west plate"] and done["read east plate"] and done["inspect cooling loop"] and done["vent coupler"], "studied, read both plates, inspected and vented")
 ok(s:find("pursue rusk|de turnip|pursue rusk|say containment|look testcoupler", 1, true), "rival on the pursue: fought, then Rusk pursued again")
@@ -116,7 +121,8 @@ ok(select(2, s:gsub("calibrate west 3", "")) == 2 and select(2, s:gsub("calibrat
 ok(LOG:find("Load test failed", 1, true) and LOG:find("Containment assignment done", 1, true), "reports the retry and the reward")
 ok(next(timers) == nil, "nothing left running")
 
--- coupler already on card 2: no prep, straight to the workshop
+-- coupler already on card 2: no prep, straight to the workshop (no travel)
+cumber.command("travel", "off")
 world(2)
 LOG, sent = "", {}
 cumber.command("start")
@@ -140,9 +146,10 @@ ok(card == 4 and LOG:find("All three cards passed", 1, true), "cumber solve: all
 cumber.command("stop")
 ok(next(timers) == nil, "cumber stop cleans up")
 
+cumber.command("travel", "crecall;leave")
 -- can't find Rusk
 respond = function(c) if c == "pursue rusk" then say("You sense no ki.") end end
 LOG = ""
-cumber.command("start"); run(5)
+cumber.command("start"); run(15)
 ok(LOG:find("Can't sense Rusk", 1, true) and next(timers) == nil, "no Rusk in range: says where to go and stops")
 print("\ncumber: ALL PASSED")

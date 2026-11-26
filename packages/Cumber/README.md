@@ -7,7 +7,7 @@ lets you into Cumber's Confinement. Type `cumber help`.
 |---|---|
 | `cumber start` | The whole assignment (500,000 zenni and 40 tokens from Rusk) |
 | `cumber solve` | Standing at the workshop rig: just solve the load cards |
-| `cumber travel <cmds>` | Sent before `pursue rusk`, `;`-separated, e.g. `cumber travel crecall;leave` (saved; `off` clears it) |
+| `cumber travel <cmds>` | Gets you to space before `pursue rusk`, `;`-separated (default `crecall;leave`, saved; `off` skips it) |
 | `cumber attack <cmd>` | Attack used on rivals (default `de`, saved) |
 | `cumber stop` | Stop |
 | `cumber update` | Update Cumber to the latest release |
@@ -16,7 +16,7 @@ You need the test coupler (Rusk's); if `look testcoupler` shows no card it asks 
 
 ## How it works
 
-1. **Rusk:** `pursue rusk` (from the Prison Planet or space next to it), `say containment`, then
+1. **Rusk:** `crecall` and `leave` into space (the clan hall is Galactic Federation HQ), then `pursue rusk`, `say containment`, then
    `look testcoupler` for the card the coupler is on.
 2. **Card 1, the prep:** `study containment` in Containment Records, `read west plate` at Western Coil
    Access, `read east plate` at Eastern Coil Access, `inspect cooling loop` and `vent coupler` at

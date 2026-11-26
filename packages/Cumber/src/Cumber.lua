@@ -6,7 +6,7 @@ cumber = cumber or {}
 local C = cumber
 
 C.attack = C.attack or "de"   -- used on rivals that jump you
-C.travel = C.travel or ""     -- sent before `pursue rusk`, e.g. "crecall;leave" (`cumber travel`)
+C.travel = C.travel or "crecall;leave"  -- gets you into space before `pursue rusk` (`cumber travel`)
 C.per    = C.per or { west = 2, east = 3 }  -- load units per notch; the plates say so, and are re-read
 local FILE = (type(getMudletHomeDir) == "function" and getMudletHomeDir() or ".") .. "/cumber.lua"
 
@@ -108,7 +108,7 @@ pursue = function()
     if l == "You have successfully tracked down Chief Rusk!" or l == "You're already in the same room!!" then
       takeAssignment(); return true
     elseif l == "You sense no ki." then
-      fail("Can't sense Rusk: get to the Prison Planet (or space next to it) first, or set `cumber travel`")
+      fail("Can't sense Rusk from here: check `cumber travel` (now: " .. (C.travel ~= "" and C.travel or "none") .. ")")
       return true
     end
   end)
@@ -218,8 +218,13 @@ function C.start()
   C.stop(true)
   run = { active = true }
   info("green", "Containment assignment: off to Chief Rusk")
+  if C.travel == "" then return pursue() end
+  run.stage = "travel"
   for c in C.travel:gmatch("[^;]+") do send(c) end
-  pursue()
+  -- `leave` from the clan hall: "You fly up into the air." then the space room
+  waitFor("space", 10, function(l)
+    if l == "You fly up into the air." then setTimer(1, pursue); return true end
+  end, pursue)
 end
 
 -- A rival jumps you: fight back, then start that step again
@@ -249,6 +254,7 @@ function C.line(l)
         elseif stage == "walk" then walk(run.route, run.done, run.step - 1)
         elseif stage == "rig" then rig()
         elseif stage == "handin" then handIn()
+        elseif stage == "travel" then C.start()
         else takeAssignment() end
       end)
     end
@@ -260,7 +266,7 @@ end
 -- ---------------------------------------------------------------- `cumber` alias
 C.HELP = {
   { "cumber start",          "Do Chief Rusk's containment assignment on the Prison Planet, start to finish" },
-  { "cumber travel <cmds>",  "Sent before `pursue rusk`, ;-separated (now: " .. (C.travel ~= "" and C.travel or "none") .. "; `cumber travel off` clears it)" },
+  { "cumber travel <cmds>",  "Gets you to space before `pursue rusk`, ;-separated (now: " .. (C.travel ~= "" and C.travel or "none") .. "; `off` skips it)" },
   { "cumber attack <cmd>",   "Attack used on rivals (now: " .. C.attack .. ")" },
   { "cumber solve",          "At the workshop rig: just solve the cards" },
   { "cumber stop",           "Stop" },
@@ -276,7 +282,7 @@ function C.command(c, arg)
   elseif c == "solve" then C.stop(true); run = { active = true }; rig()
   elseif c == "travel" and arg then
     C.travel = (arg == "off" or arg == "none") and "" or arg
-    C.HELP[2][2] = "Sent before `pursue rusk`, ;-separated (now: " .. (C.travel ~= "" and C.travel or "none") .. ")"
+    C.HELP[2][2] = "Gets you to space before `pursue rusk`, ;-separated (now: " .. (C.travel ~= "" and C.travel or "none") .. ")"
     save(); info("white", "Travel: " .. (C.travel ~= "" and C.travel or "none"))
   elseif c == "attack" and arg then C.attack = arg; save(); info("white", "Attack: " .. arg)
   elseif c == "stop" then C.stop()

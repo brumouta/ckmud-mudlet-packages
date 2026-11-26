@@ -1,6 +1,6 @@
 {
   "name": "Cumber",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "title": "Cumber's containment assignment (Prison Planet)",
   "description": "Does Chief Rusk's containment assignment on the Prison Planet: studies the records, reads the west and east plates, vents the coupler, solves the three load cards at the workshop rig and hands in to Rusk. Type `cumber help`.",
   "author": "Bruno Mouta",
