@@ -19,11 +19,12 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [Chat](packages/Chat) | `chatwnd` | *By Penguin.* A tabbed chat window for OOC, tells, group, auctions, events and says. |
 | [Health](packages/Health) | none | *By Penguin.* Your current and max powerlevel from MSDP, for other scripts (`HP`). |
 | [Majerska](packages/Majerska) | `maj help` | Travels to **Majerska's Cursed Canopy** on Earth and kills every boss there, weakest first. |
+| [Cumber](packages/Cumber) | `cumber help` | Does **Chief Rusk's containment assignment** on the Prison Planet: the records, both plates, the vent and the three load cards at the rig. |
 | [Gumshoe](packages/Gumshoe) | `gum help` | Solves Jaco's **Briefs mansion** party cases: walks the house, searches, questions, opens the sealed rooms and names who did it. |
 | [CryonFarm](packages/CryonFarm) | `cryon help` | Farms the **Confession of Cryon Frigidus** in Iceria's hidden lab: the four DNA samples, the fields and the smack. |
 | [Gogeta](packages/Gogeta) | `gog help` | Loops **Kami's timeline portal**: counts your Essences and Diamonds, hands them to Kami, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, repeats. Also buys Essences from the event shop. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossHelpers, Gumshoe, CryonFarm, Gogeta, MoroQuest and Majerska work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossHelpers, Gumshoe, CryonFarm, Gogeta, MoroQuest, Majerska and Cumber work without it.
 
 ## Installing
 
@@ -49,7 +50,7 @@ packages/
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler-style JSON + .lua files, resources/ bundled as is
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ YamoshiSpawn/  single-script packages
+  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ Cumber/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases, scripts
     src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gog, gum, msdp, ys)
     Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)

@@ -1,0 +1,38 @@
+{
+  "name": "Cumber",
+  "version": "1.0.0",
+  "title": "Cumber's containment assignment (Prison Planet)",
+  "description": "Does Chief Rusk's containment assignment on the Prison Planet: studies the records, reads the west and east plates, vents the coupler, solves the three load cards at the workshop rig and hands in to Rusk. Type `cumber help`.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "Cumber",
+      "file": "src/Cumber.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "cumber",
+      "regex": "^cumber(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"Cumber\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\ncumber.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Cumber",
+      "folder": true,
+      "children": [
+        {
+          "name": "cumber Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "cumber.line(type(matches) == \"table\" and matches[1] or line)"
+        }
+      ]
+    }
+  ]
+}
