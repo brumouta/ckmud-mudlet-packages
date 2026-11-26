@@ -106,6 +106,8 @@ ok(s:find("recall|press button|s|s|enter vortex|survey|survey 5 fly|enter|where|
 ok(s:find("pursue kragul|de transform|pursue kragul|de kragul", 1, true), "rival: fought, then the boss pursued again")
 ok(s:find("de valbun|pursue valbun|de valbun", 1, true), "boss moved away (who?): pursued again")
 ok(s:find("pursue zel-zan", 1, true), "hyphenated first name")
+ok(s:find("de malakar|get all|pursue vorzeth", 1, true) and select(2, s:gsub("get all", "")) == 14, "get all after each of the 14")
+ok(sent[#sent] == "pursue jean", "all dead: pursue jean (last sent: " .. tostring(sent[#sent]) .. ")")
 ok(LOG:find("clear (14 killed)", 1, true), "says it's clear")
 ok(next(temps) == nil and next(timers) == nil, "nothing left running")
 
@@ -118,6 +120,7 @@ end
 LOG, sent = "", {}
 maj.command("kill")
 run(120)
+ok(not table.concat(sent, "|"):find("pursue jean", 1, true), "a boss skipped: no pursue jean")
 ok(LOG:find("skipped: Valbun", 1, true) and next(temps) == nil and next(timers) == nil, "unreachable boss skipped, then done")
 maj.command("kill"); maj.command("stop")
 ok(next(temps) == nil and next(timers) == nil, "maj stop cleans up")

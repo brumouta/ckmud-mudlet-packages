@@ -6,6 +6,8 @@ local J = maj
 
 J.attack    = J.attack or "de"   -- "<attack> <first name>" on every boss and rival
 J.fightWait = J.fightWait or 300 -- seconds a boss may take to die before it's tried again
+J.loot      = J.loot or "get all"      -- after each boss
+J.done      = J.done or "pursue jean"  -- once every boss is dead
 J.AREA      = "Majerska's Cursed Canopy"
 J.TRAVEL    = { "recall", "press button", "s", "s", "enter vortex" }
 J.bosses    = J.bosses or {}
@@ -62,6 +64,7 @@ local function finish()
   end
   info("green", "Majerska's Cursed Canopy is clear (" .. run.killed .. " killed)"
     .. (#skipped > 0 and (", skipped: " .. table.concat(skipped, ", ")) or ""))
+  if #skipped == 0 and J.done ~= "" then send(J.done) end
 end
 
 local function readList()
@@ -114,6 +117,7 @@ fight = function()
     clear()
     run.killed = run.killed + 1
     info("green", b.name .. " down (" .. run.killed .. ")")
+    if J.loot ~= "" then send(J.loot) end
     after(2, nextBoss)
   end)
   -- "Death Beam who?": it moved, go after it again

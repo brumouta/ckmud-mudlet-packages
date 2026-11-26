@@ -17,11 +17,13 @@ boss, weakest first. Type `maj help`.
    flies there with `survey <n> fly` and `enter`s.
 2. **The bosses:** `where` lists them (`[B][powerlevel]Name - Majerska's Cursed Canopy: Room`).
    They're sorted by powerlevel, weakest first.
-3. **Each boss:** `pursue <first name>`, then `<attack> <first name>`, until "<Name> is dead!".
+3. **Each boss:** `pursue <first name>`, then `<attack> <first name>`, until "<Name> is dead!",
+   then `get all` for the loot.
    If it moves away ("... who?") it pursues it again. If it can't be found 3 times, or is still
    alive after 5 minutes twice, it's skipped.
 4. **When the list is done** it checks `where` again and kills anything still there. It stops
-   when nothing is left and says how many died and which were skipped.
+   when nothing is left and says how many died and which were skipped. If every boss died
+   (none skipped) it sends `pursue jean`.
 
 A rival that "flies out of nowhere and attacks you" gets the attack too. Once it's dead, the
 boss is pursued again.
