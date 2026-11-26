@@ -541,10 +541,12 @@ function FQ.bridgeCard()
   FQ.run(concat({ { delay = 1 } }, FQ.bridgeSteps(FQ.TAIKO_TO_HATCH)))
 end
 
--- Walk (optionally from Taiko's room) to the Bridge terminal, swipe, biometrics
+-- Walk (optionally from Taiko's room) to the Bridge terminal, swipe, biometrics.
+-- Sent in one go, like the Cui Cui walk: nothing is looked for on the way, and the game
+-- runs the moves and the swipe in order.
 function FQ.bridgeSteps(first)
-  return concat(FQ.walkSteps(concat(first or {}, FQ.TO_BRIDGE)),
-                { "swipe", { wait = "Biometrics required.", timeout = 10 }, "biometrics" })
+  return concat(first or {}, FQ.TO_BRIDGE,
+                { "swipe", { wait = "Biometrics required.", timeout = 30 }, "biometrics" })
 end
 
 -- "Identity confirmed. Bridge portal opening."

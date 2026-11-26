@@ -37,7 +37,7 @@ Starting at a later stage (`fq start power`) only checks what that stage still n
 | revenge | Walk to the dying man, `say revenge`, wait 5s for Dodoria to spawn, `pursue dodoria` (retried every 5s for a minute) and kill him, walk back |
 | comms / power / comms2 | Deliver the note, power the ship via the Electrical Engineer, deliver the crumpled note |
 | zarbon | Step west to Zarbon a second after the Officer alerts him, `say surrender` for each card, attack Zarbon once the Holding Room stops being safe, kill him, go down to Taiko |
-| bridge | After Taiko hands back the Bridge Access Card (Online): walk to the Bridge terminal (the south end of the Gangway), `swipe`, `biometrics` |
+| bridge | After Taiko hands back the Bridge Access Card (Online): walk to the Bridge terminal (the south end of the Gangway, all moves sent at once), `swipe`, `biometrics` |
 
 ## Walking
 

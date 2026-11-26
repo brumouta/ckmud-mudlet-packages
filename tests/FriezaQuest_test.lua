@@ -147,12 +147,11 @@ fq.zarbonHere(); expect("")   -- seen in the Communications Module: no attack ye
 fq.duplicates(); expect(""); fq.zarbonHere(); expect("ss zarbon"); fq.zarbonHere(); expect("")
 fq.zarbonDead(); expect("get all | d")
 fq.room("Communications Module"); fq.exit("West", "Frieza's Spaceship: Communications Module"); fq.command("go"); expect("w")
-fq.bridgeCard(); assert(fq.stage == "bridge"); wait(1); expect("w")
-for _ = 1, 26 do feed("Obvious exits:"); wait(0.5) end
-expect(table.concat(fq.TAIKO_TO_HATCH, " | ", 2) .. " | " .. table.concat(fq.TO_BRIDGE, " | ") .. " | swipe")
+fq.bridgeCard(); assert(fq.stage == "bridge"); expect(""); wait(1)
+expect(table.concat(fq.TAIKO_TO_HATCH, " | ") .. " | " .. table.concat(fq.TO_BRIDGE, " | ") .. " | swipe")  -- all at once
 feed("Biometrics required."); expect("biometrics")
 fq.bridgeOpen(); assert(fq.stage == "done" and not fq.active)
 fq.active = true; fq.stage = "bridge"
-fq.room("Hatch"); fq.command("go"); expect("n"); fq.cancel()
+fq.room("Hatch"); fq.command("go"); expect(table.concat(fq.TO_BRIDGE, " | ") .. " | swipe"); fq.cancel()
 fq.room("Gangway"); fq.exit("North", "Frieza's Spaceship: Gangway"); fq.command("go"); expect("swipe"); fq.cancel()
 print("\nSMOKE TEST PASSED")
