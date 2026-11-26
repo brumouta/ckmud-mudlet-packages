@@ -326,7 +326,7 @@ end
 for _, s in ipairs({
   "scripts/Utils.lua", "scripts/Core.lua", "scripts/Attacks.lua", "scripts/Damage.lua",
   "scripts/Fight.lua", "scripts/StateMachine.lua", "scripts/SendQueue.lua",
-  "scripts/Skills.lua", "scripts/Modes.lua", "scripts/Racials.lua", "scripts/Learning.lua",
+  "scripts/Skills.lua", "scripts/Modes.lua", "scripts/Racials.lua", "scripts/Learning.lua", "scripts/Gumshoe.lua",
   "scripts/Event Handlers/MSDP.lua", "scripts/Event Handlers/Prompt_Events.lua",
   "scripts/Event Handlers/Connection_Events.lua",
 }) do run_script(s) end
@@ -974,6 +974,50 @@ do
   check(ok and ck:constant("learning.priority") == "", "AL priority clear empties it")
   Lr["multiform"], M["multiform"], Lv["multiform"], Lr["iron will"], Lv["iron will"] = nil, nil, nil, nil, nil
   P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl = table.unpack(saved)
+end
+
+realprint("=== PHASE: pause for gum repeat ===")
+do
+  local ck, L, Mode, State = require(PKG), AL.API.Learning, AL.API.Mode, AL.API.State
+  local Toggles, PC = ck:get_table("Toggles"), ck:get_table("PromptCounters")
+  local calls, queued, realTimer = {}, {}, tempTimer
+  tempTimer = function(_, f) queued[#queued + 1] = f end
+  local function tick() local q = queued; queued = {}; for _, f in ipairs(q) do f() end end
+  gum = { rep = {}, hold = function(w) calls[#calls + 1] = "hold " .. w end,
+          release = function(w) calls[#calls + 1] = "release " .. w end }
+  ck:set_constant("learning.recall_isolation", "recall;s;w")
+  if Mode:is(Mode.Learning) then Mode:switch(Mode.Interactive) end
+  matches = { "autolearn troll n;n", "troll", "n;n" }; pcall(alias_fn)
+  check(Mode:is(Mode.Learning), "learning on before the case")
+  Toggles.fighting, PC.fighting = true, 3   -- mid-fight when the case comes up
+  LOG = {}
+  raiseEvent("gumshoe.repeat.starting")
+  check(Mode:is(Mode.Interactive) and TIMERS["AL:Learning"] == nil, "case starting: learning paused, its timer gone")
+  check(calls[1] == "hold Autolearn" and calls[2] == nil, "holds Gumshoe while the fight goes on")
+  tick(); check(calls[2] == nil, "still fighting: still holding")
+  Toggles.fighting, PC.fighting = false, nil
+  tick(); check(calls[2] == "release Autolearn", "fight over: lets Gumshoe go")
+  SENT = {}
+  raiseEvent("gumshoe.repeat.done")
+  check(Mode:is(Mode.Learning) and gum.rep.claimed == "Autolearn", "case done: learning again, instead of the wait commands")
+  check(table.contains(SENT, "recall") and table.contains(SENT, "sleep") and State:is(State.REST),
+        "heads back by recall and rest (sent: " .. table.concat(SENT, " | ") .. ")")
+  -- resting when the case comes up: woken before Gumshoe walks
+  calls, SENT = {}, {}
+  raiseEvent("gumshoe.repeat.starting")
+  check(table.contains(SENT, "wake") and calls[2] == "release Autolearn", "asleep: woken, then Gumshoe goes")
+  raiseEvent("gumshoe.repeat.done")
+  -- turned off: nothing happens
+  ck:set_feature("learning.pause_for_gumshoe", false)
+  calls = {}
+  raiseEvent("gumshoe.repeat.starting")
+  check(Mode:is(Mode.Learning) and #calls == 0, "AL feature learning.pause_for_gumshoe off: keeps learning")
+  ck:set_feature("learning.pause_for_gumshoe", true)
+  -- not learning: nothing happens either
+  Mode:switch(Mode.Interactive); calls = {}
+  raiseEvent("gumshoe.repeat.starting"); raiseEvent("gumshoe.repeat.done")
+  check(Mode:is(Mode.Interactive) and #calls == 0, "not learning: Gumshoe isn't held and learning isn't started")
+  gum, tempTimer = nil, realTimer
 end
 
 realprint("=== PHASE: config aliases ===")

@@ -10,7 +10,7 @@ local P
 for _, t in ipairs(G.temp or {}) do
   if t[1] == 'trigger' then killTrigger(t[2]) elseif t[1] == 'alias' then killAlias(t[2]) else killTimer(t[2]) end
 end
-if G.rep then for _, k in ipairs{ 'timer', 'watchdog', 'park' } do if G.rep[k] then killTimer(G.rep[k]) end end end
+if G.rep then for _, k in ipairs{ 'timer', 'watchdog', 'park', 'hold' } do if G.rep[k] then killTimer(G.rep[k]) end end end
 G.temp = {}
 local function keep(kind, id) G.temp[#G.temp + 1] = { kind, id }; return id end
 
@@ -130,6 +130,20 @@ end
 -- on across logins; in Mudlet it lasts until Mudlet closes.
 local WATCHDOG = 30 * 60
 local function cancel(name) if rep[name] then killTimer(rep[name]); rep[name] = nil end end
+
+-- Other Mudlet packages (Autolearn) can step aside for a repeat case. Mudlet events:
+--   gumshoe.repeat.starting  a case is about to start: call gum.hold(name) to make it wait until
+--                            gum.release(name) (finish a fight, wake up; at most 3 minutes)
+--   gumshoe.repeat.done      back at Jaco after a case (or repeat turned off): set
+--                            gum.rep.claimed = name to carry on instead of the repeat wait commands
+local HOLD_MAX = 180
+local function raise(ev) if type(raiseEvent) == 'function' then pcall(raiseEvent, ev) end end
+rep.holds = rep.holds or {}
+function G.hold(who) rep.holds[who or '?'] = true end
+function G.release(who)
+  rep.holds[who or '?'] = nil
+  if rep.go and not next(rep.holds) then local go = rep.go; rep.go = nil; cancel('hold'); go() end
+end
 local startCase
 local function schedule(delay)
   cancel('timer')
@@ -148,8 +162,23 @@ startCase = function()
     G.info('yellow', 'Repeat: no case finished in 30 minutes, trying again'); startCase()
   end
   rep.watchdog = tempTimer(WATCHDOG, watch)
-  G.info('green', 'Repeat: off to Jaco for the next case (gum repeat off to stop)')
-  G.toJaco()
+  rep.holds, rep.go = {}, nil
+  raise('gumshoe.repeat.starting')
+  local function go()
+    if not rep.on then return end
+    G.info('green', 'Repeat: off to Jaco for the next case (gum repeat off to stop)')
+    G.toJaco()
+  end
+  if not next(rep.holds) then return go() end
+  local who = {}
+  for k in pairs(rep.holds) do who[#who + 1] = k end
+  G.info('white', 'Repeat: waiting for ' .. table.concat(who, ', ') .. ' before the next case')
+  rep.go = go
+  cancel('hold')
+  rep.hold = tempTimer(HOLD_MAX, function()
+    rep.hold = nil
+    if rep.go then rep.holds = {}; local g = rep.go; rep.go = nil; g() end
+  end)
 end
 local function untilJaco(extra) return math.max(0, (G.cooldownLeft and G.cooldownLeft()) or 0) + extra end
 rep.retry = function(delay) if rep.on then schedule(delay) end end
@@ -173,8 +202,9 @@ setRepeat = function(on, from)
     G.info('green', 'Repeat on: ' .. (G.running and 'the next case opens by itself when this one is done'
       or ('next case in ' .. ('%d:%02d'):format(math.floor(left / 60), left % 60))) .. '. gum repeat off to stop.')
   else
-    cancel('timer'); cancel('watchdog'); cancel('park'); rep.at = nil
+    cancel('timer'); cancel('watchdog'); cancel('park'); cancel('hold'); rep.at, rep.go = nil, nil
     G.info('white', 'Repeat off')
+    raise('gumshoe.repeat.done')
   end
 end
 
@@ -207,6 +237,9 @@ local function park(delay)
     rep.park = nil
     if not rep.on or G.running then return end
     G.toJaco(nil, function()
+      rep.claimed = nil
+      raise('gumshoe.repeat.done')
+      if rep.claimed then return G.info('green', 'Repeat: ' .. rep.claimed .. ' carries on until the next case') end
       if not rep.wait then return G.info('green', 'Repeat: waiting with Jaco for the next case') end
       G.info('green', 'Repeat: at Jaco, now: ' .. rep.wait)
       for part in rep.wait:gmatch('[^;]+') do
@@ -262,8 +295,8 @@ for _, h in ipairs(G.HELP) do help[#help + 1] = { command = h[1], description = 
 
 P = mud.plugin.register{
   -- Written out (not variables) so the catalog tools can read them. Raise the version on every
-  -- change, so the client offers the update (1.12.4: back to Jaco once the culprit is dead, built on Gumshoe.mpackage 1.10.6).
-  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.12.4',
+  -- change, so the client offers the update (1.13.0: other packages, like Autolearn, can pause around a repeat case; built on Gumshoe.mpackage 1.10.6).
+  api = 1, id = 'gumshoe', name = 'Gumshoe', version = '1.13.0',
   description = "Jaco's party mysteries at the Briefs house (help mansion): walks the house, searches every room, questions every guest, opens the sealed rooms, confronts the secrets and works out who did it.",
   settings = {
     { key = 'auto', label = 'After Open case: run it and accuse when sure', type = 'boolean', default = true },

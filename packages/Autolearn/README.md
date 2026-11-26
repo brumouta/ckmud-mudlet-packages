@@ -62,6 +62,16 @@ afford yet waits, and the others keep training meanwhile.
 Multiform is trained with `focus 'multiform'` followed by `order followers dismiss`, so no
 clones pile up (that also dismisses any other followers you have).
 
+### Pausing for Gumshoe's repeat
+
+With Gumshoe's `gum repeat` on (`gumshoe.xml`), learning steps aside for every case: just before
+Gumshoe heads to Jaco it pauses, lets a fight end and wakes you if you're resting. Once Gumshoe is
+back at Jaco after the case, learning starts again and gets back the way resting does: the
+`learning.recall_isolation` recall, a rest, then your path back to the target. That instead of the
+`gum repeat wait` commands. For that it needs `learning.recall_isolation` set and a path when you
+start (`autolearn elder n;n;w`); without them it stays off after the case and says so.
+`AL feature learning.pause_for_gumshoe off` turns this off.
+
 ## Aliases
 
 `autolearn <target> <speedwalk>` - toggle auto learning

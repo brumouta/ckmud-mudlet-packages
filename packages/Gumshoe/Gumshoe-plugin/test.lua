@@ -57,6 +57,7 @@ local function env(mudlet)
     e.os = { time = function() return now end, date = function() return '12:00' end }
     e.io = { open = function(p) if files[p] then return {} end end }
     e.tempAlias = function(re, fn) local i = id(); aliases[i] = {regex = re, f = fn}; return i end
+    e.raiseEvent = function(ev, ...) for _, fn in ipairs(handlers[ev] or {}) do fn(ev, ...) end end
   end
   return e
 end
@@ -249,6 +250,27 @@ E.gum.nextCase = nil; input('gum repeat on'); advance(5); local mt = output()
 check('Mudlet: repeat goes for a case', jacoTrips(mt) == 1, mt)
 E.gum.running = false; E.gum.caseOver(); advance(20 * 60 + 5)
 check('Mudlet: next case 20 min later', jacoTrips(output()) == 1)
+-- another package (Autolearn) holds the next case until it's ready, then takes over afterwards
+do
+  local heard, toJaco = {}, E.gum.toJaco
+  E.gum.toJaco = function(_, arrived) if arrived then arrived() end end   -- the walk itself is tested above
+  handlers['gumshoe.repeat.starting'] = { function() heard[#heard + 1] = 'starting'; E.gum.hold('Autolearn') end }
+  handlers['gumshoe.repeat.done'] = { function() heard[#heard + 1] = 'done'; E.gum.rep.claimed = 'Autolearn' end }
+  input('gum repeat off'); E.gum.nextCase = nil; E.gum.running = false
+  input('gum repeat on'); heard = {}; advance(6); local held = output()
+  check('Mudlet: a hold makes the next case wait', heard[1] == 'starting' and jacoTrips(held) == 0 and held:find('waiting for Autolearn') ~= nil, held)
+  E.gum.release('Autolearn'); check('Mudlet: released: off to Jaco', jacoTrips(output()) == 1)
+  E.gum.running = false; E.gum.nextCase = nil; E.gum.onCulpritDead(); advance(3); local after = output()
+  check('Mudlet: after the case, back at Jaco: done, and the claim replaces the wait commands',
+    heard[#heard] == 'done' and after:find('Autolearn carries on until the next case') ~= nil, after)
+  E.gum.caseOver(); advance(20 * 60 + 6); output(); advance(181)
+  check('Mudlet: a hold never released: goes anyway after 3 minutes', jacoTrips(output()) == 1)
+  E.gum.running = false; heard = {}
+  input('gum repeat off'); local offd = output()
+  check('Mudlet: repeat off tells the others (done)', heard[1] == 'done' and offd:find('Repeat off') ~= nil, table.concat(heard, ','))
+  handlers['gumshoe.repeat.starting'], handlers['gumshoe.repeat.done'], E.gum.toJaco = nil, nil, toJaco
+  E.gum.nextCase = nil; input('gum repeat on'); advance(5); output()
+end
 E.gum.running = false
 load_plugin(true, true); output()   -- Mudlet runs the script again when it is saved
 check('Mudlet: running the script again leaves one trigger and one alias', count_of(triggers) == 1 and count_of(aliases) == 1)

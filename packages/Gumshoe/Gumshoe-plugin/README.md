@@ -25,6 +25,12 @@ It is built from:
     <commands>` then sends your own commands from the Front Steps (`;` between them, aliases work
     in Mudlet), to wait somewhere else; `gum repeat wait jaco` goes back to just waiting at Jaco.
     The choice is saved in `gumshoe_repeat.lua` in the profile.
+  - **Mudlet only:** other packages can step aside for a repeat case. Just before a case starts it
+    raises the event `gumshoe.repeat.starting`; a package can call `gum.hold(name)` and later
+    `gum.release(name)` to make it wait (for at most 3 minutes). Once it's back at Jaco after the
+    case, or repeat is turned off, it raises `gumshoe.repeat.done`; a package that sets
+    `gum.rep.claimed = name` carries on from there instead of the `gum repeat wait` commands.
+    Autolearn uses this to pause its learning.
   - **Client only:** the dashboard card (settings, buttons, help, status) and plugin control.
     Gumshoe claims movement before it walks and gives it back when it stops.
 
