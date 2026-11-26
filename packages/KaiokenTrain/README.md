@@ -1,89 +1,64 @@
-![shenron](src/resources/shenron.png)
-
 # KaiokenTrain
 
-A standalone Mudlet package for CKMud that trains your kaioken to the maximum
-mastery level: it raises kaioken step by step, drinks when thirsty, rests when
-fatigued, and stops when kaioken is mastered. Extracted from the
-[CK](https://github.com/CKMud-Mudlet-Scripts/CK) package and fully
-self-contained - it does NOT require CK to be installed.
+Command: `kt`
+
+Trains your kaioken mastery to the top. It raises kaioken just above your mastery, drinks when
+you're thirsty, sleeps when you're fatigued, wakes when you're rested, and stops once kaioken is
+mastered. Originally extracted from the [CK](https://github.com/CKMud-Mudlet-Scripts/CK) package by
+fried; it doesn't need CK.
 
 ## Installation
 
 `lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/KaiokenTrain.mpackage")`
 
-**Requires the [MSDP](../MSDP) package**, which supplies the stats this package reads. Install it first.
-
-After installation the `KT update` alias will take care of updating the script.
-
-You must turn on `msdp` in settings to use this script (the package enforces
-the correct protocol settings on connect, same as CK does). Also while you are
-there disable MSSP and GMCP.
+**Requires the [MSDP](../MSDP) package** (with MSDP turned on in Mudlet's settings), which supplies
+your fatigue, thirst and the rest. Install it first. `kt update` updates KaiokenTrain.
 
 ## Usage
 
-`kaioken train` - toggle kaioken auto training. Try to hang out in an
-isolation chamber, and keep a drink source in your inventory (it sends
-`drink tears` by default - change it with e.g.
-`KT constant kaioken.drink_cmd="drink flask"`). Run it again to
-turn it off.
+Go to an isolation chamber with something to drink and type `kt start` (or `kaioken train`, which
+turns it on and off). `kt stop` stops it.
 
-### Room for Accelerated Mastery
+| Command | What it does |
+|---|---|
+| `kt` / `kt help` | The commands, and the current drink and room |
+| `kt start` | Start training |
+| `kt stop` | Stop |
+| `kt status` | Training or not, your kaioken, mastery and the ceiling |
+| `kt drink <command>` | What to drink when thirsty, default `drink tears` (saved) |
+| `kt room <0-10>` | Extra levels above mastery + 9, default 2 (saved) |
+| `kt update` | Update KaiokenTrain to the latest release |
+| `kaioken train` | Turn training on or off |
 
-Kaioken mastery can only climb to 8 below the kaioken level you're using, so
-the old mastery + 9 left room for one point per gain. With Accelerated Mastery
-(`pshop mastery`) one gain can land 2 or 3 points, so the bot now trains at
-mastery + 9 + `kaioken.extra_room` (default 2, i.e. mastery + 11). A higher
-level drains fatigue faster, so without the perk set it back to the old
-behaviour with `KT constant kaioken.extra_room=0`.
+While it trains, the prompt shows `[kt training][x21 / x10]` (kaioken / mastery).
 
-If the game won't hold the level it asks for (it asks three times), it steps
-down one level for the rest of the session and says so.
+### How high it trains
 
-The last stretch is different: once mastery + 9 + `kaioken.extra_room` reaches
-your ceiling (`kaioken getmax`, e.g. 128), it trains at the ceiling itself and
-never steps down, until mastery is 8 below it (120), then stops.
+Kaioken mastery only climbs to 8 below the kaioken you're using, so mastery + 9 leaves room for
+one point per gain. With Accelerated Mastery (`pshop mastery`) one gain can land 2 or 3 points, so
+it trains at mastery + 9 + the room (default 2, i.e. mastery + 11). A higher level drains fatigue
+faster, so without the perk use `kt room 0`.
 
-Each time training is turned on it reads your mastery fresh from `status`
-(nothing is trained until it has it), so a value left over from another
-character or a rebirth can't make it think kaioken is already mastered.
+If the game won't hold the level it asks for (it asks three times), it steps down one level for
+the rest of the session and says so.
 
-## Aliases
+The last stretch is different: once mastery + 9 + the room reaches your ceiling (`kaioken getmax`,
+e.g. 128), it trains at the ceiling itself and never steps down, until mastery is 8 below it (120).
+Before it stops it asks `kaioken getmax` again, because the ceiling grows as you do; if it grew,
+training goes on.
 
-`kaioken train` - toggle kaioken auto training
+Each start reads your mastery fresh (from the prompt or `status`), so a value left over from
+another character or a rebirth can't make it think kaioken is already mastered.
 
-`KT` - get a list of KaiokenTrain commands
+## Changes in 3.0
 
-`KT features` - list feature flags
-
-`KT feature <name> <on|off>` - turn a feature on/off
-
-`KT constants` - list script constants (these survive resetProfile())
-
-`KT constant <name>=<value>` - set a script constant
-
-`KT update` - update KaiokenTrain from github latest
-
-## Running alongside CK or Autolearn
-
-KaiokenTrain keeps all of its state under its own `KT` global namespace, its
-own `KaiokenTrain` settings database, and its own `KT.*` events, so it will
-not corrupt an installed CK or Autolearn package. Since each package has its
-own mode system they are no longer mutually exclusive - run one bot at a
-time. Recent CK versions no longer ship the kaioken train feature.
+KaiokenTrain is now one Lua file like the newer packages. `KT`, `KT features` and
+`KT constant ...` are gone. The two settings are `kt drink` and `kt room`, saved in
+`kaiokentrain.lua` in your profile folder. Settings from 2.x aren't carried over, so set them again
+if you had changed them. It no longer changes Mudlet's protocol settings or reconnects by itself;
+it tells you if MSDP is off.
 
 ## Development
 
-The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
-needed: `python3 ../../tools/build.py KaiokenTrain` writes `../../dist/KaiokenTrain.mpackage`.
-
-Before building, two checks catch the common failure modes:
-
-```
-python3 ../../tools/lint_manifests.py src   # every trigger/alias has a script
-cd tests && npm install && node runner.js driver.lua   # simulated Mudlet run
-```
-
-The tests run the real package sources in a Lua VM with a stubbed Mudlet API
-and simulate connect -> MSDP feed -> prompt/kaioken parsing -> `kaioken train`
-toggle -> raise / drink / rest / wake / completion.
+`python3 tools/build.py KaiokenTrain` builds `dist/KaiokenTrain.mpackage`, and
+`lua tests/KaiokenTrain_test.lua` (from the repo root) tests it.

@@ -7,7 +7,7 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [MSDP](packages/MSDP) | `msdp` | **Install this first.** Subscribes to every MSDP variable CKMud offers and shares the values (plus your name, race and base PL from `score`) with the packages below. |
 | [Autolearn](packages/Autolearn) | `al help` | Masters all your skills and learns new ones once their prerequisites are mastered. |
 | [Chores](packages/Chores) | `chores fish\|quest\|both\|off`, `CH` | Automates fishing, the royal cook delivery quest and the gravedigger excavation. |
-| [KaiokenTrain](packages/KaiokenTrain) | `kaioken train`, `KT` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
+| [KaiokenTrain](packages/KaiokenTrain) | `kt` | Trains kaioken to max mastery: raises it step by step, drinks, rests and stops when mastered. |
 | [Score](packages/Score) | `score`, `SC` | A richer `score`: real numbers, damage at every boost level, item tier progress, training hints. |
 | [DataLords2](packages/DataLords2) | `dl2 help` | Runs the **Data Lords v2.0** event boss chain (not Data Lords 1 or 3) when *you* requested it, pausing for rivals (yours or your group's). |
 | [Casino](packages/Casino) | `casino` | The **Lucky Monkey Casino**: plays **blackjack** (`bj`), **video poker** (`vp`) and **slots** (`slot`), and advises in the Friday **High Stakes** hold'em tournament (`hs`). Tracks zenni, Lucky Tails and XP. |
@@ -39,7 +39,7 @@ Or download the `.mpackage` from the [latest release](../../releases/latest) and
 
 ## Updating
 
-Every package has an update command: its command followed by `update`, e.g. `maj update`, `al update`, `SC update`, `CH update`, `KT update`, `casino update`, `autobuff update`, `chatwnd update` or `health update`. It downloads the package from the latest release first and only then swaps it in, so if the download fails (offline, or the repository isn't public) your installed copy stays as it is. Older copies installed as `dl2` or `gumshoe` are replaced too. The shared code is [tools/shared/CKMudUpdate.lua](tools/shared/CKMudUpdate.lua).
+Every package has an update command: its command followed by `update`, e.g. `maj update`, `al update`, `SC update`, `CH update`, `kt update`, `casino update`, `autobuff update`, `chatwnd update` or `health update`. It downloads the package from the latest release first and only then swaps it in, so if the download fails (offline, or the repository isn't public) your installed copy stays as it is. Older copies installed as `dl2` or `gumshoe` are replaced too. The shared code is [tools/shared/CKMudUpdate.lua](tools/shared/CKMudUpdate.lua).
 
 ## Repository layout
 
@@ -47,11 +47,11 @@ There are two kinds of package, built differently:
 
 ```
 packages/
-  Autolearn/ Buffs/ Chat/ Chores/ Health/ KaiokenTrain/ Score/     muddler-layout projects (built without muddler)
+  Autolearn/ Buffs/ Chat/ Chores/ Health/ Score/     muddler-layout projects (built without muddler)
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler-style JSON + .lua files, resources/ bundled as is
     tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ Cumber/ FusionQuest/ YamoshiSpawn/  single-script packages
+  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ Cumber/ FusionQuest/ KaiokenTrain/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases, scripts
     src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gog, gum, msdp, ys)
     Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
@@ -81,10 +81,10 @@ The packages with an `mfile` keep [muddler](https://github.com/demonnic/muddler)
 sh tests/run.sh
 ```
 
-Needs Lua 5.1+, Python 3 and Node (Node only runs the simulation tests of Autolearn, Chores, KaiokenTrain and Score, and builds the CKMud client plugins; those are skipped without it). What it covers:
+Needs Lua 5.1+, Python 3 and Node (Node only runs the simulation tests of Autolearn, Chores and Score, and builds the CKMud client plugins; those are skipped without it). What it covers:
 
 - **Blackjack, CryonFarm, DataLords2, FriezaQuest, Gumshoe, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test. Gumshoe reads a real case and runs a whole one in a fake Briefs house. CryonFarm does a whole run in a fake lab built from the log's exits.
-- **Autolearn, Chores, KaiokenTrain, Score:** each manifest is linted (every trigger and alias needs a script; `tools/muddle.py` refuses to build without one too). Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
+- **Autolearn, Chores, Score:** each manifest is linted (every trigger and alias needs a script; `tools/muddle.py` refuses to build without one too). Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
 
 ## Versioning
 

@@ -1,8 +1,0 @@
-{
-       "package": "KaiokenTrain",
-       "title": "Standalone kaioken training bot for CKMud",
-       "version": "2.1.5",
-       "author": "fried",
-       "icon": "shenron.png",
-       "outputFile": true
-}

@@ -1,8 +1,0 @@
-{
-  "name": "kaiokentrain-tests",
-  "private": true,
-  "description": "Mudlet environment simulation tests for the KaiokenTrain package",
-  "dependencies": {
-    "fengari": "^0.1.4"
-  }
-}
