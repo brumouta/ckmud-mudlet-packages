@@ -29,6 +29,7 @@ end
 local cursor, combat, enemy, here = 0, false, nil, "Kame House"
 local count = { crate = 0, bench = 0, androids = 0, k = 0 }
 local soldierDone, path, zeno, drill, kai = false, {}, false, nil, nil
+local itFails = 0   -- how many instant transmissions to King Kai fail before one works
 local function prompt()
   say("[Time: 12:00]")
   if combat then say("[Target: " .. combat .. "] [Rage: 0%]") end
@@ -118,6 +119,22 @@ respond = function(c)
       room("Arena Sidewalk", "Somen the Metamoran dance master says, 'The steps are easy. The timing is not, and timing is King Kai's art.'")
     end
     return
+  end
+  local function kaiArrives()
+    say("King Kai exclaims, 'Somen sent you? The dance! Timing is my art. But first: why did the Saiyan bring a ladder to the fight? To reach the next level!'")
+    say("King Kai says, '...Well? Go on. Laugh.'")
+    room("King Kai's Living Room")
+  end
+  if c == "focus 'instant' king kai" then
+    say("Okay.")
+    if itFails > 0 then itFails = itFails - 1; say("You failed."); prompt(); return end
+    say("You touch two fingers to your forehead and disappear suddenly."); kaiArrives(); return
+  end
+  if c == "crecall" then return room("Capsule Corp Ship") end
+  if c == "leave" then room("Outer Space", "You can 'land' here."); return end
+  if c == "pursue king kai" then
+    assert(here == "Outer Space", "pursue king kai from " .. here)
+    kaiArrives(); say("You have successfully tracked down King Kai!"); prompt(); return
   end
   if c:match("^pursue ") then
     local who = c:sub(8)
@@ -268,11 +285,23 @@ for _, g in ipairs({ "turles", "slug", "cooler", "frieza" }) do ok(s:find("k " .
 ok(s:find("k hatchiyack", 1, true), "Hatchiyack fought")
 ok(s:find("pursue dr briefs|e|n|watch", 1, true), "Goku's recording watched")
 ok(s:find("recall|fly|fly|survey|survey 5 fly|enter", 1, true), "flies to the Otherworld Tournament Arena")
-ok(s:find("recall|pursue king|laugh|s|n|point|point|step left|swing", 1, true), "King Kai: laugh, out and back in, the dance in order")
+ok(s:find("enter|focus 'instant' king kai|laugh|s|n|point|point|step left|swing", 1, true), "King Kai: instant transmission, laugh, out and back in, the dance in order")
 ok(s:find("pursue vegeta|e|drill|point|swing|point|step left|step left|point", 1, true), "gravity drill answered call by call")
 ok(s:find("drill|step left|step left|step right|step left|point|point|point|point", 1, true), "hangar drill answered call by call")
 ok(LOG:find("Fuse with another player", 1, true), "ends telling you to fuse with another player")
 ok(next(timers) == nil, "nothing left running")
+
+-- King Kai when instant transmission keeps failing: space, then pursue
+fus.command("stage", "kaikai")
+itFails, sent, LOG = 2, {}, ""
+local model = respond
+respond = function(c) if fus.stage == "kaikai" then model(c) end end   -- just this stage; the next one gets no answers
+fus.command("start"); run(120)
+respond = model
+s = table.concat(sent, "|")
+ok(s:find("^focus 'instant' king kai|focus 'instant' king kai|crecall|leave|pursue king kai|laugh|s|n|point", 1, false) ~= nil, "two failed instant transmissions, then crecall, leave, pursue king kai, the dance")
+ok(fus.stage == "gravity", "on to the gravity room after King Kai (stage: " .. fus.stage .. ")")
+fus.stop(true)
 
 -- stop and resume
 fus.command("stage", "archive")

@@ -33,7 +33,7 @@ Runs the **West Capital questline** that ends in the Metamoran fusion dance, sta
 | report | Tell Bulma |
 | archive | `watch` Goku's recording in the Blueprint Archive |
 | somen | The Otherworld Tournament Arena |
-| kaikai | King Kai: `laugh`, out and back in, the dance he calls |
+| kaikai | King Kai: `focus 'instant' king kai` (if it fails twice: `crecall`, `leave`, `pursue king kai`), then `laugh`, out and back in, the dance he calls |
 | gravity | `drill` in Gravity Room South, answering every call |
 | hangar | `drill` in the hangar opposite Sixteen |
 | done | Fuse with another player (10 billion base PL, knows the dance), then walk into Bulma's workshop fused |

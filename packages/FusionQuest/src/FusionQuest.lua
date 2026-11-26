@@ -191,7 +191,7 @@ F.STAGES = {
   { "somen", "Somen at the Otherworld Tournament Arena", {
     { travel = "otherworld" }, seen("The steps are easy", 20) } },
   { "kaikai", "King Kai: laugh at the joke, then the first dance", {
-    { go = "recall", room = "King Kai's Planet" }, pursue("king"), { special = "kaikai" } } },
+    { special = "tokai" }, { special = "kaikai" } } },
   { "gravity", "The gravity room drill", {
     { travel = "westcapital" }, pursue("vegeta"), { go = "e", room = "Gravity Room South" },
     { special = "drill", done = "Now the hangar" } } },
@@ -310,6 +310,35 @@ function SPECIAL.drill(step)
     if drillLine(l, step.done) then done(); return true end
     if l:find("There is nothing here you can drill.", 1, true) then fail("No drill console in this room"); return true end
   end)
+end
+
+-- getting to King Kai: instant transmission, twice; then space (crecall, leave) and pursue
+local IT_GONE = "You touch two fingers to your forehead and disappear suddenly."
+local function kaiBySpace()
+  info("white", "Instant transmission to King Kai failed twice: crecall, leave, pursue king kai")
+  send("crecall"); send("leave")
+  local function chase()
+    run.mark = #run.lines + 1
+    send("pursue king kai")
+    waitFor("pursue king kai", 120, function(l)
+      if l:find("You have successfully tracked down", 1, true) or l:find("You're already in the same room!!", 1, true) then done(); return true end
+      if l:find("can't seem to sense", 1, true) or l == "You sense no ki." then fail("Can't find King Kai from space"); return true end
+    end)
+  end
+  run.mark = #run.lines + 1
+  waitFor("space", 10, function(l) if l:find("You can 'land' here.", 1, true) then chase(); return true end end, chase)
+end
+function SPECIAL.tokai()
+  run.itTries = (run.itTries or 0) + 1
+  if run.itTries > 2 then run.itTries = nil; return kaiBySpace() end
+  run.mark = #run.lines + 1
+  send("focus 'instant' king kai")
+  local gone = false
+  waitFor("instant transmission to King Kai", 15, function(l)
+    if l:find(IT_GONE, 1, true) or l:find("But you are already in the same place as them.", 1, true) then gone = true end
+    if gone and l:find("^%[Pl: ") then run.itTries = nil; done(); return true end
+    if not gone and l:find("You failed.", 1, true) then setTimer(2, SPECIAL.tokai); run.handler = nil; return true end
+  end, SPECIAL.tokai)
 end
 
 -- King Kai: the joke (laugh), walk out and back in, then "do it back to me in order"
