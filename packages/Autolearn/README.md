@@ -92,7 +92,6 @@ case and says so. `al stop` while it's paused keeps it off. `al gumshoe off` tur
 | `al status` | Learning or not, on what, how many skills left |
 | `al priority [skills\|clear]` | Skills to train first, in order |
 | `al gumshoe on\|off` | Pause for Gumshoe's `gum repeat` cases (default on) |
-| `al gravity on\|off` | While learning, raise the room's gravity (`adjust`) to your max - 1, for more gains (default off) |
 | `al features` / `al feature <name> on\|off` | Every feature switch |
 | `al constants [prefix]` / `al constant <name> = <value>` | Every setting (these survive resetProfile()) |
 | `al update` | Update Autolearn to the latest release |

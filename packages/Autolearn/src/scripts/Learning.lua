@@ -3,7 +3,6 @@ local Player = ck:get_table("Player")
 local Toggles = ck:get_table("Toggles")
 local learn = ck:get_table("API.Learning", {
     triggers = {},
-    gravity = 0,
     to_learn = {}
 })
 local Times = ck:get_table("API.Times")
@@ -12,10 +11,8 @@ local State = ck:get_table("API.State")
 local Mode = ck:get_table("API.Mode")
 local PromptCounters = ck:get_table("PromptCounters")
 local Skills = ck:get_table("API.Skills")
-local Room = ck:get_table("Room")
 local Target = ck:get_table("Target")
 
-ck:define_feature("learning.use_zeta", false)
 -- learning.return_to_target is gone: the way back comes from the path autolearn is started with
 ck:get_table("Constants")["learning.return_to_target"] = nil
 ck:define_constant("learning.recall_isolation", "")
@@ -99,8 +96,7 @@ local function do_learning()
         if next(learn.gk_blocked) and Player.GK and Player.MaxGK and Player.GK >= Player.MaxGK then
             learn.gk_blocked = {}                   -- god ki is full again: try those skills again
         end
-        local learned = learn:setup_skills(target)
-        learn:maybe_adjust_gravity()
+        learn:setup_skills(target)
 
         -- The first command sent below is this tick's skill attempt. If the MUD answers
         -- "You lack sufficient god ki...", that's the skill to set aside (out_of_god_ki).
@@ -127,20 +123,6 @@ local function do_learning()
         if sent == false and not API:is_rested() and Target.level == 0 then
             learn:go_rest(speedwalk_path)
             return
-        end
-
-        local others = { "powersense", "powerup", "powerdown", "portal", "instant", "scan" }
-        if sent == false and learned == 0 and Player.UBS == 100 and Player.LBS == 100 then
-            -- check others
-            local all_done = true
-            for _, v in ipairs(others) do
-                if learn:need_to_master(v) then
-                    all_done = false
-                end
-            end
-            if all_done then
-                -- Lets turn on zeta on the target
-            end
         end
 
         -- If we didn't do anything we are probably done.
@@ -341,7 +323,6 @@ local function enter()
     learn.to_learn = {
         set = false
     }
-    learn.gravity = 0
     learn.warned_no_return = nil
     learn.teleported = nil
     -- Always armed: find_target no-ops while there's no way back, and
@@ -470,13 +451,6 @@ end
 function learn:land()
     if Mode:is(Mode.Learning) then
         send("land")
-    end
-end
-
-function learn:maybe_adjust_gravity()
-    local new_grav = API:get_gravity()
-    if Room.Gravity < new_grav and ck:feature("learning.use_zeta") then
-        send(f "adjust {new_grav}")
     end
 end
 

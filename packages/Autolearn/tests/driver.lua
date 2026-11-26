@@ -1066,9 +1066,10 @@ do
   -- switches, features and constants
   al("al gumshoe off"); check(ck:feature("learning.pause_for_gumshoe") == false, "al gumshoe off")
   al("al gumshoe on"); check(ck:feature("learning.pause_for_gumshoe") == true, "al gumshoe on")
-  al("al features"); check(said():find("learning.use_zeta", 1, true), "al features lists them")
-  al("AL feature learning.use_zeta on"); check(ck:feature("learning.use_zeta") == true, "AL feature <name> on")
-  al("al gravity off"); check(ck:feature("learning.use_zeta") == false, "al gravity off")
+  al("al features"); check(said():find("learning.pause_for_gumshoe", 1, true), "al features lists them")
+  al("AL feature learning.pause_for_gumshoe off"); check(ck:feature("learning.pause_for_gumshoe") == false, "AL feature <name> off")
+  al("al feature learning.pause_for_gumshoe on"); check(ck:feature("learning.pause_for_gumshoe") == true, "al feature <name> on")
+  al("al zeta on"); check(said():find("Unknown command: al zeta", 1, true), "al zeta is gone")
   al("AL constants"); check(said():find("learning.recall_isolation", 1, true), "AL constants lists them")
   al('AL constant learning.recall_isolation="recall;s"'); check(ck:constant("learning.recall_isolation") == "recall;s", "AL constant name=value")
   al('al constant learning.recall_isolation = "crecall;w"'); check(ck:constant("learning.recall_isolation") == "crecall;w", "al constant name = value")

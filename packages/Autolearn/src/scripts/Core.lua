@@ -50,16 +50,6 @@ function API:getName()
     return Player.name or ck:constant("name")
 end
 
-function API:get_gravity(training)
-    local max_gravity = Player.MaxGravity or 2
-    local max_pl = Player.MaxPl or Player.Pl
-    if training then
-        return math.min(math.floor((1 / 5000) * 0.06 * max_pl), max_gravity - 1)
-    else
-        return max_gravity - 1
-    end
-end
-
 function API:cmd_stack_empty()
     -- I might move this in the future
     return AL.cmd_stack == 0
