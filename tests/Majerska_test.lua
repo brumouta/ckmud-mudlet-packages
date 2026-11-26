@@ -81,6 +81,7 @@ respond = function(c)
     say("Majerska's Cursed Canopy:")
     for l in WHERE:gmatch("[^\n]+") do if alive[maj.parseBoss(l).name] then say(l) end end
     say("o------------------------------------------------------------o")
+  elseif c == "pursue jean" then say("You have successfully tracked down Jean!")
   elseif c:match("^pursue ") then
     local who = byKey[c:sub(8)]
     assert(who and alive[who], "pursue " .. c)
