@@ -12,12 +12,12 @@ lets you into Cumber's Confinement. Type `cumber help`.
 | `cumber stop` | Stop |
 | `cumber update` | Update Cumber to the latest release |
 
-You need the test coupler (Rusk's); if `look testcoupler` shows no card it asks him with `say coupler`.
+You need Rusk's test coupler.
 
 ## How it works
 
 1. **Rusk:** `crecall` and `leave` into space (the clan hall is Galactic Federation HQ), then `pursue rusk`, `say containment`, then
-   `look testcoupler` for the card the coupler is on.
+   `look testcoupler` for the card the coupler is on (a fresh one says to study the records first).
 2. **Card 1, the prep:** `study containment` in Containment Records, `read west plate` at Western Coil
    Access, `read east plate` at Eastern Coil Access, `inspect cooling loop` and `vent coupler` at
    Northern Cooling Walk, then on to the Restraint Workshop. If the coupler is already on card 2 or 3

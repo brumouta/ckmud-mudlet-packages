@@ -55,11 +55,11 @@ local AT = {
   ["vent coupler"] = { "Northern Cooling Walk", "You bleed the disconnected test hose into the catch basin until its inspection tube is clear.", "The protected venting point and catch basin are not here." },
 }
 local CARDS = { { 6, 12 }, { 10, 6 }, { 4, 15 } }
-local here, card, dial, done, rivalOnce, flubOnce, haveCoupler, paid
+local here, card, dial, done, rivalOnce, flubOnce, paid
 local function world(startCard, opts)
   opts = opts or {}
   here, card, dial, done, paid = "The dark expanse of space", startCard, {}, {}, false
-  rivalOnce, flubOnce, haveCoupler = opts.rival, opts.flub, opts.coupler ~= false
+  rivalOnce, flubOnce = opts.rival, opts.flub
   respond = function(c)
     if c == "crecall" then here = "Galactic Federation HeadQuarters"; say(here)
     elseif c == "leave" then assert(here == "Galactic Federation HeadQuarters", "leave outside the clan hall"); here = "space"; say("You fly up into the air."); say("Galactic Federation HeadQuarters")
@@ -71,11 +71,10 @@ local function world(startCard, opts)
     elseif c == "say containment" then say("You say, 'containment'"); say("Chief Rusk says, ''Study containment' in the records room. 'Read west plate' and 'read east plate'...'")
     elseif c == "say coupler" then
       say("You say, 'coupler'")
-      if not haveCoupler then haveCoupler = true; say("Chief Rusk hands you a test coupler.")
-      elseif card > 3 then paid = true; say("Chief Rusk says, 'Three load records, correctly reproduced without confusing the feeds. Here are 500,000 zenni and 40 tokens.'")
+      if card > 3 then paid = true; say("Chief Rusk says, 'Three load records, correctly reproduced without confusing the feeds. Here are 500,000 zenni and 40 tokens.'")
       else say("Chief Rusk says, 'Bring me a coupler that has passed all three cards.'") end
     elseif c == "look testcoupler" then
-      if not haveCoupler then say("You see nothing special.."); return end
+      if not done["study containment"] and card == 1 then say("'Study containment' in the records room before interpreting a quiet coil."); return end
       local k = CARDS[card]
       if k then say(string.format("Card %d calls for west %d load units and east %d. The workshop rig has independent zero-to-five dials.", card, k[1], k[2])) end
     elseif c:match("^calibrate (%a+) (%d)$") then
@@ -130,15 +129,17 @@ run(60)
 ok(paid and not done["study containment"], "card 2 on the coupler: skips the prep")
 ok(table.concat(sent, "|"):find("e|d|e|n|n|look testcoupler|calibrate west 5|calibrate east 2", 1, true), "walks straight to the rig")
 
--- no coupler: asks Rusk for one
-world(1, { coupler = false })
+-- a fresh coupler: look testcoupler says to study first, so the prep is done
+world(1)
 LOG, sent = "", {}
 cumber.command("start")
 run(120)
-ok(paid and LOG:find("asking Rusk", 1, true), "no coupler: asks Rusk, then does the assignment")
+s = table.concat(sent, "|")
+ok(paid and done["study containment"] and done["vent coupler"], "fresh coupler ('Study containment' first): does the prep, then the cards")
+ok(select(2, s:gsub("say coupler", "")) == 1, "never asks Rusk for a coupler, only hands it in")
 
 -- just the rig
-world(1); here = "Restraint Workshop"; done["vent coupler"] = true
+world(1); here = "Restraint Workshop"; done["vent coupler"] = true; done["study containment"] = true
 LOG, sent = "", {}
 cumber.command("solve")
 run(30)

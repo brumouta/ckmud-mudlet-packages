@@ -123,8 +123,9 @@ takeAssignment = function()
   end, function() checkCoupler() end)
 end
 
--- `look testcoupler` says which card is up; nothing about a card means there's no coupler
-checkCoupler = function(asked)
+-- `look testcoupler` says which card is up. Before the records are studied it says
+-- "'Study containment' in the records room before interpreting a quiet coil." instead: do the prep.
+checkCoupler = function()
   run.stage = "coupler"
   send("look testcoupler")
   waitFor("the test coupler", 4, function(l)
@@ -134,12 +135,8 @@ checkCoupler = function(asked)
       if n == 1 then walk(PREP, rig) else walk(TO_RIG, rig) end
       return true
     end
-  end, function()
-    if asked then return fail("No test coupler, even after asking Rusk for one") end
-    info("yellow", "No test coupler: asking Rusk for one")
-    send("say coupler")
-    setTimer(3, function() checkCoupler(true) end)
-  end)
+    if l:find("^'Study containment' in the records room") then walk(PREP, rig); return true end
+  end, function() walk(PREP, rig) end)
 end
 
 walk = function(route, done, from)
