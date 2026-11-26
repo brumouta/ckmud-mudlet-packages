@@ -1068,7 +1068,7 @@ do
   al("al gumshoe on"); check(ck:feature("learning.pause_for_gumshoe") == true, "al gumshoe on")
   al("al features"); check(said():find("learning.use_zeta", 1, true), "al features lists them")
   al("AL feature learning.use_zeta on"); check(ck:feature("learning.use_zeta") == true, "AL feature <name> on")
-  al("al zeta off"); check(ck:feature("learning.use_zeta") == false, "al zeta off")
+  al("al gravity off"); check(ck:feature("learning.use_zeta") == false, "al gravity off")
   al("AL constants"); check(said():find("learning.recall_isolation", 1, true), "AL constants lists them")
   al('AL constant learning.recall_isolation="recall;s"'); check(ck:constant("learning.recall_isolation") == "recall;s", "AL constant name=value")
   al('al constant learning.recall_isolation = "crecall;w"'); check(ck:constant("learning.recall_isolation") == "crecall;w", "al constant name = value")

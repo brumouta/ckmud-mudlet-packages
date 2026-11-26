@@ -64,7 +64,7 @@ function API:setup()
         "al recall <commands>: rest from any room (needed to come back after a Gumshoe case), e.g. al recall crecall;w")
     line(true, "priority", get("learning.priority") or "usual order", nil)
     line(true, "gumshoe", onoff(ck:feature("learning.pause_for_gumshoe")) .. " pause for gum repeat cases (al gumshoe on|off)")
-    line(true, "zeta", onoff(ck:feature("learning.use_zeta")) .. " (al zeta on|off)")
+    line(true, "gravity", onoff(ck:feature("learning.use_zeta")) .. " raise the room's gravity to your max - 1 while learning (al gravity on|off)")
     local race = API.getRace and API:getRace() or ck:constant("race")
     line(race and race ~= "???", "race", tostring(race or "???"), "type score once")
     if target and (path or android or recall) then
@@ -168,7 +168,7 @@ API.HELP = {
     { "al status",                "Learning or not, and how far" },
     { "al priority [skills|clear]", "Skills to train first, e.g. al priority multiform, kamehameha" },
     { "al gumshoe on|off",        "Pause for Gumshoe's gum repeat cases (default on)" },
-    { "al zeta on|off",           "Use zeta on the target" },
+    { "al gravity on|off",        "Raise the room's gravity (adjust) to your max - 1 while learning (default off)" },
     { "al features / al feature <name> on|off", "All feature switches" },
     { "al constants [prefix] / al constant <name> = <value>", "All settings" },
     { "al update",                "Update Autolearn to the latest release" },
@@ -216,7 +216,9 @@ local function switch(feature, label)
     end
 end
 COMMANDS.gumshoe = switch("learning.pause_for_gumshoe", "Pause for Gumshoe's repeat cases")
-COMMANDS.zeta = switch("learning.use_zeta", "Zeta on the target")
+-- (the feature is still called learning.use_zeta, its name in CK, so saved settings carry over)
+COMMANDS.gravity = switch("learning.use_zeta", "Raise the gravity while learning")
+COMMANDS.zeta = COMMANDS.gravity
 COMMANDS.features = function() list_features() end
 COMMANDS.feature = function(arg)
     local name, sw = (arg or ""):match("^(%S+)%s+(on)$")
