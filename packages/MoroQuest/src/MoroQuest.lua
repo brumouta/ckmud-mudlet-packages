@@ -3,6 +3,8 @@
 --    3 forward), so moving each letter back gives the five names to decipher.
 -- 2. The wanted bulletins: post them at the spaceports of Earth, Vegeta, Namek, Iceria and Konats,
 --    by recall, the Zeno Button and the Grand Atrium's vortexes (no ship).
+-- 3. The recorded transmission: fly from Galactic Federation HQ to the Galactic Patrol Station and
+--    walk to its Communications Deck, where Jaco's recording plays (landmark for the Prison Planet).
 moro = moro or {}
 local M = moro
 
@@ -120,14 +122,15 @@ local function doPursue(who)
   timeout(90, "pursue " .. who)
 end
 
-local function doSurvey(area)
+local function doSurvey(area, arrive)
+  arrive = arrive or ("You land on the ground in front of " .. area .. ".")
   clear()
   send("survey")
   onRe([[^\s*(\d+)\. (.+), go \w+]], function()
     if matches[3] ~= area then return end
     clear()
     send("survey " .. matches[2] .. " fly")
-    on("You land on the ground in front of " .. area .. ".", stepDone)
+    on(arrive, stepDone)
     timeout(180, "the flight to " .. area)
   end)
   timeout(15, area .. " in the survey list")
@@ -137,6 +140,7 @@ nextStep = function()
   local leg = run.leg
   if not leg then return end
   local step = leg[run.i]
+  if step == nil and run.finish then return run.finish() end
   if step == nil then   -- at the spaceport
     clear()
     send("post bulletin")
@@ -146,7 +150,9 @@ nextStep = function()
       run.leg = nil
       if #left == 0 then
         run.active = false
-        return info("green", "All five bulletins posted. Next: the recorded transmission on the Station's comms deck.")
+        info("green", "All five bulletins posted. Off to the Station's comms deck for the recorded transmission.")
+        run.timer = tempTimer(2, function() run.timer = nil; M.comms() end)
+        return
       end
       if run.only then run.active = false; return info("green", "Posted. Still to post: " .. table.concat(left, ", ")) end
       nextLeg()
@@ -171,7 +177,7 @@ nextStep = function()
   end
   if type(step) == "string" then send(step); run.i = run.i + 1; return nextStep() end
   if step.pursue then return doPursue(step.pursue) end
-  if step.survey then return doSurvey(step.survey) end
+  if step.survey then return doSurvey(step.survey, step.arrive) end
   if step.wait then
     clear()
     on(step.wait, stepDone)
@@ -213,6 +219,26 @@ function M.bulletins(planet)
   nextLeg()
 end
 
+-- ---------------------------------------------------------------- 3. the recorded transmission
+-- recall lands in Galactic Federation HeadQuarters; leave into space, fly to the Patrol Station
+-- (from `survey`), enter its hangar and walk n, n, w to the Communications Deck, where it plays.
+M.COMMS = { "recall", "leave",
+  { survey = "Galactic Patrol Station", arrive = "You have arrived at Galactic Patrol Station." },
+  "enter", { wait = "Patrol Station Hangar" }, "n", "n", "w",
+  { wait = "The recording ends with coordinates", timeout = 60 } }
+
+function M.comms()
+  M.stop()
+  run = { active = true, tried = {}, trigs = {}, planet = "the comms deck", i = 1, leg = M.COMMS }
+  run.finish = function()
+    clear(); run.active = false; run.leg = nil
+    info("green", "Transmission played: next is the Prison Planet"
+      .. (M.landmark and (", landmark " .. M.landmark .. " on the Space Map survey") or ""))
+  end
+  info("green", "Off to the Station's comms deck")
+  nextStep()
+end
+
 -- A rival jumps you on the way: fight back, then pick the step up again (redo the pursue)
 function M.rival(name)
   if not run.active or run.rival then return end
@@ -240,6 +266,8 @@ function M.line(l)
   if l:find("Here are the wanted bulletins", 1, true) then
     return info("green", "Bulletins for Earth, Vegeta, Namek, Iceria and Konats: moro bulletins posts them all")
   end
+  local landmark = l:match("The recording ends with coordinates: .-landmark (%d+)")
+  if landmark then M.landmark = tonumber(landmark) end
   local rival = l:match("^(.-) flies out of nowhere and attacks you!")
   if rival then return M.rival(rival) end
   if l:find("^%s*Prisoner manifest%.") then buf = { l }
@@ -257,8 +285,9 @@ M.HELP = {
   { "moro auto [on|off]",      "Send the decipher commands as soon as the manifest is read (default off)" },
   { "moro decode a d <words>", "Decode words by hand with a key" },
   { "moro bulletins [planet]", "Post the wanted bulletins at every spaceport still to do (or one planet)" },
+  { "moro comms",              "Go to the Station's comms deck for the recorded transmission (after the bulletins)" },
   { "moro attack <cmd>",       "Attack used on rivals that jump you on the way (default de)" },
-  { "moro stop",               "Stop the bulletin run" },
+  { "moro stop",               "Stop the bulletin or comms run" },
 }
 function M.help()
   cecho("\n<cyan>Moro questline (moro):\n")
@@ -277,6 +306,7 @@ function M.command(c, arg)
     for w in words:gmatch("[^,%s]+") do out[#out + 1] = M.decode(w, from, to) end
     info("green", table.concat(out, ", "))
   elseif c == "bulletins" or c == "post" then M.bulletins(arg)
+  elseif c == "comms" or c == "transmission" then M.comms()
   elseif c == "attack" and arg then M.attack = arg; info("white", "Rival attack: " .. arg)
   elseif c == "stop" then M.stop()
   else M.help() end

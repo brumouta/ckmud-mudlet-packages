@@ -9,8 +9,9 @@ Helpers for the Moro questline (Agent Merus, Galactic Patrol). Type `moro help`.
 | `moro auto [on\|off]` | Send them as soon as the manifest is read (default off) |
 | `moro decode a d <words>` | Decode words by hand with any key |
 | `moro bulletins [planet]` | Post the wanted bulletins at every spaceport still to do (or just one planet) |
+| `moro comms` | Go to the Station's comms deck for the recorded transmission (runs by itself after the last bulletin) |
 | `moro attack <cmd>` | Attack used on rivals that jump you on the way (default `de`) |
-| `moro stop` | Stop the bulletin run |
+| `moro stop` | Stop the bulletin or comms run |
 
 ## The manifest
 
@@ -35,3 +36,10 @@ The survey number is read from the `survey` list, not fixed. After each post it 
 post:" and goes on with what's left, so it can be stopped and started again. A rival that flies
 out of nowhere gets `moro attack` (first word of their name); once they're dead the step is done
 again (the pursue, or the flight).
+
+## The recorded transmission
+
+After the fifth bulletin it heads to the Station's comms deck: `recall` (Galactic Federation
+HeadQuarters), `leave`, fly to the Galactic Patrol Station (number read from `survey`), `enter`,
+then `n n w` to the Communications Deck, where Jaco's recording plays. It shows the landmark it
+gives for the Prison Planet (landmark 12 on the Space Map survey).

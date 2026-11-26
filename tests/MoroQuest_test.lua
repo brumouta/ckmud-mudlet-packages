@@ -70,7 +70,8 @@ local ORDER = { "Earth", "Vegeta", "Namek", "Iceria", "Konats" }
 local left = { Earth = true, Vegeta = true, Namek = true, Iceria = true, Konats = true }
 local walked, planet, area, rivalDone, surveyNo = {}, nil, nil, false, {}
 local VORTEX = { ["s,s"] = "Earth", ["s,e,e"] = "Vegeta", ["s,w,w"] = "Namek", ["n,w,w"] = "Iceria", ["n,e,e"] = "Konats" }
-local SURVEY = { Namek = { "Kami's Lookout", "Guru's Compound" }, Iceria = { "Clifftop Village", "Crystal Grotto", "Iron Maiden Heights", "Frostblight Cavern", "City of Zero Nexus" } }
+local SURVEY = { Space = { "Earth", "Namek", "Vegeta", "Iceria", "Konats", "Yardrat", "Arlia", "Kanassa", "Planet Zeno", "Galactic Patrol Station" },
+                 Namek = { "Kami's Lookout", "Guru's Compound" }, Iceria = { "Clifftop Village", "Crystal Grotto", "Iron Maiden Heights", "Frostblight Cavern", "City of Zero Nexus" } }
 local path = {}
 local function leftText()
   local l = {}
@@ -80,15 +81,24 @@ local function leftText()
   return table.concat(l, ", ", 1, #l - 1) .. " and " .. l[#l]
 end
 respond = function(c)
-  if c == "recall" then path = {}; planet = nil
+  if c == "recall" then path = {}; planet = nil; say("Galactic Federation HeadQuarters")
+  elseif c == "leave" then planet = "Space"
   elseif c == "press button" then say("A Grand Atrium")
   elseif c == "enter vortex" then planet = VORTEX[table.concat(path, ",")]; assert(planet, "no vortex at " .. table.concat(path, ",")); say("You step through the portal.")
-  elseif c == "n" or c == "s" or c == "e" or c == "w" then path[#path + 1] = c
+  elseif c == "n" or c == "s" or c == "e" or c == "w" then
+    path[#path + 1] = c
+    if planet == "Station" and table.concat(path, ",") == "n,n,w" then
+      say("Communications Deck")
+      say("The projector pad flickers and a small figure in a Patrol uniform appears, recorded: Jaco of the Galactic Patrol, Earth station.")
+      say("The recording ends with coordinates: the Prison Planet, landmark 12 on the Space Map survey.")
+    end
   elseif c == "survey" then
     for i, a in ipairs(SURVEY[planet]) do say(string.format("%2d. %s, go North", i, a)) end
   elseif c:match("^survey (%d+) fly$") then
     local n = tonumber(c:match("^survey (%d+) fly$")); area = SURVEY[planet][n]
-    say("- " .. area .. ", go North."); say("You land on the ground in front of " .. area .. ".")
+    say("- " .. area .. ", go North.")
+    say(planet == "Space" and ("You have arrived at " .. area .. ".") or ("You land on the ground in front of " .. area .. "."))
+  elseif c == "enter" and planet == "Space" then planet = "Station"; path = {}; say("Patrol Station Hangar")
   elseif c == "enter" then say(area == "Guru's Compound" and "Guru's Compound - Entrance" or "Zero Nexus - City Gates")
   elseif c:match("^pursue ") then
     say("You begin tracking someone's ki...")
@@ -114,6 +124,8 @@ local s = table.concat(sent, "|")
 ok(s:find("survey 2 fly", 1, true) and s:find("survey 5 fly", 1, true), "survey numbers read from the list")
 ok(s:find("de transform|pursue guide", 1, true), "rival: fought, then the pursue again")
 ok(LOG:find("All five bulletins posted", 1, true), "says what's next")
+ok(s:find("recall|leave|survey|survey 10 fly|enter|n|n|w", 1, true), "then on to the comms deck: " .. s:sub(-50))
+ok(moro.landmark == 12 and LOG:find("Prison Planet, landmark 12", 1, true), "transmission played: Prison Planet, landmark 12")
 ok(next(temps) == nil and next(timers) == nil, "nothing left running")
 -- only what's still to post, and a single planet
 left = { Namek = true, Konats = true }; walked, sent = {}, {}
@@ -129,6 +141,8 @@ ok(table.concat(walked, " ") == "Vegeta:see" and left.Iceria, "moro post vegeta:
 respond = function() end
 LOG = ""; moro.command("bulletins", "earth"); run(60)
 ok(LOG:find("Timed out", 1, true) and next(temps) == nil and next(timers) == nil, "a stuck step times out and cleans up")
+moro.command("comms"); moro.command("stop")
+ok(next(temps) == nil and next(timers) == nil, "moro stop cleans up the comms run")
 moro.command("bulletins", "earth"); moro.command("stop")
 ok(next(temps) == nil and next(timers) == nil, "moro stop cleans up")
 print("\nmoro: ALL PASSED")

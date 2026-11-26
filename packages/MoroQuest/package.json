@@ -1,8 +1,8 @@
 {
   "name": "MoroQuest",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "title": "Moro questline helper",
-  "description": "The Moro questline for Agent Merus: decodes the scrambled prisoner manifest and posts the wanted bulletins at all five spaceports (recall, Zeno Button, vortexes), fighting off rivals on the way. Type `moro help`.",
+  "description": "The Moro questline for Agent Merus: decodes the scrambled prisoner manifest and posts the wanted bulletins at all five spaceports (recall, Zeno Button, vortexes), fighting off rivals on the way, then goes to the comms deck for the recorded transmission. Type `moro help`.",
   "author": "Bruno Mouta",
   "scripts": [
     {
