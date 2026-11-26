@@ -183,7 +183,8 @@ function getMudletHomeDir() return "/fakeprofile" end
 function installPackage(u) log("installPackage", u) end
 function uninstallPackage(n) log("uninstallPackage", n) end
 function createStopWatch(name, start) return name end
-local watch_times = {}
+WATCH_TIMES = {}
+local watch_times = WATCH_TIMES
 function getStopWatchTime(name) return watch_times[name] or 0 end
 function resetStopWatch(name) watch_times[name] = 0 end
 function alert() end
@@ -358,14 +359,14 @@ local toggle_fn = function()
 end
 ok, err = pcall(toggle_fn); check(ok, "kaioken train alias" .. (ok and "" or (" -- " .. tostring(err))))
 check(table.contains(SENT, "kaioken getmax"), "'kaioken getmax' sent")
-check(#TEMP_TRIGGERS == 1, "getmax temp trigger installed")
+check(#TEMP_TRIGGERS == 2, "getmax temp trigger installed (after the prompt watch line counter)")
 check(KT.API.Mode:is(KT.API.Mode.Kaioken), "Mode is Kaioken")
 check(KT.API.Mode:toString() == "Kaioken", "Mode:toString reports Kaioken (CK bug fixed)")
 check(TIMERS["KT:Kaioken"] ~= nil, "kaioken timer registered")
 
 -- server replies with the syntax line -> temp trigger captures max
 matches = { "Syntax: Kaioken 1-120", "120" }
-ok, err = pcall(TEMP_TRIGGERS[1].func)
+ok, err = pcall(TEMP_TRIGGERS[#TEMP_TRIGGERS].func)
 check(ok, "getmax trigger callback" .. (ok and "" or (" -- " .. tostring(err))))
 check(KT.API.Kaioken.max == 120, "kaio.max captured as 120")
 
@@ -620,6 +621,42 @@ ok, err = pcall(load_pkg_file("aliases/KT_constant_set.lua")); check(ok, "KT con
 check(require(PKG):constant("MSDP.timeout") == 15, "constant persisted")
 matches = { "KT" }
 ok, err = pcall(load_pkg_file("aliases/KT_Help.lua")); check(ok, "KT help alias" .. (ok and "" or (" -- " .. tostring(err))))
+
+---------------------------------------------------------------------------
+-- Prompt watch: warns only when lines keep coming without a recognised prompt
+---------------------------------------------------------------------------
+realprint("=== PHASE: prompt watch ===")
+do
+  local lineTrig
+  for _, tr in ipairs(TEMP_TRIGGERS) do if tr.pattern == "^" then lineTrig = tr end end
+  check(lineTrig ~= nil, "every-line counter trigger registered")
+  local function warnings()
+    local n = 0
+    for _, l in ipairs(LOG) do if l:find("No prompt recognised", 1, true) then n = n + 1 end end
+    return n
+  end
+  local tick = TIMERS["KT:LastPrompt"].func
+  raiseEvent("KT.onPrompt")
+  LOG = {}
+  WATCH_TIMES["KT.prompt"] = 4000 -- idle over an hour, nothing arrived
+  tick()
+  check(warnings() == 0, "no warning when idle (no lines since the last prompt)")
+  for _ = 1, 5 do lineTrig.func() end
+  tick()
+  check(warnings() == 0, "no warning for the few lines right after an idle spell")
+  for _ = 1, 150 do lineTrig.func() end
+  tick(); tick()
+  check(warnings() == 1, "warns once when lines keep coming without a prompt")
+  raiseEvent("KT.onPrompt")
+  check(WATCH_TIMES["KT.prompt"] == 0, "a prompt resets the stopwatch")
+  for _ = 1, 150 do lineTrig.func() end
+  tick()
+  check(warnings() == 1, "no warning right after a prompt")
+  WATCH_TIMES["KT.prompt"] = 400
+  tick()
+  check(warnings() == 2, "warns again after a prompt re-armed it")
+  raiseEvent("KT.onPrompt")
+end
 
 ---------------------------------------------------------------------------
 -- Summary

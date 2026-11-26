@@ -181,6 +181,12 @@ function setTriggerStayOpen(name, n) end
 
 function speedwalk(path, reverse, delay) table.insert(SPEEDWALKS, { path = path, reverse = reverse }) end
 
+TEMP_TRIGGERS = TEMP_TRIGGERS or {}
+function tempRegexTrigger(pattern, func, count)
+  table.insert(TEMP_TRIGGERS, { pattern = pattern, func = func, count = count })
+  return #TEMP_TRIGGERS
+end
+
 function getConnectionInfo() return "ckmud.example", 4000, connected end
 function getConfig()
   return { enableGMCP = false, enableMNES = true, enableMSDP = true, enableMSP = false, enableMSSP = false, enableMTTS = true }
@@ -192,7 +198,8 @@ function getMudletHomeDir() return "/fakeprofile" end
 function installPackage(u) log("installPackage", u) end
 function uninstallPackage(n) log("uninstallPackage", n) end
 function createStopWatch(name, start) return name end
-local watch_times = {}
+WATCH_TIMES = {}
+local watch_times = WATCH_TIMES
 function getStopWatchTime(name) return watch_times[name] or 0 end
 function resetStopWatch(name) watch_times[name] = 0 end
 function alert() end
@@ -1082,6 +1089,42 @@ do
   al("al stop"); raiseEvent("gumshoe.repeat.done")
   check(not Mode:is(Mode.Learning), "al stop while paused: stays off after the case")
   gum = nil
+end
+
+---------------------------------------------------------------------------
+-- Prompt watch: warns only when lines keep coming without a recognised prompt
+---------------------------------------------------------------------------
+realprint("=== PHASE: prompt watch ===")
+do
+  local lineTrig
+  for _, tr in ipairs(TEMP_TRIGGERS) do if tr.pattern == "^" then lineTrig = tr end end
+  check(lineTrig ~= nil, "every-line counter trigger registered")
+  local function warnings()
+    local n = 0
+    for _, l in ipairs(LOG) do if l:find("No prompt recognised", 1, true) then n = n + 1 end end
+    return n
+  end
+  local tick = TIMERS["AL:LastPrompt"].func
+  raiseEvent("AL.onPrompt")
+  LOG = {}
+  WATCH_TIMES["AL.prompt"] = 4000 -- idle over an hour, nothing arrived
+  tick()
+  check(warnings() == 0, "no warning when idle (no lines since the last prompt)")
+  for _ = 1, 5 do lineTrig.func() end
+  tick()
+  check(warnings() == 0, "no warning for the few lines right after an idle spell")
+  for _ = 1, 150 do lineTrig.func() end
+  tick(); tick()
+  check(warnings() == 1, "warns once when lines keep coming without a prompt")
+  raiseEvent("AL.onPrompt")
+  check(WATCH_TIMES["AL.prompt"] == 0, "a prompt resets the stopwatch")
+  for _ = 1, 150 do lineTrig.func() end
+  tick()
+  check(warnings() == 1, "no warning right after a prompt")
+  WATCH_TIMES["AL.prompt"] = 400
+  tick()
+  check(warnings() == 2, "warns again after a prompt re-armed it")
+  raiseEvent("AL.onPrompt")
 end
 
 ---------------------------------------------------------------------------
