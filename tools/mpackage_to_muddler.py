@@ -3,6 +3,7 @@
 
 Usage:
     python3 tools/mpackage_to_muddler.py <file.mpackage> <output-dir>
+    python3 tools/muddler_to_package.py <output-dir>/<Package>    # then: a package.json build.py builds
 
 Writes <output-dir>/<Package>/ with:
     mfile                         package, title, version, author, icon, description

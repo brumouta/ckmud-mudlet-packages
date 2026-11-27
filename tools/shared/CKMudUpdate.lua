@@ -1,8 +1,7 @@
 -- CKMudUpdate("<Package>"): the `<prefix> update` command of every package in
 -- brumouta/ckmud-mudlet-packages. Downloads the package's .mpackage from the latest release first
 -- and only then swaps it in, so a failed download (offline, or the repo not public yet) leaves the
--- installed copy alone. The same file ships in every package (tools/build.py adds it to the simple
--- ones, the mfile ones keep a copy that tests/run.sh checks against tools/shared/CKMudUpdate.lua).
+-- installed copy alone. tools/build.py adds this file to every package.
 CKMudUpdate_RELEASES = "https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/"
 -- Names older copies were installed under: uninstalled too, so the update doesn't leave two copies
 CKMudUpdate_LEGACY = { DataLords2 = { "dl2" }, Gumshoe = { "gumshoe" } }

@@ -1,0 +1,370 @@
+{
+  "name": "Buffs",
+  "version": "26.11.26",
+  "title": "Buffs",
+  "description": "# Buffs\n\nBy **Penguin**. Keeps your buffs up: casts the ones you choose, recasts each one when it wears\noff, and shows how long each has left in a small window. Type `autobuff help`.\n\n| Command | What it does |\n|---|---|\n| `autobuff on\\|off` | Turn auto-buffing on or off |\n| `autobuff add <skill>` / `autobuff remove <skill>` | Choose which buffs to keep up |\n| `autobuff` (or `autobuff list`) / `autobuff buffs` | Show your list / every buff it knows |\n| `autobuff cast` | Cast everything on your list now |\n| `autobuff newbuff <skill> :: <expire message>` / `autobuff delbuff <skill>` | Add or remove a buff it doesn't know yet |\n| `autobuff setcast`, `setaffects`, `setcmd`, `setitem`, `settag`, `combat` | Fine-tune a buff (see `autobuff help`) |\n| `buffwnd [show\\|hide\\|float]` | The buff timer window |\n\nKnows Energy Shield, Zanzoken, Regenerate, Swiftness, Gigantification, Hasshuken, Herculean\nForce, Resonance, Hakai Barrier, Forcefield, Barrier, Infravision, Invigorate, Kino Tsurugi,\nWrathful Fury, Demonic Will, Celestial Shield, Divine Judgement, Celestial Drain, Tremor Pulse,\nKenjutsu and Protection Ballad. Recasts after a copyover too.\n",
+  "author": "Penguin",
+  "scripts": [
+    {
+      "name": "Buffs",
+      "file": "src/scripts/Buffs.lua"
+    },
+    {
+      "name": "BuffWindow",
+      "file": "src/scripts/BuffWindow.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "autobuff update",
+      "regex": "^autobuff update$",
+      "script": "CKMudUpdate(\"Buffs\")"
+    },
+    {
+      "name": "autobuff on off",
+      "regex": "^autobuff (on|off)$",
+      "file": "src/aliases/autobuff_on_off.lua"
+    },
+    {
+      "name": "autobuff add",
+      "regex": "^autobuff add (.+)$",
+      "file": "src/aliases/autobuff_add.lua"
+    },
+    {
+      "name": "autobuff remove",
+      "regex": "^autobuff remove (.+)$",
+      "file": "src/aliases/autobuff_remove.lua"
+    },
+    {
+      "name": "autobuff newbuff",
+      "regex": "^autobuff newbuff (.+) :: (.+)$",
+      "file": "src/aliases/autobuff_newbuff.lua"
+    },
+    {
+      "name": "autobuff delbuff",
+      "regex": "^autobuff delbuff (.+)$",
+      "file": "src/aliases/autobuff_delbuff.lua"
+    },
+    {
+      "name": "autobuff buffs",
+      "regex": "^autobuff buffs$",
+      "file": "src/aliases/autobuff_buffs.lua"
+    },
+    {
+      "name": "autobuff settag",
+      "regex": "^autobuff settag (.+) (.+)$",
+      "file": "src/aliases/autobuff_settag.lua"
+    },
+    {
+      "name": "autobuff setcast",
+      "regex": "^autobuff setcast (.+) :: (.+)$",
+      "file": "src/aliases/autobuff_setcast.lua"
+    },
+    {
+      "name": "autobuff setaffects",
+      "regex": "^autobuff setaffects (.+) :: (.+)$",
+      "file": "src/aliases/autobuff_setaffects.lua"
+    },
+    {
+      "name": "autobuff setcmd",
+      "regex": "^autobuff setcmd (.+) :: (.+)$",
+      "file": "src/aliases/autobuff_setcmd.lua"
+    },
+    {
+      "name": "autobuff setitem",
+      "regex": "^autobuff setitem (.+) :: (.+) :: (.+)$",
+      "file": "src/aliases/autobuff_setitem.lua"
+    },
+    {
+      "name": "autobuff combat",
+      "regex": "^autobuff combat (.+)$",
+      "file": "src/aliases/autobuff_combat.lua"
+    },
+    {
+      "name": "autobuff cast",
+      "regex": "^autobuff cast$",
+      "file": "src/aliases/autobuff_cast.lua"
+    },
+    {
+      "name": "autobuff help",
+      "regex": "^autobuff help$",
+      "file": "src/aliases/autobuff_help.lua"
+    },
+    {
+      "name": "autobuff",
+      "regex": "^autobuff(?:\\s+list)?$",
+      "file": "src/aliases/autobuff.lua"
+    },
+    {
+      "name": "buffwnd",
+      "regex": "^buffwnd(?:\\s+(show|hide|float))?$",
+      "file": "src/aliases/buffwnd.lua"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Energy Shield",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your ki shield diminishes."
+        }
+      ],
+      "file": "src/triggers/Energy_Shield.lua"
+    },
+    {
+      "name": "Zanzoken",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "You slow down."
+        }
+      ],
+      "file": "src/triggers/Zanzoken.lua"
+    },
+    {
+      "name": "Regenerate",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your regenerative abilities slowly fade away."
+        }
+      ],
+      "file": "src/triggers/Regenerate.lua"
+    },
+    {
+      "name": "Swiftness",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "You are no longer masking your movement."
+        }
+      ],
+      "file": "src/triggers/Swiftness.lua"
+    },
+    {
+      "name": "Gigantification",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your body shrinks back to its normal size."
+        }
+      ],
+      "file": "src/triggers/Gigantification.lua"
+    },
+    {
+      "name": "Hasshuken",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your arm movements return to normal."
+        }
+      ],
+      "file": "src/triggers/Hasshuken.lua"
+    },
+    {
+      "name": "Herculean Force",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your muscles return to their normal size."
+        }
+      ],
+      "file": "src/triggers/Herculean_Force.lua"
+    },
+    {
+      "name": "Resonance",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "The harmonious aura of resonance dissipates."
+        }
+      ],
+      "file": "src/triggers/Resonance.lua"
+    },
+    {
+      "name": "Hakai Barrier",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your hakai barrier slowly fades away."
+        }
+      ],
+      "file": "src/triggers/Hakai_Barrier.lua"
+    },
+    {
+      "name": "Forcefield",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your forcefield flickers briefly and fades away."
+        }
+      ],
+      "file": "src/triggers/Forcefield.lua"
+    },
+    {
+      "name": "Barrier",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "The globe of energy around your body fades."
+        }
+      ],
+      "file": "src/triggers/Barrier.lua"
+    },
+    {
+      "name": "Infravision",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your night vision seems to fade."
+        }
+      ],
+      "file": "src/triggers/Infravision.lua"
+    },
+    {
+      "name": "Invigorate",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "You suddenly feel exceptionally tired..."
+        }
+      ],
+      "file": "src/triggers/Invigorate.lua"
+    },
+    {
+      "name": "Kino Tsurugi",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your ki blades fade into nothing."
+        }
+      ],
+      "file": "src/triggers/Kino_Tsurugi.lua"
+    },
+    {
+      "name": "Wrathful Fury",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "You aura subsides as your destructive wrath wanes."
+        },
+        {
+          "type": "exactMatch",
+          "pattern": "Your aura subsides as your destructive wrath wanes."
+        }
+      ],
+      "file": "src/triggers/Wrathful_Fury.lua"
+    },
+    {
+      "name": "Demonic Will",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your horns recede as you feel your demonic powers fade away."
+        }
+      ],
+      "file": "src/triggers/Demonic_Will.lua"
+    },
+    {
+      "name": "Celestial Shield",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your divine barrier slowly fades away."
+        }
+      ],
+      "file": "src/triggers/Celestial_Shield.lua"
+    },
+    {
+      "name": "Divine Judgement",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your body is no longer radiating divine energy."
+        }
+      ],
+      "file": "src/triggers/Divine_Judgement.lua"
+    },
+    {
+      "name": "Celestial Drain",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your celestial aura of resurgence fades away."
+        }
+      ],
+      "file": "src/triggers/Celestial_Drain.lua"
+    },
+    {
+      "name": "Tremor Pulse",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "You feel unease as your body loses sync with time."
+        }
+      ],
+      "file": "src/triggers/Tremor_Pulse.lua"
+    },
+    {
+      "name": "Kenjutsu",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "Your focus wanes, the clarity of your technique fading as your stance relaxes."
+        }
+      ],
+      "file": "src/triggers/Kenjutsu.lua"
+    },
+    {
+      "name": "Protection Ballad",
+      "patterns": [
+        {
+          "type": "exactMatch",
+          "pattern": "You feel vulnerable as your protection ballad wears away."
+        }
+      ],
+      "file": "src/triggers/Protection_Ballad.lua"
+    },
+    {
+      "name": "AutoBuff Copyover",
+      "patterns": [
+        {
+          "type": "substring",
+          "pattern": "Copyover recovery complete."
+        }
+      ],
+      "file": "src/triggers/AutoBuff_Copyover.lua"
+    },
+    {
+      "name": "AutoBuff HealTick",
+      "patterns": [
+        {
+          "type": "substring",
+          "pattern": "The isolation chamber slowly mends your body."
+        },
+        {
+          "type": "substring",
+          "pattern": "Copyover recovery complete."
+        },
+        {
+          "type": "substring",
+          "pattern": "The night has begun."
+        },
+        {
+          "type": "substring",
+          "pattern": "You feel a little more refreshed after staying here."
+        },
+        {
+          "type": "substring",
+          "pattern": "The day has begun."
+        },
+        {
+          "type": "substring",
+          "pattern": "The sun slowly disappears in the west."
+        }
+      ],
+      "file": "src/triggers/AutoBuff_HealTick.lua"
+    }
+  ]
+}

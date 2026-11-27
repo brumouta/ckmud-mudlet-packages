@@ -1,0 +1,37 @@
+{
+  "name": "Health",
+  "version": "26.11.26",
+  "title": "Health",
+  "description": "# Health\n\nBy **Penguin**. Keeps your current and maximum powerlevel from MSDP in a shared `HP` table\n(`HP.current`, `HP.max`, `HP.pct`, `HP:calc()`) for other scripts to use. No commands.\n",
+  "author": "Penguin",
+  "scripts": [
+    {
+      "name": "Health",
+      "file": "src/scripts/Health.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "health update",
+      "regex": "^health update$",
+      "script": "CKMudUpdate(\"Health\")"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Prompt",
+      "patterns": [
+        {
+          "type": "substring",
+          "pattern": "[Pl: "
+        },
+        {
+          "type": "regex",
+          "pattern": "^\\[Pl: (?<PL>[0-9,]+) \\|"
+        }
+      ],
+      "file": "src/triggers/Prompt.lua",
+      "multiline": true
+    }
+  ]
+}

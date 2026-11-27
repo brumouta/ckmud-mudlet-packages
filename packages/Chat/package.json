@@ -1,0 +1,322 @@
+{
+  "name": "Chat",
+  "version": "26.11.26",
+  "title": "Chat",
+  "description": "# Standalone Chat\r\n\r\n## EMCO Chat\r\n\r\nSets up triggers to log ooc/racetalk/etc to EMCO\r\n\r\n## Installation\r\n\r\nInstall the `Chat.mpackage` directly in Mudlet - no other packages required.\r\n\r\n## Usage\r\n\r\nBrief introduction to the overall usage. Then break it down to specifics\r\n\r\n## Aliases\r\n\r\n`chat`\r\n",
+  "author": "Penguin",
+  "resources": "src/resources",
+  "icon": "android21.jpg",
+  "scripts": [
+    {
+      "name": "Standalone-Chat",
+      "file": "src/scripts/Standalone-Chat.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "chatwnd update",
+      "regex": "^chatwnd update$",
+      "script": "CKMudUpdate(\"Chat\")"
+    },
+    {
+      "name": "chatwnd",
+      "regex": "^chatwnd (save|load|font|fontSize|blink|blankLine|timestamp|show|hide)(?: (.+))?$",
+      "file": "src/aliases/chatwnd.lua"
+    },
+    {
+      "name": "chatwnd gag",
+      "regex": "^chatwnd gag (.+)",
+      "file": "src/aliases/chatwnd_gag.lua"
+    },
+    {
+      "name": "chatwnd ungag",
+      "regex": "^chatwnd ungag (.+)",
+      "file": "src/aliases/chatwnd_ungag.lua"
+    },
+    {
+      "name": "chatwnd gaglist",
+      "regex": "^chatwnd gaglist$",
+      "file": "src/aliases/chatwnd_gaglist.lua"
+    },
+    {
+      "name": "chatwnd notify",
+      "regex": "^chatwnd notify (.*)",
+      "file": "src/aliases/chatwnd_notify.lua"
+    },
+    {
+      "name": "chatwnd unnotify",
+      "regex": "^chatwnd unnotify (.*)",
+      "file": "src/aliases/chatwnd_unnotify.lua"
+    },
+    {
+      "name": "chatwnd addtab",
+      "regex": "^chatwnd addtab (\\w+)( \\d+)?$",
+      "file": "src/aliases/chatwnd_addtab.lua"
+    },
+    {
+      "name": "chatwnd remtab",
+      "regex": "^chatwnd remtab (.+)",
+      "file": "src/aliases/chatwnd_remtab.lua"
+    },
+    {
+      "name": "chatwnd float",
+      "regex": "^chatwnd float$",
+      "file": "src/aliases/chatwnd_float.lua"
+    },
+    {
+      "name": "chatwnd image",
+      "regex": "^chatwnd image (show|hide)$",
+      "file": "src/aliases/chatwnd_image.lua"
+    },
+    {
+      "name": "chatwnd border",
+      "regex": "^chatwnd border (.+)$",
+      "file": "src/aliases/chatwnd_border.lua"
+    },
+    {
+      "name": "chatwnd tabtext",
+      "regex": "^chatwnd tabtext (.+)$",
+      "file": "src/aliases/chatwnd_tabtext.lua"
+    },
+    {
+      "name": "chatwnd label",
+      "regex": "^chatwnd label (.+)$",
+      "file": "src/aliases/chatwnd_label.lua"
+    },
+    {
+      "name": "chatwnd color",
+      "regex": "^chatwnd color (\\w+) (.+)",
+      "file": "src/aliases/chatwnd_color.lua"
+    },
+    {
+      "name": "chatwnd color usage",
+      "regex": "^chatwnd color$",
+      "file": "src/aliases/chatwnd_color_usage.lua"
+    },
+    {
+      "name": "chatwnd usage",
+      "regex": "^chatwnd( usage)?$",
+      "file": "src/aliases/chatwnd_usage.lua"
+    },
+    {
+      "name": "chatwnd title",
+      "regex": "^chatwnd title (.+)",
+      "file": "src/aliases/chatwnd_title.lua"
+    },
+    {
+      "name": "chatwnd lock",
+      "regex": "^chatwnd lock$",
+      "file": "src/aliases/chatwnd_lock.lua"
+    },
+    {
+      "name": "chatwnd unlock",
+      "regex": "^chatwnd unlock$",
+      "file": "src/aliases/chatwnd_unlock.lua"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Chat OOC",
+      "patterns": [
+        {
+          "type": "startOfLine",
+          "pattern": "[OOC:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[CLAN:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[CHAT:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[CKMud Info]:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[Congrats:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[Music:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "You have mastered"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "You have learned"
+        }
+      ],
+      "file": "src/triggers/Chat_OOC.lua"
+    },
+    {
+      "name": "Chat Auction",
+      "patterns": [
+        {
+          "type": "startOfLine",
+          "pattern": "[AUCTION:"
+        }
+      ],
+      "file": "src/triggers/Chat_Auction.lua"
+    },
+    {
+      "name": "Chat Group",
+      "folder": true,
+      "children": [
+        {
+          "name": "gtell",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "the group, "
+            },
+            {
+              "type": "regex",
+              "pattern": "^.+? tells? the group, '.+'$"
+            }
+          ],
+          "file": "src/triggers/gtell.lua",
+          "multiline": true
+        },
+        {
+          "name": "diceroll",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "three 6 sided di"
+            },
+            {
+              "type": "regex",
+              "pattern": "^.+? rolls? three 6 sided di(?:e|ce).$"
+            },
+            {
+              "type": "substring",
+              "pattern": "Total: "
+            }
+          ],
+          "file": "src/triggers/diceroll.lua",
+          "multiline": true,
+          "delta": 1
+        }
+      ]
+    },
+    {
+      "name": "Chat Tell",
+      "patterns": [
+        {
+          "type": "substring",
+          "pattern": "tell"
+        },
+        {
+          "type": "regex",
+          "pattern": "^.+? tells? \\w+?, '.+'$"
+        }
+      ],
+      "file": "src/triggers/Chat_Tell.lua",
+      "multiline": true
+    },
+    {
+      "name": "Chat Event",
+      "patterns": [
+        {
+          "type": "startOfLine",
+          "pattern": "[Quest:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[RAID:"
+        },
+        {
+          "type": "startOfLine",
+          "pattern": "[EVENT:"
+        }
+      ],
+      "file": "src/triggers/Chat_Event.lua"
+    },
+    {
+      "name": "Chat Say",
+      "folder": true,
+      "children": [
+        {
+          "name": "say",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "say"
+            },
+            {
+              "type": "regex",
+              "pattern": "^.+? says?, '.+'$"
+            }
+          ],
+          "file": "src/triggers/say.lua",
+          "multiline": true
+        },
+        {
+          "name": "Ask",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "ask"
+            },
+            {
+              "type": "regex",
+              "pattern": "^.+? asks?, '.+'$"
+            }
+          ],
+          "file": "src/triggers/Ask.lua",
+          "multiline": true
+        },
+        {
+          "name": "exclaim",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "exclaim"
+            },
+            {
+              "type": "regex",
+              "pattern": "^.+? exclaims?, '.+'$"
+            }
+          ],
+          "file": "src/triggers/exclaim.lua",
+          "multiline": true
+        },
+        {
+          "name": "mutter",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "mutter"
+            },
+            {
+              "type": "regex",
+              "pattern": "^.+? mutters?, '.+'$"
+            }
+          ],
+          "file": "src/triggers/mutter.lua",
+          "multiline": true
+        },
+        {
+          "name": "give",
+          "patterns": [
+            {
+              "type": "substring",
+              "pattern": "give"
+            },
+            {
+              "type": "regex",
+              "pattern": "^[A-Za-z0-9 ]+ gives?(?: you)? .+\\.$"
+            }
+          ],
+          "file": "src/triggers/give.lua",
+          "multiline": true
+        }
+      ]
+    }
+  ]
+}

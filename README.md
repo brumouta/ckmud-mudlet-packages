@@ -43,26 +43,25 @@ Every package has an update command: its command followed by `update`, e.g. `maj
 
 ## Repository layout
 
-There are two kinds of package, built differently:
+Every package is built the same way, from its `package.json`:
 
 ```
-packages/
-  Buffs/ Chat/ Health/     Penguin's packages, in muddler's layout (built without muddler)
-    mfile                 name, version, author
-    src/                  triggers/aliases/scripts as muddler-style JSON + .lua files, resources/ bundled as is
-  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ Cumber/ FusionQuest/ KaiokenTrain/ Chores/ Score/ Autolearn/ YamoshiSpawn/  single-script packages
-    package.json          version, triggers (patterns + one-line scripts), aliases, scripts
-    src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gog, gum, msdp, ys, kt, chores, sc)
-    Autolearn/src/        the AL namespace split over several scripts (Base.lua, Learning.lua, Lines.lua, ...)
-    Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
-tests/                    Lua tests for the single-script packages (Autolearn's is a whole simulated session) + run.sh for everything
-docs/design/               how Autolearn, KaiokenTrain and Chores were first extracted from CK (history)
+packages/<Package>/
+  package.json            version, title, triggers, aliases, scripts (and, for Chat, bundled files)
+  src/<Package>.lua       most packages: the logic in one Lua table named after its command
+                          (boss, cryon, dl2, fq, gog, gum, msdp, ys, kt, chores, sc, maj, moro, ...)
+  Autolearn/src/          the AL namespace split over several scripts (Base.lua, Learning.lua, Lines.lua, ...)
+  Casino/src/             Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
+  Buffs/ Chat/ Health/    Penguin's packages: one .lua file per trigger, alias and script in src/,
+                          as they came from muddler; Chat bundles its window libraries and images
+tests/                    Lua tests (Autolearn's is a whole simulated session) + run.sh for everything
+docs/design/              how Autolearn, KaiokenTrain and Chores were first extracted from CK (history)
 tools/
-  build.py                builds every package into dist/
-  muddle.py               the muddler-layout half of build.py (no muddler or Java needed)
-  lint_manifests.py       checks every muddler trigger/alias actually has a script
+  build.py                builds every package into dist/ (see its header for package.json's keys)
+  mpackage_to_muddler.py  + muddler_to_package.py: bring in a package exported from Mudlet
   plugin/                 build-plugin.cjs (copied from CKMud-2D-Desktop): <Pkg>-plugin/ folders -> dist/<pkg>.xml for the CKMud client
 ```
+
 
 ## Building
 
@@ -73,7 +72,7 @@ python3 tools/build.py          # all of them -> dist/
 python3 tools/build.py FriezaQuest    # just one
 ```
 
-The packages with an `mfile` keep [muddler](https://github.com/demonnic/muddler)'s project layout, but [tools/muddle.py](tools/muddle.py) builds them, so neither muddler nor Java is needed. It covers the muddler features these packages use and stops the build on any other, so nothing is dropped silently. Its output was checked against muddler 1.1.0's for all seven packages that used it then: the same triggers, aliases, scripts and bundled files. Only Penguin's Buffs, Chat and Health still use that layout.
+Nothing else is needed: no muddler, Java or Node. `build.py` stops on a trigger or alias whose `file` is missing, and on any key it doesn't know, so nothing is dropped silently.
 
 ## Testing
 
@@ -86,11 +85,11 @@ Needs Lua 5.3+, Python 3 and Node (Node only builds the CKMud client plugins; th
 - **Blackjack, CryonFarm, DataLords2, FriezaQuest, Gumshoe, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test. Gumshoe reads a real case and runs a whole one in a fake Briefs house. CryonFarm does a whole run in a fake lab built from the log's exits.
 - **Autolearn:** the real package sources run through a simulated session (connect → MSDP → score and learn sheets → prompts → the bot).
 - **KaiokenTrain, Chores, Score:** real game lines through each package's line reader, and each bot's loop.
-- **Buffs, Chat, Health:** each manifest is linted (every trigger and alias needs a script; `tools/muddle.py` refuses to build without one too).
+- **Every package:** `tools/build.py` builds it, so a missing script file or a malformed package fails the run.
 
 ## Versioning
 
-Every package uses [semantic versioning](https://semver.org/), `MAJOR.MINOR.PATCH`, in its `package.json` or `mfile`:
+Every package uses [semantic versioning](https://semver.org/), `MAJOR.MINOR.PATCH`, in its `package.json`:
 
 - **PATCH** (1.2.0 → 1.2.1): bug fixes, e.g. a trigger pattern that missed a line.
 - **MINOR** (1.2.0 → 1.3.0): new features or behaviour that existing users won't trip over, e.g. a new command or stage.

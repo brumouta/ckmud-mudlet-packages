@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run every test from the repo root: sh tests/run.sh
 #   - Lua tests for the simple packages (tests/*_test.lua)
-#   - manifest lint + build (tools/muddle.py) for the mfile packages (Buffs, Chat, Health)
+#   - every package builds
 cd "$(dirname "$0")/.." || exit 1
 status=0
 
@@ -13,28 +13,12 @@ for t in tests/*_test.lua; do
   fi
 done
 
-for mfile in packages/*/mfile; do
-  pkg=$(dirname "$mfile")
-  # the mfile packages carry a copy of the shared updater: keep it identical
-  if ! cmp -s tools/shared/CKMudUpdate.lua "$pkg/src/scripts/CKMudUpdate.lua"; then
-    echo "FAIL  $pkg/src/scripts/CKMudUpdate.lua differs from tools/shared/CKMudUpdate.lua (copy it over)"; status=1
-  fi
-  if out=$(python3 tools/lint_manifests.py "$pkg/src" 2>&1); then
-    echo "PASS  $pkg lint"
-  else
-    echo "FAIL  $pkg lint"; echo "$out" | tail -8; status=1
-  fi
-  # a missing mfile description means README.md goes into config.lua; some clients can't parse non-ASCII there
-  if bad=$(LC_ALL=C grep -n '[^ -~	]' "$pkg/README.md" 2>/dev/null); then
-    echo "FAIL  $pkg README.md is not plain ASCII (it ends up in config.lua)"; echo "$bad" | head -5; status=1
-  fi
-  name=$(basename "$pkg")
-  if out=$(python3 tools/muddle.py "$name" 2>&1) && out=$(unzip -p "dist/$name.mpackage" config.lua | lua -e 'assert(load(io.read("a")))()' 2>&1); then
-    echo "PASS  $pkg build"
-  else
-    echo "FAIL  $pkg build"; echo "$out" | tail -8; status=1
-  fi
-done
+# every package builds (build.py stops on a missing file or a key it doesn't know)
+if out=$(python3 tools/build.py 2>&1); then
+  echo "PASS  build ($(echo "$out" | grep -c '^built') packages)"
+else
+  echo "FAIL  build"; echo "$out" | tail -8; status=1
+fi
 # Plugins for the CKMud client (one XML for Mudlet and the client): build from the package's
 # mpackage plus packages/<Pkg>/<Pkg>-plugin/{head,tail}.lua, then run its test.lua in Lua 5.1
 # (the client's Lua) against the built file

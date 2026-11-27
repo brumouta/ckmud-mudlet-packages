@@ -15,7 +15,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y lua5.3
       - name: Test
         run: for t in tests/*_test.lua; do echo "== $t"; lua5.3 "$t" || exit 1; done
-      - name: Build (every package, no muddler or Java)
+      - name: Build every package
         run: python3 tools/build.py
       - name: CKMud client plugins (build and test)
         run: |
@@ -31,15 +31,3 @@ jobs:
           path: |
             dist/*.mpackage
             dist/*.xml
-
-  lint:
-    name: ${{ matrix.package }} (manifest lint)
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: [Buffs, Chat, Health]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Lint manifests
-        run: python3 tools/lint_manifests.py packages/${{ matrix.package }}/src
