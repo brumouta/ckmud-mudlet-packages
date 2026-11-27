@@ -1,0 +1,31 @@
+{
+  "name": "ZenoButton",
+  "version": "1.0.0",
+  "title": "Zeno Button shortcuts",
+  "description": "Shortcuts for the Zeno Button: `pb` presses it, and `pbe`, `pbv`, `pbn`, `pbk` and `pbi` take you to the Earth, Vegeta, Namek, Konats or Iceria vortex from anywhere (recall, press button, walk, enter vortex). Replaces the old Zeno Button module. Type `zb help`.",
+  "author": "Bruno Mouta",
+  "scripts": [
+    {
+      "name": "ZenoButton",
+      "file": "src/ZenoButton.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "zb",
+      "regex": "^zb(?:\\s+(\\w+))?$",
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"ZenoButton\") end\nzb.command(matches[2] ~= \"\" and matches[2] or nil)"
+    },
+    {
+      "name": "Press Button",
+      "regex": "^pb$",
+      "script": "send(\"press button\")"
+    },
+    {
+      "name": "Button to a planet",
+      "regex": "^pb([evnki])$",
+      "script": "zb.go(matches[2])"
+    }
+  ],
+  "triggers": []
+}

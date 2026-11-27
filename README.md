@@ -24,8 +24,9 @@ Self-contained [Mudlet](https://www.mudlet.org/) packages for CKMud: bots, event
 | [Gumshoe](packages/Gumshoe) | `gum help` | Solves Jaco's **Briefs mansion** party cases: walks the house, searches, questions, opens the sealed rooms and names who did it. |
 | [CryonFarm](packages/CryonFarm) | `cryon help` | Farms the **Confession of Cryon Frigidus** in Iceria's hidden lab: the four DNA samples, the fields and the smack. |
 | [Gogeta](packages/Gogeta) | `gog help` | Loops **Kami's timeline portal**: counts your Essences and Diamonds, hands them to Kami, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, repeats. Also buys Essences from the event shop. |
+| [ZenoButton](packages/ZenoButton) | `zb help`, `pb` | The **Zeno Button** shortcuts: `pbe`, `pbv`, `pbn`, `pbk` and `pbi` take you to the Earth, Vegeta, Namek, Konats or Iceria vortex from anywhere. Replaces the old Zeno Button module. |
 
-Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossHelpers, Gumshoe, CryonFarm, Gogeta, MoroQuest, Majerska, Cumber and FusionQuest work without it.
+Install only the ones you want, plus **MSDP**: Autolearn, Chores, KaiokenTrain, Score and DataLords2 need it, and Casino uses it when it's there. FriezaQuest, YamoshiSpawn, BossHelpers, Gumshoe, CryonFarm, Gogeta, MoroQuest, Majerska, Cumber, FusionQuest and ZenoButton work without it.
 
 ## Installing
 
