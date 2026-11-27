@@ -2,7 +2,9 @@
 -- tables, settings ("features" are on/off switches, "constants" hold values) and timers.
 -- Settings are saved in autolearn.lua in the profile folder. They used to live in Mudlet's
 -- "Autolearn" database (Autolearn 3.x and older); those are brought over once.
-AL = AL or {}
+-- Uninstalling Autolearn 3.x leaves its AL tables in Mudlet's Lua state until Mudlet restarts, and
+-- they are shaped differently (API.Times has no _marks, so loading would fail). Start clean then.
+if type(AL) ~= "table" or AL.v4 ~= true then AL = { v4 = true } end
 local ck = AL.ck or {}
 AL.ck = ck
 

@@ -1,6 +1,6 @@
 {
   "name": "Autolearn",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "title": "Standalone auto-learning bot for CKMud",
   "description": "Masters all your skills and learns new ones once their prerequisites are mastered: trains on a target, rests and comes back, and steps aside for Gumshoe's repeat cases. Needs the MSDP package. Type `al help`.",
   "author": "fried",

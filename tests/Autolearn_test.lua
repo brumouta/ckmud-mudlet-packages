@@ -320,6 +320,9 @@ do
 end
 dofile("tools/shared/CKMudUpdate.lua")   -- build.py adds it to every package
 
+-- Autolearn 3.x was installed before: uninstalling it left its AL tables in Mudlet's Lua state,
+-- e.g. API.Times already marked as set up but without the _marks 4.x keeps its times in
+AL = { ck = {}, API = { Times = { __al_defaults_WAS_SET = true } } }
 local PACKAGE_JSON = readfile(ROOT .. "/package.json")
 for file in PACKAGE_JSON:gmatch('"file": "([^"]+)"') do run_script(file) end
 
