@@ -103,7 +103,8 @@ Settings are saved in `autolearn.lua` in your profile folder.
 The commands are the same. Underneath, Autolearn no longer carries CK's framework: its settings
 moved from Mudlet's `Autolearn` database to `autolearn.lua`, and yours are brought over the first
 time 4.0 loads. One Lua line reader replaces its 16 triggers. It no longer changes Mudlet's protocol
-settings or reconnects by itself, and the "prompt not parsing" warning is gone.
+settings or reconnects by itself, and the "prompt not parsing" warning is gone. Since 4.1 it reads
+your stats straight from the MSDP package instead of keeping its own copy.
 
 ## Running alongside CK
 

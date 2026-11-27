@@ -40,24 +40,6 @@ end
 local function onPrompt()
     Times:reset("prompt")
 
-    -- Lets check if MSDP is up2date
-    if Toggles.ticked_once then
-        local last_update = MSDP:last_update()
-        if last_update > ck:constant("MSDP.reconnect_timeout") then
-            cecho(
-            "<red>!<yellow>!<red>!<yellow>!<white> Reconnecting to fix CKMud MSDP feed <yellow>!<red>!<yellow>!<red>!\n")
-            reconnect()
-            Toggles.ticked_once = false
-        elseif last_update > ck:constant("MSDP.timeout") then
-            if ck:feature("MSDP.debug") then
-                cecho(
-                "<red>!<yellow>!<red>!<yellow>!<white> Re-Subscribing to MSDP events<yellow>!<red>!<yellow>!<red>!\n")
-            end
-            MSDP:report_names()
-            Toggles.ticked_once = false
-        end
-    end
-
     Toggles.firstprompt = true
 
     if not PromptFlags.Target then

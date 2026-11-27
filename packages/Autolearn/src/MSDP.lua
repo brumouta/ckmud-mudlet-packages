@@ -1,111 +1,70 @@
--- MSDP comes from the shared MSDP package (it subscribes, converts and shares the
--- values for every CKMud package). This bridge copies those values into this
--- package's own Player/Room/Target tables, so the rest of the package keeps reading
--- Player.MaxPl, Room.Gravity, AL.cmd_stack, ... exactly as before.
+-- Stats come straight from the shared MSDP package (it subscribes, converts and shares the values
+-- for every CKMud package): AL.Player, AL.Room and AL.Target read through to MSDP.Player,
+-- MSDP.Room and MSDP.Target, so the rest of Autolearn keeps reading Player.MaxPl, Room.Gravity,
+-- Target.name, ... while holding only its own data (skills, prompt status, name, race).
 local ck = AL.ck
-local ROOT = ck:get_table()
 local Player = ck:get_table("Player")
 local Room = ck:get_table("Room")
 local Target = ck:get_table("Target")
 local MSDP = ck:get_table("API.MSDP")
-local Toggles = ck:get_table("Toggles")
 
--- So they will be there for msdp
-ck:get_table("Player.Stats")
-ck:get_table("Player.BaseStats")
-ck:define_feature("MSDP.debug", false)
-ck:define_constant("MSDP.timeout", 10)
-ck:define_constant("MSDP.reconnect_timeout", 120)
+local function shared() return rawget(_G, "MSDP") end
 
-local function shared()
-    return rawget(_G, "MSDP")
+local function through(t, kind)
+    setmetatable(t, { __index = function(_, k)
+        local M = shared()
+        local src = M and M[kind]
+        if src then return src[k] end
+    end })
 end
+
+-- Autolearn 4.0.0-4.0.2 copied the values in: drop those copies (a reinstall keeps AL), or they'd
+-- hide the live ones. Its own fields stay.
+local OWN = { name = true, race = true, Status = true, Rage = true, Skills = true, Attacks = true,
+    Target = true, Target_Full = true }
+do
+    local M = shared()
+    for k, v in pairs(Player) do
+        if not OWN[k] and type(v) ~= "function" and (k == "Stats" or k == "BaseStats" or (M and M.Player[k] ~= nil)) then
+            Player[k] = nil
+        end
+    end
+    for _, t in ipairs({ Room, Target }) do
+        for k in pairs(t) do if not k:find("^__") then t[k] = nil end end
+    end
+    AL.cmd_stack = nil
+end
+through(Player, "Player")
+through(Room, "Room")
+through(Target, "Target")
+
+function AL.API:cmd_stack()
+    local M = shared()
+    return M and M.cmd_stack
+end
+function AL.API:cmd_stack_empty() return self:cmd_stack() == 0 end
 
 local warned = false
 local function needShared()
-    if shared() or warned then
-        return
-    end
+    if shared() or warned then return end
     warned = true
     cecho("\n<red>[ Autolearn ] needs the MSDP package for your stats. Install MSDP.mpackage from the " ..
               "ckmud-mudlet-packages release, then reconnect.\n")
 end
 
-local DEST = {
-    Player = function() return Player end,
-    Stats = function() return Player.Stats end,
-    BaseStats = function() return Player.BaseStats end,
-    Room = function() return Room end,
-    Target = function() return Target end,
-}
-
-local function copy(kind, field, value)
-    if kind == "MSDP" and field == "cmd_stack" then
-        ROOT.cmd_stack = value
-    elseif DEST[kind] then
-        DEST[kind]()[field] = value
-    end
-end
-
-local function copyAll()
-    local M = shared()
-    if not M then
-        return
-    end
-    for field, value in pairs(M.Player) do
-        if type(value) ~= "table" then copy("Player", field, value) end
-    end
-    for field, value in pairs(M.Player.Stats) do copy("Stats", field, value) end
-    for field, value in pairs(M.Player.BaseStats) do copy("BaseStats", field, value) end
-    for field, value in pairs(M.Room) do copy("Room", field, value) end
-    for field, value in pairs(M.Target) do copy("Target", field, value) end
-    if M.cmd_stack ~= nil then copy("MSDP", "cmd_stack", M.cmd_stack) end
-    if M.ticked then Toggles.ticked_once = true end
-end
-
 function MSDP:last_update()
     local M = shared()
-    if M then
-        return M:last_update()
-    end
+    if M then return M:last_update() end
     return getEpoch() - tonumber((msdp and msdp.UPDATE_EPOCH) or 0)
 end
 
 function MSDP:report_names()
     local M = shared()
-    if M then
-        M:report()
-    else
-        needShared()
-    end
+    if M then M:report() else needShared() end
 end
 
-registerNamedEventHandler("Autolearn", "MSDP changed", "MSDP.changed", function(_, kind, field, value)
-    copy(kind, field, value)
-end)
-
--- Track Updates, fire off a AL.tick event for hud to hook into.
-registerNamedEventHandler("Autolearn", "MSDP tick", "MSDP.tick", function()
-    if not Toggles.ticked_once and ck:feature("MSDP.debug") then
-        cecho(f "<yellow>Received MSDP Update Epoch...\n")
-    end
-    Toggles.ticked_once = true
-    raiseEvent("AL.tick")
-end)
-
-registerNamedEventHandler("Autolearn", "MSDP loaded", "MSDP.loaded", copyAll)
-
--- The MSDP package subscribes on connect; we only reset our tick flag
-registerNamedEventHandler("Autolearn", "MSDP REPORT", "sysConnectionEvent", function()
-    Toggles.ticked_once = false
-    tempTimer(2, needShared)
-end)
-
-registerNamedEventHandler("Autolearn", "MSDP Player Reload", "AL.onPlayerReload", function()
-    Toggles.ticked_once = false
-    MSDP:report_names()
-end)
-
--- Pick up whatever the MSDP package already has (it may have loaded first)
-copyAll()
+-- AL.tick on every server update, for anything that hooks into it
+registerNamedEventHandler("Autolearn", "MSDP tick", "MSDP.tick", function() raiseEvent("AL.tick") end)
+registerNamedEventHandler("Autolearn", "MSDP REPORT", "sysConnectionEvent", function() tempTimer(2, needShared) end)
+registerNamedEventHandler("Autolearn", "MSDP Player Reload", "AL.onPlayerReload", function() MSDP:report_names() end)
 tempTimer(5, needShared)

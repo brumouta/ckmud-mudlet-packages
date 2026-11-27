@@ -13,8 +13,7 @@ local PromptCounters = ck:get_table("PromptCounters")
 local Skills = ck:get_table("API.Skills")
 local Target = ck:get_table("Target")
 
--- learning.return_to_target is gone: the way back comes from the path autolearn is started with
-ck:get_table("Constants")["learning.return_to_target"] = nil
+-- (learning.return_to_target is gone: the way back comes from the path autolearn is started with)
 ck:define_constant("learning.recall_isolation", "")
 -- Skills to train first, in order: "multiform, rescue, kamehameha" (empty: the usual order)
 ck:define_constant("learning.priority", "")

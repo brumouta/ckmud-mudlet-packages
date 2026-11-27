@@ -50,15 +50,6 @@ function API:getName()
     return Player.name or ck:constant("name")
 end
 
-function API:cmd_stack_empty()
-    -- I might move this in the future
-    return AL.cmd_stack == 0
-end
-
-function API:cmd_stack()
-    return AL.cmd_stack
-end
-
 function API:status_ok()
     return Player:get_health() >= 50 and Player:get_energy() >= 50 and Player:get_stamina() >= 50
 end

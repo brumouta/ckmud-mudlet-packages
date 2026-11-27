@@ -371,7 +371,7 @@ for k, v in pairs(feed) do
 end
 check(AL.Player.Ki == 800, "AL.Player.Ki populated from MSDP (got " .. tostring(AL.Player.Ki) .. ")")
 check(AL.Player.MaxGravity == 10, "AL.Player.MaxGravity populated")
-check(AL.cmd_stack == 0, "AL.cmd_stack populated")
+check(AL.API:cmd_stack() == 0 and AL.API:cmd_stack_empty(), "cmd_stack read from the MSDP package")
 check(AL.Target.name == "", "AL.Target.name populated")
 check(AL.Player.Stats.INT == 60, "AL.Player.Stats.INT populated")
 
@@ -1142,6 +1142,32 @@ do
   check(AL.ck:constant("learning.target") == "elder", "next time it comes from autolearn.lua")
   io.open, io.exists, table.load, table.save = realOpen, nil, nil, nil
   AL = keepAL
+end
+
+realprint("=== PHASE: stats straight from MSDP ===")
+do
+  rawset(AL.Player, "MaxGK", nil)
+  MSDP.Player.MaxGK = 777
+  check(AL.Player.MaxGK == 777, "AL.Player reads the MSDP package's value, no copy")
+  MSDP.Room.Gravity = 13
+  check(AL.Room.Gravity == 13, "AL.Room too")
+  MSDP.Target.name = "a troll"
+  check(AL.Target.name == "a troll", "AL.Target too")
+  MSDP.Target.name = ""
+  -- a reinstall over 4.0.0-4.0.2, which copied the values in: the copies go, its own fields stay
+  rawset(AL.Player, "MaxGK", 1); AL.Player.Skills.Learned["kick"] = true
+  run_script("src/MSDP.lua")
+  check(AL.Player.MaxGK == 777 and AL.Player.Skills.Learned["kick"] and AL.Player.race ~= nil,
+    "old copies dropped on reload, Autolearn's own data kept")
+  -- a quiet MSDP feed no longer makes it reconnect
+  LOG = {}
+  local keep = MSDP.last_update
+  MSDP.last_update = function() return 500 end
+  raiseEvent("AL.onPrompt")
+  MSDP.last_update = keep
+  local reconnected = false
+  for _, l in ipairs(LOG) do if l:find("RECONNECT", 1, true) then reconnected = true end end
+  check(not reconnected, "doesn't reconnect by itself")
 end
 
 ---------------------------------------------------------------------------
