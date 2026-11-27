@@ -19,8 +19,10 @@ ck:define_constant("learning.recall_isolation", "")
 -- Skills to train first, in order: "multiform, rescue, kamehameha" (empty: the usual order)
 ck:define_constant("learning.priority", "")
 
--- The way back to the target, worked out from the path you start with: crecall, then the path
--- backwards with every step reversed. `autolearn elder n;n;n;n;w` -> "crecall;e;s;s;s;s"
+-- The way back to the target, worked out from the path you start with (target -> rest spot):
+-- first get to the rest spot, then walk the path backwards with every step reversed. With
+-- learning.recall_isolation set (al recall crecall;w) that's the recall itself:
+-- `al path n;n;n;n;w` -> "crecall;w;e;s;s;s;s". Without it, plain crecall: "crecall;e;s;s;s;s".
 local RECALL = "crecall"
 local OPPOSITE = { n = "s", s = "n", e = "w", w = "e", u = "d", d = "u",
     ne = "sw", sw = "ne", nw = "se", se = "nw", ["in"] = "out", out = "in" }
@@ -41,17 +43,21 @@ function learn.parse_path(path)
     return dirs
 end
 
-function learn.return_from(path)
+function learn.return_from(path, recall)
     local dirs = learn.parse_path(path)
     if not dirs then return nil end
-    local back = { RECALL }
+    if recall == nil then recall = ck:constant("learning.recall_isolation") end
+    recall = (recall or ""):gsub("^[%s;]+", ""):gsub("[%s;]+$", "")
+    local back = { recall ~= "" and recall or RECALL }
     for i = #dirs, 1, -1 do back[#back + 1] = OPPOSITE[dirs[i]] end
     return table.concat(back, ";")
 end
 
--- The path back to the target, from the path autolearn was started with ("" when there's none)
+-- The path back to the target, from the path autolearn was started with ("" when there's none).
+-- Worked out each time, so a recall set while learning counts straight away.
 function learn:return_path()
-    return self.derived_return or ""
+    if not self.derived_return then return "" end
+    return learn.return_from(self.speedwalk) or ""
 end
 
 local function skill_key(name)

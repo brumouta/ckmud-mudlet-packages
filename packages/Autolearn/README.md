@@ -35,8 +35,10 @@ don't need a path. `al status` says whether it's learning, on what, and how many
 `AL` and `autolearn` work as well as `al`, and the old `autolearn <target> <path>` still starts it
 (and saves them); a bare `autolearn` turns it on or off.
 
-**The way back comes from the path:** `crecall`, then the path backwards with every step
-reversed. `al path n;n;n;n;w` walks back with `crecall;e;s;s;s;s` (`al setup` shows it). It's used
+**The way back comes from the path:** first your `al recall` (which gets you to the rest spot),
+then the path backwards with every step reversed. With `al recall crecall;w` and
+`al path n;n;n;n;w` it walks back with `crecall;w;e;s;s;s;s` (`al setup` shows it). Without
+`al recall` it starts with a plain `crecall`. It's used
 after resting, after training portal/instant transmission (they teleport you to king kai), and
 when the target isn't there. A path with a step that isn't a direction (`enter vort`) can't be
 walked back, so then portal/instant aren't trained.
