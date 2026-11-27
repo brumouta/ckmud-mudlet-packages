@@ -1,120 +1,108 @@
-![shenron](src/resources/shenron.png)
-
 # Chores
 
-A standalone Mudlet package for CKMud that automates the boring bits: fishing
-and the royal cook delivery quest. Extracted from the
-[CK](https://github.com/CKMud-Mudlet-Scripts/CK) ecosystem and fully
-self-contained - it does NOT require CK to be installed.
+Command: `chores`
+
+Automates the boring bits of CKMud: fishing, the royal cook delivery quest and the gravedigger
+excavation. Originally extracted from the [CK](https://github.com/CKMud-Mudlet-Scripts/CK) package
+by fried; it doesn't need CK.
 
 ## Installation
 
 `lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Chores.mpackage")`
 
-**Requires the [MSDP](../MSDP) package**, which supplies the stats this package reads. Install it first.
-
-After installation the `CH update` alias will take care of updating the script.
-
-You must turn on `msdp` in settings to use this script (the package enforces
-the correct protocol settings on connect, same as CK does).
+**Requires the [MSDP](../MSDP) package** (with MSDP turned on in Mudlet's settings), which supplies
+your fatigue, base power level and opponent. Install it first. `chores update` updates Chores.
 
 ## Usage
 
-Stand at your fishing spot holding a fishing pole, then:
+Set your two paths once (they're saved):
 
-`chores fish` - auto fishing: castout, reelin on a bite, recast, untangle.
-When fatigue drops below `chores.rest_below`% - or the mud says "You are too
-exhausted to fish right now." - it walks `chores.rest_path`, sleeps, and walks
-back via `chores.fishing_path` when rested.
+```
+chores set fishing_path recall;w;w;n     from the rest room, and after a delivery, to the fishing spot
+chores set rest_path e;e;u               from the fishing spot to your rest room
+```
 
-`chores quest` - runs the royal cook delivery every `chores.quest_period`
-minutes: travel `chores.cook_path` (default: recall then instant transmission
-to Roshi, 3 attempts), pursue the cook,
-accept, deliver the jerky to whichever knight he names. If the cook says the
-delivery is on cooldown, the next attempt is scheduled for exactly when the
-cooldown ends.
+Then stand at your fishing spot holding a fishing pole and type one of:
 
-`chores both` - quest whenever the cooldown is up, fish in between. The quest
-preempts fishing and even resting; fishing resumes afterwards via
-`chores.fishing_path`.
+| Command | What it does |
+|---|---|
+| `chores fish` | Fish: `castout`, `reelin` on a bite, cast again, untangle; rest when fatigued |
+| `chores quest` | Only the deliveries: the royal cook every 5 minutes and the gravedigger whenever he has a plot |
+| `chores both` / `chores start` | The deliveries whenever they're due, fishing in between |
+| `chores stop` / `chores off` | Stop |
+| `chores status` | What it's doing and when the next deliveries are |
+| `chores set` | Every setting with its value |
+| `chores set <name> <value>` | Change a setting (saved). `default` puts it back, `off` empties it |
+| `chores debug on\|off` | Trace every step, for when a cycle stalls |
+| `chores update` | Update Chores to the latest release |
 
-`chores off` - stop. Bare `chores` toggles between off and `both`.
+`CH` works as well as `chores`. While it runs, the prompt shows `[chores:both/fishing]` (mode and
+what it's doing).
 
-Toggling into `quest` or `both` runs the delivery immediately, then settles
-into the main loop (fishing between cooldowns in `both`).
+### Fishing
 
-A second periodic task, the **gravedigger excavation**, runs in `quest`/`both`
-modes once configured (the cook delivery takes priority when both are due):
-travel `chores.grave_path` to Billy (default: instant transmission to gine,
-then pursue him), `say task` - repeated every few seconds until he answers,
-since `pursue` may still be walking -
-and when he names a plot ("Yer in luck <name>, plot 4 is ready to be
-excavated." - or the nag "I already done told you! I need you to go dig up
-burial plot 5!" when the task was already assigned) confirm a shovel with
-`locate shovel` - "a wrought iron burial
-shovel" means we have one, "No matching items found" buys one from Billy with
-`buy 1` - then walk the matching `chores.grave_plot_<n>` route, `dig`, and
-return to fishing. Unset `grave_path` disables it with a one-time hint; an
-unmapped plot or a timeout aborts cleanly to fishing. The task also needs
-1 billion base power level (Billy's requirement, read from MSDP BASE_PL before
-travelling) and is skipped with a one-time note below it.
+On a bite it reels in and casts again. With no bite for `recast_timeout` seconds it casts again.
+When fatigue drops below `rest_below`%, or the game says you're too exhausted to fish, it reels in,
+walks `rest_path` and sleeps. Once rested it wakes and walks `fishing_path` back. "This is not a
+good place to fish" walks `fishing_path` back; three of those without a bite in between stop it.
 
-Every quest step has a timeout - if anything unexpected happens the cycle
-aborts and the bot returns to fishing rather than idling somewhere odd.
+### The royal cook delivery
 
-If a cycle ever stalls, `CH feature chores.debug on` traces each step so you
-can see exactly where it stopped.
+Every `quest_period` minutes it travels `cook_path` (by default `recall` and instant transmission
+to Roshi, three tries), pursues the royal cook, says yes and gives the jerky to the knight he
+names. If he says the last delivery was too recent, it tries again exactly when the wait is over.
+A `cook_path` that includes `pursue royal cook` skips the Roshi check.
 
-## Constants
+### The gravedigger
 
-Set with `CH constant <name>=<value>`:
+Every `grave_period` minutes (after the cook, who goes first) it travels `grave_path` to
+Gravedigger Billy (by default instant transmission to gine, then `pursue gravedigger`) and says
+`task` every few seconds until he answers. For the plot he names it checks for a burial shovel
+(`locate shovel`, buying one from Billy if needed), walks that plot's `grave_plot_<n>` route,
+digs and picks up the loot. He needs 1 billion base power level, which comes from MSDP (type
+`score` once if it says it doesn't know yours). `chores set grave_path off` turns the excavation
+off.
 
-- `chores.fishing_path` - commands to reach your fishing spot; used after the
-  quest, and after resting, so it should work from both places (e.g. start it
-  with a recall)
-- `chores.rest_path` - commands from the fishing spot to your rest room
-- `chores.cook_path` - commands to reach the royal cook, default
-  `recall;focus 'instant' roshi`. Like `grave_path` it may include the
-  `pursue royal cook` step, in which case the Roshi confirmation is skipped;
-  a travel-only path keeps it (with 3 instant retries)
-- `chores.quest_period` - minutes between deliveries, default 5
-- `chores.recast_timeout` - seconds without a bite before recasting, default 120
-- `chores.rest_below` - fatigue percent that triggers a rest, default 20
-- `chores.grave_period` - minutes between gravedigger tasks, default 5
-- `chores.grave_path` - commands to reach Gravedigger Billy, default
-  `focus 'instant' gine;pursue gravedigger`. It may include the
-  `pursue gravedigger` step (as the default does) or just the travel commands,
-  in which case the bot adds the pursue itself. Set it to an empty string to
-  disable the excavation task.
-- `chores.grave_plot_1` ... `chores.grave_plot_7` - movement commands from
-  Billy to each plot, pre-filled with working routes
-- `chores.boss_before` / `chores.boss_attack` / `chores.boss_after` - boss
-  fish fight: commands before, the attack to repeat, commands after
-- `chores.rival_before` / `chores.rival_attack` / `chores.rival_after` -
-  rival ambush ("<Name> flies out of nowhere and attacks you!"): commands
-  before ($target is replaced with the rival's keyword), the attack to repeat
-  (the target is appended), commands after the fight. The fight end is
-  detected via the kill line/MSDP opponent feed; afterwards an interrupted
-  quest resumes at the royal cook (who re-asks or reminds us which knight
-  the jerky is for) and anything else resumes via chores.fishing_path.
-  With rival_attack unset the bot only warns and leaves the fight to you.
+### Boss fish, rivals and dying
 
-## Boss fish
+A boss fish ("A massive shadow emerges from the depths...") gets `boss_before`, then `boss_attack`
+until it dies, then `boss_after`, and fishing goes on. A rival ("<Name> flies out of nowhere and
+attacks you!") gets `rival_before` (`$target` is the rival), `rival_attack <rival>` until the
+fight ends, then `rival_after`, and whatever was interrupted carries on: an interrupted delivery
+goes straight back to the cook. With `boss_attack` or `rival_attack` empty it only warns and
+leaves the fight to you. If you die, it heads back to fishing.
 
-On "A massive shadow emerges from the depths... Prepare for battle!" the bot
-sends `chores.boss_before`, repeats `chores.boss_attack` each tick, and
-detects the kill via the MSDP opponent feed; then `chores.boss_after` runs
-and casting resumes. With `boss_attack` unset the bot only warns and leaves
-the fight to you.
+Every step of a delivery has a time limit, so anything unexpected sends it back to fishing rather
+than leaving it idle somewhere odd.
+
+## Settings
+
+| Setting | Default | |
+|---|---|---|
+| `fishing_path` | | To the fishing spot, from the rest room and after a delivery (start it with a recall) |
+| `rest_path` | | From the fishing spot to the rest room |
+| `rest_below` | 20 | Rest below this fatigue % |
+| `recast_timeout` | 120 | Seconds without a bite before casting again |
+| `cook_path` | `recall;focus 'instant' roshi` | To the royal cook |
+| `quest_period` | 5 | Minutes between cook deliveries |
+| `grave_path` | `focus 'instant' gine;pursue gravedigger` | To Gravedigger Billy (empty: no excavation) |
+| `grave_period` | 5 | Minutes between gravedigger tasks |
+| `grave_plot_1` ... `grave_plot_7` | working routes | From Billy to each plot |
+| `boss_before`, `boss_attack`, `boss_after` | | Boss fish fight |
+| `rival_before`, `rival_attack`, `rival_after` | | Rival fight (`$target` is the rival) |
+
+Settings are saved in `chores.lua` in your profile folder.
+
+## Changes in 3.0
+
+Chores is now one Lua file like the newer packages. `CH constant chores.<name>=<value>` is now
+`chores set <name> <value>`, and `CH features` and `CH feature chores.debug on` are now
+`chores debug on`. Your 2.x settings are brought over the first time 3.0 loads. A bare `chores`
+now shows the help instead of turning it on: use `chores start` or `chores both`. It no longer
+changes Mudlet's protocol settings or reconnects by itself, and base PL now comes from the MSDP
+package (which reads it from `score`).
 
 ## Development
 
-The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
-needed: `python3 ../../tools/build.py Chores` writes `../../dist/Chores.mpackage`.
-
-Before building, two checks catch the common failure modes:
-
-```
-python3 ../../tools/lint_manifests.py src   # every trigger/alias has a script
-cd tests && npm install && node runner.js driver.lua   # simulated Mudlet run
-```
+`python3 tools/build.py Chores` builds `dist/Chores.mpackage`, and `lua tests/Chores_test.lua`
+(from the repo root) tests it.

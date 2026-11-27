@@ -1,0 +1,38 @@
+{
+  "name": "Chores",
+  "version": "3.0.0",
+  "title": "Fishing, cook delivery and gravedigger bot for CKMud",
+  "description": "Fishes (rests when fatigued, fights boss fish and rivals) and runs the royal cook delivery and the gravedigger excavation whenever their cooldown is up. Needs the MSDP package. Type `chores help`.",
+  "author": "fried",
+  "scripts": [
+    {
+      "name": "Chores",
+      "file": "src/Chores.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "chores",
+      "regex": "^(?:chores|CH)(?:\\s+([\\w.]+)(?:\\s+(.+))?)?$",
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"Chores\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\nchores.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Chores",
+      "folder": true,
+      "children": [
+        {
+          "name": "chores Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "chores.line(type(matches) == \"table\" and matches[1] or line)"
+        }
+      ]
+    }
+  ]
+}

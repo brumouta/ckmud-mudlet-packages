@@ -1,8 +1,0 @@
-{
-  "name": "chores-tests",
-  "private": true,
-  "description": "Mudlet environment simulation tests for the Chores package",
-  "dependencies": {
-    "fengari": "^0.1.4"
-  }
-}
