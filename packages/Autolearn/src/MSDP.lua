@@ -2,7 +2,7 @@
 -- values for every CKMud package). This bridge copies those values into this
 -- package's own Player/Room/Target tables, so the rest of the package keeps reading
 -- Player.MaxPl, Room.Gravity, AL.cmd_stack, ... exactly as before.
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local ROOT = ck:get_table()
 local Player = ck:get_table("Player")
 local Room = ck:get_table("Room")
@@ -27,7 +27,7 @@ local function needShared()
         return
     end
     warned = true
-    cecho("\n<red>[ __PKGNAME__ ] needs the MSDP package for your stats. Install MSDP.mpackage from the " ..
+    cecho("\n<red>[ Autolearn ] needs the MSDP package for your stats. Install MSDP.mpackage from the " ..
               "ckmud-mudlet-packages release, then reconnect.\n")
 end
 
@@ -80,12 +80,12 @@ function MSDP:report_names()
     end
 end
 
-registerNamedEventHandler("__PKGNAME__", "MSDP changed", "MSDP.changed", function(_, kind, field, value)
+registerNamedEventHandler("Autolearn", "MSDP changed", "MSDP.changed", function(_, kind, field, value)
     copy(kind, field, value)
 end)
 
 -- Track Updates, fire off a AL.tick event for hud to hook into.
-registerNamedEventHandler("__PKGNAME__", "MSDP tick", "MSDP.tick", function()
+registerNamedEventHandler("Autolearn", "MSDP tick", "MSDP.tick", function()
     if not Toggles.ticked_once and ck:feature("MSDP.debug") then
         cecho(f "<yellow>Received MSDP Update Epoch...\n")
     end
@@ -93,15 +93,15 @@ registerNamedEventHandler("__PKGNAME__", "MSDP tick", "MSDP.tick", function()
     raiseEvent("AL.tick")
 end)
 
-registerNamedEventHandler("__PKGNAME__", "MSDP loaded", "MSDP.loaded", copyAll)
+registerNamedEventHandler("Autolearn", "MSDP loaded", "MSDP.loaded", copyAll)
 
 -- The MSDP package subscribes on connect; we only reset our tick flag
-registerNamedEventHandler("__PKGNAME__", "MSDP REPORT", "sysConnectionEvent", function()
+registerNamedEventHandler("Autolearn", "MSDP REPORT", "sysConnectionEvent", function()
     Toggles.ticked_once = false
     tempTimer(2, needShared)
 end)
 
-registerNamedEventHandler("__PKGNAME__", "MSDP Player Reload", "AL.onPlayerReload", function()
+registerNamedEventHandler("Autolearn", "MSDP Player Reload", "AL.onPlayerReload", function()
     Toggles.ticked_once = false
     MSDP:report_names()
 end)

@@ -1,5 +1,3 @@
-![shenron](src/resources/shenron.png)
-
 # Autolearn
 
 A standalone Mudlet package for CKMud that masters all your skills, and learns
@@ -93,30 +91,28 @@ case and says so. `al stop` while it's paused keeps it off. `al gumshoe off` tur
 | `al priority [skills\|clear]` | Skills to train first, in order |
 | `al gumshoe on\|off` | Pause for Gumshoe's `gum repeat` cases (default on) |
 | `al features` / `al feature <name> on\|off` | Every feature switch |
-| `al constants [prefix]` / `al constant <name> = <value>` | Every setting (these survive resetProfile()) |
+| `al constants [prefix]` / `al constant <name> = <value>` | Every setting |
 | `al update` | Update Autolearn to the latest release |
+
+Settings are saved in `autolearn.lua` in your profile folder.
+
+## Changes in 4.0
+
+The commands are the same. Underneath, Autolearn no longer carries CK's framework: its settings
+moved from Mudlet's `Autolearn` database to `autolearn.lua`, and yours are brought over the first
+time 4.0 loads. One Lua line reader replaces its 16 triggers. It no longer changes Mudlet's protocol
+settings or reconnects by itself, and the "prompt not parsing" warning is gone.
 
 ## Running alongside CK
 
-Autolearn keeps all of its state under its own `AL` global namespace, its own
-`Autolearn` settings database, and its own `AL.*` events, so it will not
-corrupt an installed CK package. If you do run both, note that each package
-parses the prompt and MOTD independently (you may see doubled login commands),
-and you should use CK's own `autolearn` OR this package - not both at once.
-Recent CK versions no longer ship the autolearn feature.
+Autolearn keeps all of its state under its own `AL` global namespace and its own `AL.*` events, so
+it won't corrupt an installed CK package. If you run both, each package parses the prompt and MOTD
+on its own (you may see doubled login commands), and use CK's own `autolearn` OR this package, not
+both at once. Recent CK versions no longer ship the autolearn feature.
 
 ## Development
 
-The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
-needed: `python3 ../../tools/build.py Autolearn` writes `../../dist/Autolearn.mpackage`.
-
-Before building, two checks catch the common failure modes:
-
-```
-python3 ../../tools/lint_manifests.py src   # every trigger/alias has a script
-cd tests && npm install && node runner.js driver.lua   # simulated Mudlet run
-```
-
-The tests run the real package sources in a Lua VM with a stubbed Mudlet API
-and simulate connect -> MSDP feed -> score/learn parsing -> prompt ->
-`autolearn` toggle -> bot attack/rest/wake cycle.
+`python3 tools/build.py Autolearn` builds `dist/Autolearn.mpackage`, and
+`lua tests/Autolearn_test.lua` (from the repo root) runs the real package sources with a stubbed
+Mudlet API through a simulated session: connect, MSDP feed, score and learn sheets, prompts, then
+the bot's attack, rest and wake cycle, Gumshoe pauses and the `al` command.

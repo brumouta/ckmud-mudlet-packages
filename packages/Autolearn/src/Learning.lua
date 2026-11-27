@@ -1,4 +1,4 @@
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local Player = ck:get_table("Player")
 local Toggles = ck:get_table("Toggles")
 local learn = ck:get_table("API.Learning", {
@@ -151,8 +151,8 @@ end
 -- Names as `learn` shows them or as typed (instant trans / instant, iron will / ironwill).
 function learn.priority_rank()
     local rank, n = {}, 0
-    for name in (ck:constant("learning.priority") or ""):gmatch("[^,;]+") do
-        name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    for raw in (ck:constant("learning.priority") or ""):gmatch("[^,;]+") do
+        local name = raw:gsub("^%s+", ""):gsub("%s+$", "")
         if name ~= "" then
             local key = skill_key(Skills:translate(name))
             if not rank[key] then
@@ -187,8 +187,8 @@ function learn.check_priority(list)
     local keys = {}
     for skill in pairs(Learned) do keys[skill_key(skill)] = skill end
     local unknown = {}
-    for name in (list or ""):gmatch("[^,;]+") do
-        name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    for raw in (list or ""):gmatch("[^,;]+") do
+        local name = raw:gsub("^%s+", ""):gsub("%s+$", "")
         local key = skill_key(Skills:translate(name))
         if name ~= "" and not keys[key] and not keys[skill_key(name)] then
             local best, best_d
@@ -305,13 +305,13 @@ end
 
 local function exit()
     -- Delete timer
-    deleteNamedTimer("__PKGNAME__", "AL:Learning")
+    deleteNamedTimer("Autolearn", "AL:Learning")
     -- Kill Triggers
     for _, id in ipairs(learn.triggers) do
         killTrigger(id)
     end
     learn.triggers = {}
-    disableTrigger("autolearn no target")
+    learn.watch_no_target = false
 end
 
 local function enter()
@@ -327,10 +327,10 @@ local function enter()
     learn.teleported = nil
     -- Always armed: find_target no-ops while there's no way back, and
     -- this keeps the return flow working if the constant is set mid-session.
-    enableTrigger("autolearn no target")
+    learn.watch_no_target = true
 
     -- Install a timer
-    registerNamedTimer("__PKGNAME__", "AL:Learning", 2, do_learning, true)
+    registerNamedTimer("Autolearn", "AL:Learning", 2, do_learning, true)
 end
 
 function learn:return_home()
@@ -437,7 +437,7 @@ end
 
 function learn:find_target(ability)
     if not Mode:is(Mode.Learning) then
-        disableTrigger("autolearn no target")
+        learn.watch_no_target = false
         return
     end
     if State:is(State.NORMAL) and self:return_path() ~= "" then

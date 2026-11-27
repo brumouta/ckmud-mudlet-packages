@@ -1,7 +1,14 @@
--- Mudlet environment simulator + Autolearn package smoke test.
--- Runs the real package sources under fengari (Lua 5.3) with stubbed Mudlet APIs.
+-- Autolearn: Mudlet environment simulator + package test. Run from the repo root:
+--   lua tests/Autolearn_test.lua
+-- Runs the real package sources (packages/Autolearn/package.json order) with stubbed Mudlet APIs
+-- and feeds real game lines through AL.line, the package's every-line trigger.
 
-local ROOT = SRC_ROOT or "src" -- injected by runner.js
+local ROOT = "packages/Autolearn"
+local function readfile(path)
+  local f = io.open(path, "r")
+  if not f then return nil end
+  local s = f:read("*a"); f:close(); return s
+end
 
 ---------------------------------------------------------------------------
 -- Test bookkeeping
@@ -282,30 +289,16 @@ yajl = {
 }
 
 ---------------------------------------------------------------------------
--- Package loader (mirrors muddler+Mudlet: __PKGNAME__ substitution, require)
+-- Package loader: the scripts in package.json order
 ---------------------------------------------------------------------------
 local PKG = "Autolearn"
-local module_cache = {}
 
-local function load_pkg_file(relpath, chunkname)
+local function load_pkg_file(relpath)
   local src = readfile(ROOT .. "/" .. relpath)
   assert(src, "cannot read " .. relpath)
-  src = src:gsub("__PKGNAME__", PKG):gsub("__VERSION__", "26.07.26")
   local fn, err = load(src, "@" .. relpath)
   if not fn then error("SYNTAX " .. relpath .. ": " .. tostring(err)) end
   return fn
-end
-
-function require(name)
-  if module_cache[name] then return module_cache[name] end
-  local rel
-  if name == PKG then rel = "resources/init.lua"
-  elseif name == PKG .. ".console" then rel = "resources/console.lua"
-  else error("unexpected require: " .. tostring(name)) end
-  local fn = load_pkg_file(rel)
-  local mod = fn()
-  module_cache[name] = mod
-  return mod
 end
 
 local function run_script(relpath)
@@ -314,35 +307,27 @@ local function run_script(relpath)
 end
 
 ---------------------------------------------------------------------------
--- 1. Load all scripts in scripts.json order
+-- 1. Load all scripts in package.json order
 ---------------------------------------------------------------------------
 realprint("=== PHASE: script load ===")
--- registration entry (inline in scripts.json)
-local ok, err = pcall(function() require(PKG):register(PKG, "26.07.26") end)
-check(ok, "registration script" .. (ok and "" or (" -- " .. tostring(err))))
-
 -- The shared MSDP package is installed alongside this one (packages/MSDP); load it first
 do
-  local src = readfile(ROOT .. "/../../MSDP/src/MSDP.lua")
+  local src = readfile("packages/MSDP/src/MSDP.lua")
   assert(src, "cannot read packages/MSDP/src/MSDP.lua")
   local fn, err = load(src, "@MSDP.lua")
   local ok = fn and pcall(fn)
   check(ok == true, "load the shared MSDP package" .. (fn and "" or (" -- " .. tostring(err))))
 end
+dofile("tools/shared/CKMudUpdate.lua")   -- build.py adds it to every package
 
-for _, s in ipairs({
-  "scripts/Utils.lua", "scripts/Core.lua", "scripts/Attacks.lua", "scripts/Damage.lua",
-  "scripts/Fight.lua", "scripts/StateMachine.lua", "scripts/SendQueue.lua",
-  "scripts/Skills.lua", "scripts/Modes.lua", "scripts/Racials.lua", "scripts/Learning.lua", "scripts/Gumshoe.lua", "scripts/Commands.lua",
-  "scripts/Event Handlers/MSDP.lua", "scripts/Event Handlers/Prompt_Events.lua",
-  "scripts/Event Handlers/Connection_Events.lua",
-}) do run_script(s) end
+local PACKAGE_JSON = readfile(ROOT .. "/package.json")
+for file in PACKAGE_JSON:gmatch('"file": "([^"]+)"') do run_script(file) end
 
 check(AL ~= nil, "AL global namespace exists")
 
 -- Type a line into the real `al` alias (regex and script from aliases.json)
 local AL_ALIAS = (function()
-  local src = readfile(ROOT .. "/aliases/aliases.json")
+  local src = PACKAGE_JSON:match('"aliases": %[(.-)%]%s*,%s*"triggers"')
   local script = src:match('"script": "(.-)"%s*}')
   script = script:gsub('\\n', "\n"):gsub('\\"', '"')
   return load(script)
@@ -391,12 +376,16 @@ check(AL.Player.Stats.INT == 60, "AL.Player.Stats.INT populated")
 -- 4. Score output: name + race
 ---------------------------------------------------------------------------
 realprint("=== PHASE: score parse ===")
-multimatches = { {}, { "Score Information for: Vorrac", "  Vorrac " } }
-local score_script = load("local name = string.trim(multimatches[2][2])\nAL.API:setName(name)\n")
-ok, err = pcall(score_script); check(ok, "Score Inject script" .. (ok and "" or (" -- " .. tostring(err))))
-multimatches = { {}, { "Race: Human", " Human " } }
-local race_script = load("local race = string.trim(multimatches[2][2])\nAL.API:setRace(race)\n")
-ok, err = pcall(race_script); check(ok, "Score Race script" .. (ok and "" or (" -- " .. tostring(err))))
+local function line(l)
+  local ok, err = pcall(AL.line, l)
+  check(ok, "line: " .. l .. (ok and "" or (" -- " .. tostring(err))))
+end
+line("Score Information for: Vorrac  ")
+line("Level: 10")
+line("Race: Human   ")
+line("See 'Status', 'Train', and 'Traits' for more information.")
+line("Race: Saiyan")
+check(AL.API:getRace() == "Human", "a Race: line after the score sheet isn't read")
 check(AL.API:getRace() == "Human", "race parsed as Human")
 check(AL.API:getName() == "Vorrac", "name parsed")
 
@@ -404,33 +393,28 @@ check(AL.API:getName() == "Vorrac", "name parsed")
 -- 5. learn output scraping
 ---------------------------------------------------------------------------
 realprint("=== PHASE: skill scrape ===")
-local scrape_parent = load("AL.API.Skills.clear()")
-ok, err = pcall(scrape_parent); check(ok, "Learn Scrape parent script" .. (ok and "" or (" -- " .. tostring(err))))
-
-local section_fn = load_pkg_file("triggers/Skills/Skill_Sections.lua")
-local scrape_fn = load_pkg_file("triggers/Skills/scrape_skill.lua")
-
-local function scrape_section(name, rows)
-  matches = { name .. " Attacks:", name }
-  ok, err = pcall(section_fn); check(ok, "Skill_Sections " .. name .. (ok and "" or (" -- " .. tostring(err))))
-  for _, row in ipairs(rows) do
-    -- Mudlet matchall layout: {full1, g1, g2, full2, g1, g2}
-    if row[3] then
-      matches = { row[1] .. " " .. row[2], row[1], row[2], row[3] .. " " .. row[4], row[3], row[4] }
-    else
-      matches = { row[1] .. " " .. row[2], row[1], row[2] }
-    end
-    ok, err = pcall(scrape_fn); check(ok, "scrape_skill " .. tostring(row[1]) .. (ok and "" or (" -- " .. tostring(err))))
-  end
+-- the learn sheet as the game prints it: border, header, then sections of two-column rows
+for _, l in ipairs({
+  "o---------------------------------------------------------o",
+  "Technique           Req.       Technique           Req. ",
+  "Physical Attacks:",
+  "punch               75%        kick                Mastered",
+  "roundhouse          20%",
+  "Ki Attacks:",
+  "kamehameha          50%        kiblast             Mastered",
+  "o---------------------[ Focus Skills ]--------------------o",
+  "heal                20%        meditate            Mastered",
+  " Use 'slist' to show all skills available to your race",
+  "punchy              10%",
+}) do line(l) end
+check(AL.Player.Skills.Learned["punchy"] == nil, "rows after the end of the sheet aren't read")
+check(AL.Player.Skills.section == nil, "the end of the sheet closes the section")
+do
+  local cols = AL.Lines.columns("solar flare         Supreme    multi-form          Ultimate")
+  check(#cols == 2 and cols[1][1] == "solar flare" and cols[1][2] == "Supreme" and cols[2][1] == "multi-form"
+    and cols[2][2] == "Ultimate", "two columns, with spaces and dashes in skill names")
+  check(#AL.Lines.columns("Technique           Req.       Technique           Req. ") == 0, "the header has no skills")
 end
-
-scrape_section("Physical", { { "punch", "75%", "kick", "Mastered" }, { "roundhouse", "20%" } })
-scrape_section("Ki", { { "kamehameha", "50%", "kiblast", "Mastered" } })
-scrape_section("Focus", { { "heal", "20%", "meditate", "Mastered" } })
-
-local close_fn = load("setTriggerStayOpen(\"Learn Scrape\", 0) AL.Player.Skills.section = nil")
-ok, err = pcall(close_fn); check(ok, "close Learn scrape" .. (ok and "" or (" -- " .. tostring(err))))
-
 check(AL.Player.Skills.Learned["punch"] == true, "punch learned")
 check(AL.Player.Skills.Mastered["kick"] == true, "kick mastered")
 check(AL.Player.Skills.Level["punch"] == 75, "punch level 75")
@@ -442,9 +426,8 @@ check(table.contains(AL.Player.Skills.Sections.Focus, "heal"), "heal in Focus se
 -- 6. Prompt fires
 ---------------------------------------------------------------------------
 realprint("=== PHASE: prompt ===")
-multimatches = { {}, { ["PL"] = "90,000", ["Forms"] = "[FLY]" } }
-local prompt_fn = load_pkg_file("triggers/Prompt.lua")
-ok, err = pcall(prompt_fn); check(ok, "Prompt trigger script" .. (ok and "" or (" -- " .. tostring(err))))
+local function prompt_fn(forms) AL.line("[Pl: 90,000 | Ki: 80% | Fat: 90%]" .. (forms and (" " .. forms) or "")) end
+line("[Pl: 90,000 | Ki: 80% | Fat: 90%] [FLY]")
 check(AL.Toggles.firstprompt == true, "firstprompt set after prompt")
 check(AL.Player.Status["FLY"] == true, "FLY status parsed")
 check(AL.API:is_connected() == true, "API:is_connected() true after prompt")
@@ -460,12 +443,12 @@ ok, err = pcall(alias_fn); check(ok, "autolearn alias" .. (ok and "" or (" -- " 
 check(AL.API.Mode:is(AL.API.Mode.Learning), "Mode is Learning after toggle")
 check(table.contains(SENT, "learn"), "'learn' sent on enter")
 check(TIMERS["AL:Learning"] ~= nil, "learning timer registered")
-check(TRIGGER_STATE["autolearn no target"] == true, "no-target trigger enabled")
+check(AL.API.Learning.watch_no_target == true, "no-target trigger enabled")
 
 -- "Maybe you should land first!" while the bot runs: land
 SENT = {}
-local land_fn = load("AL.API.Learning:land()")       -- the 'autolearn land' trigger's script
-ok, err = pcall(land_fn); check(ok, "land trigger script" .. (ok and "" or (" -- " .. tostring(err))))
+local function land_fn() AL.line("Maybe you should land first!") end
+line("Maybe you should land first!")
 check(table.contains(SENT, "land"), "lands when told to while autolearn runs")
 
 ---------------------------------------------------------------------------
@@ -482,8 +465,7 @@ end
 check(attacked, "bot sent a skill/attack on tick (sent: " .. table.concat(SENT, " | ") .. ")")
 
 -- another prompt between ticks (the event loop keeps running)
-multimatches = { {}, { ["PL"] = "90,000", ["Forms"] = "" } }
-ok, err = pcall(prompt_fn); check(ok, "Prompt during learning" .. (ok and "" or (" -- " .. tostring(err))))
+line("[Pl: 90,000 | Ki: 80% | Fat: 90%]")
 
 ---------------------------------------------------------------------------
 -- 8b. Costs from the attack table: an expensive skill waits while cheaper ones train
@@ -508,7 +490,11 @@ do
   P.Ki = 1000
   SENT = {}
   ok, err = pcall(TIMERS["AL:Learning"].func)
-  check(table.contains(SENT, AL.API.Learning.to_learn.energy[1] .. " troll"), "enough ki again: the first energy skill trains, whichever it is")
+  local trained = false
+  for _, sk in ipairs(AL.API.Learning.to_learn.energy) do
+    if table.contains(SENT, sk .. " troll") then trained = true end
+  end
+  check(trained, "enough ki again: an energy skill trains (sent: " .. table.concat(SENT, " | ") .. ")")
   P.Skills.Mastered["finalk"] = true; P.Skills.Level["finalk"] = 100
 end
 
@@ -601,12 +587,9 @@ end
 -- 10. no-target trigger + toggle off
 ---------------------------------------------------------------------------
 realprint("=== PHASE: no-target + toggle off ===")
-ok = pcall(function() AL.ck = nil end)
-local set_const = require(PKG)
+local set_const = AL.ck
 SENT = {}
-multimatches = { {}, { "learn troll who?", "learn troll" } }
-local nt_fn = load("AL.API.Learning:find_target(multimatches[2][2])")
-ok, err = pcall(nt_fn); check(ok, "no-target trigger script" .. (ok and "" or (" -- " .. tostring(err))))
+line("learn troll who?")
 check(table.contains(SENT, "crecall"), "the way back (from the start path) sent (sent: " .. table.concat(SENT, " | ") .. ")")
 
 matches = { "autolearn", nil, nil }
@@ -696,7 +679,7 @@ AL.Player.Skills.Learned["instant"] = true -- learned but NOT mastered
 AL.Player.GK = 500
 AL.Player.Ki = 1000
 
-local ck_mod = require(PKG)
+local ck_mod = AL.ck
 
 local function sent_instant()
   for _, c in ipairs(SENT) do
@@ -715,7 +698,7 @@ end
 -- a path that can't be walked backwards (enter vort): no way back, so no teleport training
 matches = { "autolearn troll n;enter vort", "troll", "n;enter vort" }
 ok, err = pcall(alias_fn); check(ok, "autolearn toggle for instant phase" .. (ok and "" or (" -- " .. tostring(err))))
-check(TRIGGER_STATE["autolearn no target"] == true, "no-target trigger armed even without return path")
+check(AL.API.Learning.watch_no_target == true, "no-target trigger armed even without return path")
 
 SENT = {}
 ok, err = pcall(TIMERS["AL:Learning"].func)
@@ -768,8 +751,7 @@ check(AL.API.State:is(AL.API.State.NORMAL), "back to NORMAL after teleport rest 
 
 -- and the stranded recovery still works: '<target> who?' walks back
 SENT = {}
-multimatches = { {}, { "kame troll who?", "kame troll" } }
-ok, err = pcall(nt_fn); check(ok, "no-target trigger after teleport" .. (ok and "" or (" -- " .. tostring(err))))
+line("kame troll who?")
 check(table.contains(SENT, "crecall"), "return path sent after failed attack (sent: " .. table.concat(SENT, " | ") .. ")")
 
 matches = { "autolearn", nil, nil }
@@ -785,7 +767,7 @@ AL.Player.Skills.Level["instant"] = 100
 -- the bot has genuinely nothing left to do and must rest
 AL.Player.Skills.Learned["warp"] = true
 AL.Player.Skills.Mastered["warp"] = true
-local ck_mod2 = require(PKG)
+local ck_mod2 = AL.ck
 ck_mod2:set_constant("learning.recall_isolation", "")
 
 -- organic with no path: refused
@@ -867,7 +849,7 @@ do
   matches = { "autolearn troll", "troll", nil }
   ok, err = pcall(alias_fn)
   check(ok and AL.API.Mode:is(AL.API.Mode.Interactive) and L:return_path() == "", "no path given: refused, no way back")
-  local names = table.concat(require(PKG):constant_names(), ",")
+  local names = table.concat(AL.ck:constant_names(), ",")
   check(not names:find("return_to_target", 1, true), "learning.return_to_target is gone from AL constants")
 end
 
@@ -943,7 +925,7 @@ end
 
 realprint("=== PHASE: priority + multiform ===")
 do
-  local L, P, ck = AL.API.Learning, AL.Player, require(PKG)
+  local L, P, ck = AL.API.Learning, AL.Player, AL.ck
   local Lr, M, Lv = P.Skills.Learned, P.Skills.Mastered, P.Skills.Level
   local saved = { P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl }
   P.Ki, P.MaxKi, P.Fatigue, P.MaxFatigue, P.Pl, P.MaxPl = 1000, 1000, 1000, 1000, 1000, 1000
@@ -999,7 +981,7 @@ end
 
 realprint("=== PHASE: pause for gum repeat ===")
 do
-  local ck, L, Mode, State = require(PKG), AL.API.Learning, AL.API.Mode, AL.API.State
+  local ck, L, Mode, State = AL.ck, AL.API.Learning, AL.API.Mode, AL.API.State
   local Toggles, PC = ck:get_table("Toggles"), ck:get_table("PromptCounters")
   local calls, queued, realTimer = {}, {}, tempTimer
   tempTimer = function(_, f) queued[#queued + 1] = f end
@@ -1043,7 +1025,7 @@ end
 
 realprint("=== PHASE: the al command ===")
 do
-  local ck, Mode = require(PKG), AL.API.Mode
+  local ck, Mode = AL.ck, AL.API.Mode
   local function said() local t = table.concat(LOG, "\n"); LOG = {}; return t end
   if Mode:is(Mode.Learning) then Mode:switch(Mode.Interactive) end
   LOG = {}
@@ -1101,39 +1083,60 @@ do
 end
 
 ---------------------------------------------------------------------------
--- Prompt watch: warns only when lines keep coming without a recognised prompt
+-- Lines and settings that replaced the muddler triggers and the CK database
 ---------------------------------------------------------------------------
-realprint("=== PHASE: prompt watch ===")
+realprint("=== PHASE: lines and settings ===")
 do
-  local lineTrig
-  for _, tr in ipairs(TEMP_TRIGGERS) do if tr.pattern == "^" then lineTrig = tr end end
-  check(lineTrig ~= nil, "every-line counter trigger registered")
-  local function warnings()
-    local n = 0
-    for _, l in ipairs(LOG) do if l:find("No prompt recognised", 1, true) then n = n + 1 end end
-    return n
-  end
-  local tick = TIMERS["AL:LastPrompt"].func
-  raiseEvent("AL.onPrompt")
-  LOG = {}
-  WATCH_TIMES["AL.prompt"] = 4000 -- idle over an hour, nothing arrived
-  tick()
-  check(warnings() == 0, "no warning when idle (no lines since the last prompt)")
-  for _ = 1, 5 do lineTrig.func() end
-  tick()
-  check(warnings() == 0, "no warning for the few lines right after an idle spell")
-  for _ = 1, 150 do lineTrig.func() end
-  tick(); tick()
-  check(warnings() == 1, "warns once when lines keep coming without a prompt")
-  raiseEvent("AL.onPrompt")
-  check(WATCH_TIMES["AL.prompt"] == 0, "a prompt resets the stopwatch")
-  for _ = 1, 150 do lineTrig.func() end
-  tick()
-  check(warnings() == 1, "no warning right after a prompt")
-  WATCH_TIMES["AL.prompt"] = 400
-  tick()
-  check(warnings() == 2, "warns again after a prompt re-armed it")
-  raiseEvent("AL.onPrompt")
+  AL.API.Learning.watch_no_target = false
+  SENT = {}
+  line("kame troll who?")
+  check(#SENT == 0, "'who?' is ignored while not learning")
+  line("You have learned Kamehameha!")
+  line("You've learned the skill 'solar flare' from Tien.")
+  line("You have mastered the roundhouse technique!")
+  check(AL.Player.Skills.Learned[AL.API.Skills:translate("Kamehameha")] and AL.Player.Skills.Learned[AL.API.Skills:translate("solar flare")]
+    and AL.Player.Skills.Mastered["roundhouse"], "learned and mastered messages")
+  SENT = {}
+  line("*** PRESS RETURN: ")
+  check(SENT[1] == "\n\n" and table.contains(SENT, "score") and table.contains(SENT, "learn"), "the MOTD: return, score, learn")
+  AL.PromptFlags.Target = nil
+  line("[Target: a troll]")
+  check(AL.PromptFlags.Target == true and AL.Toggles.fighting == true, "a target on the prompt means fighting")
+
+  -- settings go to autolearn.lua
+  local file, saved_t
+  table.save = function(f, t) file, saved_t = f, t end
+  AL.ck:set_constant("learning.priority", "kame")
+  AL.ck:set_feature("learning.pause_for_gumshoe", false)
+  check(file == "/fakeprofile/autolearn.lua" and saved_t.constants["learning.priority"] == "kame"
+    and saved_t.features["learning.pause_for_gumshoe"] == false, "settings saved to autolearn.lua")
+  AL.ck:set_feature("learning.pause_for_gumshoe", true)
+
+  -- a fresh load brings the old database over once, and reads autolearn.lua after that
+  local keepAL = AL
+  AL = nil
+  io.exists = function(f) return f == "/fakeprofile/Database_autolearn.db" end
+  local schema = db:create("Autolearn", { Toggles = { name = "", value = 0 }, Constants = { name = "", value = "" } })
+  db.create = function() return schema end
+  db:add(schema.Constants, { name = "learning.target", value = { "elder" } })
+  db:add(schema.Toggles, { name = "learning.pause_for_gumshoe", value = 0 })
+  saved_t = nil; LOG = {}
+  run_script("src/Base.lua")
+  AL.ck:define_constant("learning.target", ""); AL.ck:define_feature("learning.pause_for_gumshoe", true)
+  check(AL.ck:constant("learning.target") == "elder" and AL.ck:feature("learning.pause_for_gumshoe") == false,
+    "the old database's settings are brought over")
+  check(saved_t and saved_t.constants["learning.target"] == "elder", "and saved to autolearn.lua")
+  local fromFile = saved_t
+  table.load = function(_, t) for k, v in pairs(fromFile) do t[k] = v end end
+  local realOpen = io.open
+  io.open = function(f, ...) if f == "/fakeprofile/autolearn.lua" then return {} end return realOpen(f, ...) end
+  db.fetch = function() error("the database is read again") end
+  AL = nil
+  run_script("src/Base.lua")
+  AL.ck:define_constant("learning.target", "")
+  check(AL.ck:constant("learning.target") == "elder", "next time it comes from autolearn.lua")
+  io.open, io.exists, table.load, table.save = realOpen, nil, nil, nil
+  AL = keepAL
 end
 
 ---------------------------------------------------------------------------

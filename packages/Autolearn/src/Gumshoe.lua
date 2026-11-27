@@ -3,7 +3,7 @@
 -- at Jaco after the case, learning starts again and heads back the way resting does: the
 -- learning.recall_isolation recall, rest, then the start path to the target.
 -- AL feature learning.pause_for_gumshoe off turns this off.
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local learn = ck:get_table("API.Learning")
 local API = ck:get_table("API")
 local State = ck:get_table("API.State")
@@ -67,5 +67,5 @@ local function on_done()
     learn:go_rest()
 end
 
-registerNamedEventHandler("__PKGNAME__", "AL:GumshoeStarting", "gumshoe.repeat.starting", on_starting)
-registerNamedEventHandler("__PKGNAME__", "AL:GumshoeDone", "gumshoe.repeat.done", on_done)
+registerNamedEventHandler("Autolearn", "AL:GumshoeStarting", "gumshoe.repeat.starting", on_starting)
+registerNamedEventHandler("Autolearn", "AL:GumshoeDone", "gumshoe.repeat.done", on_done)

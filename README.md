@@ -47,15 +47,15 @@ There are two kinds of package, built differently:
 
 ```
 packages/
-  Autolearn/ Buffs/ Chat/ Health/     muddler-layout projects (built without muddler)
+  Buffs/ Chat/ Health/     Penguin's packages, in muddler's layout (built without muddler)
     mfile                 name, version, author
     src/                  triggers/aliases/scripts as muddler-style JSON + .lua files, resources/ bundled as is
-    tests/                Node + fengari simulation of a Mudlet session (driver.lua)
-  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ Cumber/ FusionQuest/ KaiokenTrain/ Chores/ Score/ YamoshiSpawn/  single-script packages
+  BossHelpers/ Casino/ CryonFarm/ DataLords2/ FriezaQuest/ Gogeta/ Gumshoe/ MSDP/ Majerska/ MoroQuest/ Cumber/ FusionQuest/ KaiokenTrain/ Chores/ Score/ Autolearn/ YamoshiSpawn/  single-script packages
     package.json          version, triggers (patterns + one-line scripts), aliases, scripts
-    src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gog, gum, msdp, ys)
+    src/<Package>.lua     the logic, in one Lua table named after its command (boss, cryon, dl2, fq, gog, gum, msdp, ys, kt, chores, sc)
+    Autolearn/src/        the AL namespace split over several scripts (Base.lua, Learning.lua, Lines.lua, ...)
     Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
-tests/                    Lua tests for the single-script packages + run.sh for everything
+tests/                    Lua tests for the single-script packages (Autolearn's is a whole simulated session) + run.sh for everything
 docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
 tools/
   build.py                builds every package into dist/
@@ -73,7 +73,7 @@ python3 tools/build.py          # all of them -> dist/
 python3 tools/build.py FriezaQuest    # just one
 ```
 
-The packages with an `mfile` keep [muddler](https://github.com/demonnic/muddler)'s project layout, but [tools/muddle.py](tools/muddle.py) builds them, so neither muddler nor Java is needed. It covers the muddler features these packages use and stops the build on any other, so nothing is dropped silently. Its output was checked against muddler 1.1.0's for all seven: the same triggers, aliases, scripts and bundled files.
+The packages with an `mfile` keep [muddler](https://github.com/demonnic/muddler)'s project layout, but [tools/muddle.py](tools/muddle.py) builds them, so neither muddler nor Java is needed. It covers the muddler features these packages use and stops the build on any other, so nothing is dropped silently. Its output was checked against muddler 1.1.0's for all seven packages that used it then: the same triggers, aliases, scripts and bundled files. Only Penguin's Buffs, Chat and Health still use that layout.
 
 ## Testing
 
@@ -81,10 +81,12 @@ The packages with an `mfile` keep [muddler](https://github.com/demonnic/muddler)
 sh tests/run.sh
 ```
 
-Needs Lua 5.1+, Python 3 and Node (Node only runs the simulation tests of Autolearn, and builds the CKMud client plugins; those are skipped without it). What it covers:
+Needs Lua 5.3+, Python 3 and Node (Node only builds the CKMud client plugins; those are skipped without it). What it covers:
 
 - **Blackjack, CryonFarm, DataLords2, FriezaQuest, Gumshoe, HighStakes, VideoPoker, YamoshiSpawn:** (HighStakes replays a real tournament log from `tests/fixtures/`) Mudlet's API is stubbed and real game output is replayed. YamoshiSpawn walks a model of the temple map, so a wrong turn fails the test. Gumshoe reads a real case and runs a whole one in a fake Briefs house. CryonFarm does a whole run in a fake lab built from the log's exits.
-- **Autolearn:** its manifest is linted (every trigger and alias needs a script; `tools/muddle.py` refuses to build without one too). Then the real package sources run through a simulated session (connect → MSDP → prompts → the bot).
+- **Autolearn:** the real package sources run through a simulated session (connect → MSDP → score and learn sheets → prompts → the bot).
+- **KaiokenTrain, Chores, Score:** real game lines through each package's line reader, and each bot's loop.
+- **Buffs, Chat, Health:** each manifest is linted (every trigger and alias needs a script; `tools/muddle.py` refuses to build without one too).
 
 ## Versioning
 

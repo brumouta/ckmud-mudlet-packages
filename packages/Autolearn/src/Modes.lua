@@ -1,5 +1,5 @@
 -- Vendored (trimmed) from CK's Modes.lua - only Learning and Interactive remain
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local Toggles = ck:get_table("Toggles")
 local Mode = ck:get_table("API.Mode", ck:make_enum(
     "Mode",

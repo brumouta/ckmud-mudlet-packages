@@ -1,4 +1,4 @@
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local Data = ck:get_table("Player.Skills", {
     Level = {},
     Learned = {},
@@ -275,7 +275,7 @@ function Skills:filter_mastered(alist)
     return nlist
 end
 
-registerNamedEventHandler("__PKGNAME__", "AL:SkillsReLoad", "AL.onPlayerReload", function(event)
+registerNamedEventHandler("Autolearn", "AL:SkillsReLoad", "AL.onPlayerReload", function(event)
     send("learn")
 end)
 

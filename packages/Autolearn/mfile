@@ -1,8 +1,0 @@
-{
-       "package": "Autolearn",
-       "title": "Standalone auto-learning bot for CKMud",
-       "version": "3.0.4",
-       "author": "fried",
-       "icon": "shenron.png",
-       "outputFile": true
-}

@@ -1,4 +1,4 @@
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local Attacks = ck:get_table("Player.Attacks")
 local Skills = ck:get_table("API.Skills")
 local Player = ck:get_table("Player")

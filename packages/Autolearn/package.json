@@ -1,0 +1,106 @@
+{
+  "name": "Autolearn",
+  "version": "4.0.0",
+  "title": "Standalone auto-learning bot for CKMud",
+  "description": "Masters all your skills and learns new ones once their prerequisites are mastered: trains on a target, rests and comes back, and steps aside for Gumshoe's repeat cases. Needs the MSDP package. Type `al help`.",
+  "author": "fried",
+  "scripts": [
+    {
+      "name": "Base",
+      "file": "src/Base.lua"
+    },
+    {
+      "name": "Utils",
+      "file": "src/Utils.lua"
+    },
+    {
+      "name": "Core",
+      "file": "src/Core.lua"
+    },
+    {
+      "name": "Attacks",
+      "file": "src/Attacks.lua"
+    },
+    {
+      "name": "Damage",
+      "file": "src/Damage.lua"
+    },
+    {
+      "name": "Fight",
+      "file": "src/Fight.lua"
+    },
+    {
+      "name": "StateMachine",
+      "file": "src/StateMachine.lua"
+    },
+    {
+      "name": "SendQueue",
+      "file": "src/SendQueue.lua"
+    },
+    {
+      "name": "Skills",
+      "file": "src/Skills.lua"
+    },
+    {
+      "name": "Modes",
+      "file": "src/Modes.lua"
+    },
+    {
+      "name": "Racials",
+      "file": "src/Racials.lua"
+    },
+    {
+      "name": "Learning",
+      "file": "src/Learning.lua"
+    },
+    {
+      "name": "Gumshoe",
+      "file": "src/Gumshoe.lua"
+    },
+    {
+      "name": "Commands",
+      "file": "src/Commands.lua"
+    },
+    {
+      "name": "MSDP",
+      "file": "src/MSDP.lua"
+    },
+    {
+      "name": "Prompt_Events",
+      "file": "src/Prompt_Events.lua"
+    },
+    {
+      "name": "Connection_Events",
+      "file": "src/Connection_Events.lua"
+    },
+    {
+      "name": "Lines",
+      "file": "src/Lines.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "al",
+      "regex": "^(AL|Al|al|autolearn)(?:\\s+(\\S+)(?:\\s+(.+?))?)?\\s*$",
+      "script": "local function arg(s) if s and s ~= \"\" then return s end end\nAL.API.command(arg(matches[3]), arg(matches[4]), matches[2] == \"autolearn\")"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Autolearn",
+      "folder": true,
+      "children": [
+        {
+          "name": "AL Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "AL.line(type(matches) == \"table\" and matches[1] or line)"
+        }
+      ]
+    }
+  ]
+}

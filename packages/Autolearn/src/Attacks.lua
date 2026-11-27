@@ -1,4 +1,4 @@
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local API = ck:get_table("API")
 local UBS = true
 local LBS = false

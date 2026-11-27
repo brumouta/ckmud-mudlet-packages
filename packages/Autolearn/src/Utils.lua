@@ -1,5 +1,5 @@
 -- Instead of patching math and table we have a AL.math and AL.table
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local t = ck:get_table("table")
 local m = ck:get_table("math")
 

@@ -4,7 +4,7 @@
 --   al start [target [path]]   start (with the saved setup; anything given is saved too)
 --   al stop / al status / al priority ... / al features ... / al constants ... / al update
 -- The old `autolearn <target> <path>` still works (and saves them); bare `autolearn` toggles.
-local ck = require("__PKGNAME__")
+local ck = AL.ck
 local learn = ck:get_table("API.Learning")
 local API = ck:get_table("API")
 local State = ck:get_table("API.State")
@@ -99,7 +99,7 @@ end
 
 -- ---------------------------------------------------------------- features and constants
 local function list_features()
-    local console = require("__PKGNAME__.console")
+    local console = AL.ck.console
     local features = ck:feature_names()
     local width = 15
     for _, v in ipairs(features) do width = math.max(width, #v) end
@@ -119,7 +119,7 @@ local function set_feature(name, switch)
 end
 
 local function list_constants(prefix)
-    local console = require("__PKGNAME__.console")
+    local console = AL.ck.console
     prefix = prefix or ""
     local names, width, found = ck:constant_names(), 1, 0
     for _, v in ipairs(names) do width = math.max(width, #v) end
@@ -243,7 +243,7 @@ COMMANDS.constants = function(arg)
     list_constants(trim(arg))
 end
 COMMANDS.constant = COMMANDS.constants
-COMMANDS.update = function() CKMudUpdate("__PKGNAME__") end
+COMMANDS.update = function() CKMudUpdate("Autolearn") end
 
 -- word: the first word after al/autolearn; rest: everything after it; legacy: typed as `autolearn`
 function API.command(word, rest, legacy)

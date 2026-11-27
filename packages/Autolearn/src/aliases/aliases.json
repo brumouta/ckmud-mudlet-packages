@@ -1,7 +1,0 @@
-[
-    {
-        "name": "al",
-        "regex": "^(AL|Al|al|autolearn)(?:\\s+(\\S+)(?:\\s+(.+?))?)?\\s*$",
-        "script": "local function arg(s) if s and s ~= \"\" then return s end end\nAL.API.command(arg(matches[3]), arg(matches[4]), matches[2] == \"autolearn\")"
-    }
-]

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run every test from the repo root: sh tests/run.sh
 #   - Lua tests for the simple packages (tests/*_test.lua)
-#   - manifest lint, build (tools/muddle.py) + Node simulation tests for the mfile packages
+#   - manifest lint + build (tools/muddle.py) for the mfile packages (Buffs, Chat, Health)
 cd "$(dirname "$0")/.." || exit 1
 status=0
 
@@ -33,18 +33,6 @@ for mfile in packages/*/mfile; do
     echo "PASS  $pkg build"
   else
     echo "FAIL  $pkg build"; echo "$out" | tail -8; status=1
-  fi
-  if [ ! -f "$pkg/tests/runner.js" ]; then
-    echo "SKIP  $pkg simulation (no tests)"; continue
-  fi
-  if ! command -v node >/dev/null 2>&1; then
-    echo "SKIP  $pkg simulation (node not installed)"; continue
-  fi
-  [ -d "$pkg/tests/node_modules" ] || (cd "$pkg/tests" && npm install --silent --no-audit --no-fund >/dev/null 2>&1)
-  if out=$(cd "$pkg/tests" && node runner.js driver.lua 2>&1); then
-    echo "PASS  $pkg simulation ($(echo "$out" | tail -1 | sed 's/=== RESULT: //; s/ ===//'))"
-  else
-    echo "FAIL  $pkg simulation"; echo "$out" | tail -8; status=1
   fi
 done
 # Plugins for the CKMud client (one XML for Mudlet and the client): build from the package's
