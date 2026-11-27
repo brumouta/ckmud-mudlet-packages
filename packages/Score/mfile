@@ -1,8 +1,0 @@
-{
-       "package": "Score",
-       "title": "A richer score sheet for CKMud",
-       "version": "2.0.2",
-       "author": "fried",
-       "icon": "shenron.png",
-       "outputFile": true
-}

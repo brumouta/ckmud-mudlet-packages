@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [Autolearn, Score, Buffs, Chat, Health]
+        package: [Autolearn, Buffs, Chat, Health]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

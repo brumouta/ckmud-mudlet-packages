@@ -1,0 +1,38 @@
+{
+  "name": "Score",
+  "version": "3.0.0",
+  "title": "A richer score sheet for CKMud",
+  "description": "Rewrites the Ki/GodKi/BioMass/Heat percentages on `score` into real numbers and adds damage at every boost level, item tier, heal, training hints and gauntlet runs, plus gravity on the prompt. Needs the MSDP package. Type `sc help`.",
+  "author": "fried",
+  "scripts": [
+    {
+      "name": "Score",
+      "file": "src/Score.lua"
+    }
+  ],
+  "aliases": [
+    {
+      "name": "sc",
+      "regex": "^(?:sc|SC)(?:\\s+(\\w+)(?:\\s+(.+))?)?$",
+      "script": "if matches[2] == \"update\" then return CKMudUpdate(\"Score\") end\nlocal function arg(s) if s and s ~= \"\" then return s end end\nsc.command(arg(matches[2]), arg(matches[3]))"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Score",
+      "folder": true,
+      "children": [
+        {
+          "name": "sc Every line",
+          "patterns": [
+            {
+              "type": "regex",
+              "pattern": "^.*$"
+            }
+          ],
+          "script": "sc.line(type(matches) == \"table\" and matches[1] or line)"
+        }
+      ]
+    }
+  ]
+}

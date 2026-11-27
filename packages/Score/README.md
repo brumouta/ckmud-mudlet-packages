@@ -1,22 +1,18 @@
-![shenron](src/resources/shenron.png)
-
 # Score
 
-A standalone Mudlet package for CKMud that makes the `score` command far more
-useful: real numbers instead of percentages, your damage at every boost level,
-item tier with progress to the next one, and training hints. Fully
-self-contained - it does NOT require CK to be installed.
+Command: `sc`
+
+Makes CKMud's `score` far more useful: real numbers instead of percentages, your damage at every
+boost level, item tier with progress to the next one, and training hints. Originally extracted
+from the [CK](https://github.com/CKMud-Mudlet-Scripts/CK) package by fried; it doesn't need CK.
 
 ## Installation
 
 `lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/Score.mpackage")`
 
-**Requires the [MSDP](../MSDP) package**, which supplies the stats this package reads. Install it first.
-
-After installation the `SC update` alias keeps it current.
-
-You must turn on `msdp` in settings (the package enforces the correct protocol
-settings on connect) - every number below is computed from the MSDP feed.
+**Requires the [MSDP](../MSDP) package** (with MSDP turned on in Mudlet's settings): every number
+below comes from it, base PL included (it reads that from `score`). Install it first.
+`sc update` updates Score.
 
 ## What it adds
 
@@ -27,9 +23,8 @@ Ki:    5,000                        KI REGEN: 300
 GodKi: 400                          GODKI REGEN: 50
 ```
 
-(`BioMass` for bio-androids and `Heat`/`Dissipation` for androids get the same
-treatment.) Then a block is appended, at the `Green Orbs:` line or the closing
-line of the sheet, whichever comes first:
+(`BioMass` for bio-androids and `Heat`/`Dissipation` for androids get the same treatment.) Then a
+block is added at the `Green Orbs:` line or the closing line of the sheet, whichever comes first:
 
 ```
 PHY DAM       : 1,234,567           KI DAM      : 2,345,678
@@ -43,51 +38,36 @@ GRAVITY       : 19x to train  (max 20x)
 GAUNTLET RUNS : 5
 ```
 
-- **PHY/KI DAM** - your damage per hit at base, (B)oosted, (S)upreme and
-  (U)ltimate skill levels, so you can see what a boost is worth.
-- **HEAL** - heal factor from INT, WIS and max PL.
-- **ITEM TIER** - the loot tier your base PL unlocks, and how much more base PL
-  the next tier needs.
-- **TRAIN NEXT** - your lowest base stat.
-- **GRAVITY** - the gravity that still trains efficiently, against your max.
-- **GAUNTLET RUNS** - how many runs your zenni covers.
+- **PHY/KI DAM:** your damage per hit at base, (B)oosted, (S)upreme and (U)ltimate skill levels.
+- **HEAL:** heal factor from INT, WIS and max PL.
+- **ITEM TIER:** the loot tier your base PL unlocks, and how much more the next tier needs.
+- **TRAIN NEXT:** your lowest base stat.
+- **GRAVITY:** the gravity that still trains efficiently, against your max.
+- **GAUNTLET RUNS:** how many runs your zenni covers.
 
-## Aliases
+The prompt also gains `[5/20x G]`: the room's gravity against your max, green once you're at it.
 
-`SC show` - print the block on demand, without running `score`
+## Commands
 
-`SC` - command list
+| Command | What it does |
+|---|---|
+| `sc` / `sc help` | The commands and which parts are on |
+| `sc show` | The block, without running `score` |
+| `sc extras on\|off` | The block on the score sheet (saved) |
+| `sc regen on\|off` | The Ki/GodKi/BioMass/Heat lines in real numbers (saved) |
+| `sc gravity on\|off` | Gravity on the prompt (saved) |
+| `sc update` | Update Score to the latest release |
 
-`SC features` / `SC feature <name> <on|off>` - toggles
+`SC` works as well as `sc`. The switches are saved in `score.lua` in your profile folder.
 
-`SC update` - update from github latest
+## Changes in 3.0
 
-## Gravity on the prompt
-
-Your prompt gains a gravity readout, `[5/20x G]` - the room's current gravity
-against your maximum, turning green once you are at or above your max. Turn it
-off with `SC feature score.prompt_gravity off`.
-
-## Features
-
-- `score.extras` (default on) - the appended block
-- `score.regen` (default on) - rewriting the Ki/GodKi/BioMass/Heat lines
-- `score.prompt_gravity` (default on) - the gravity readout on the prompt
-
-## Running alongside CK
-
-Score keeps its state under its own `SC` namespace, its own `Score` settings
-database, and its own events. Note that CK ships its own score
-enhancements (a damage block on the `Green Orbs:` line), so running both will
-print two blocks - turn `score.extras` off here, or drop CK's. CK's prompt
-also shows gravity, so turn `score.prompt_gravity` off if you run both.
+Score is now one Lua file like the newer packages. `SC features` and
+`SC feature score.<name> on|off` are now `sc extras|regen|gravity on|off`, and your 2.x switches
+are brought over the first time 3.0 loads. Name, race and base PL now come from the MSDP package.
+It no longer changes Mudlet's protocol settings or reconnects by itself.
 
 ## Development
 
-The sources use [muddler](https://github.com/demonnic/muddler)'s layout, but no muddler or Java is
-needed: `python3 ../../tools/build.py Score` writes `../../dist/Score.mpackage`.
-
-```
-python3 ../../tools/lint_manifests.py src
-cd tests && npm install && node runner.js driver.lua
-```
+`python3 tools/build.py Score` builds `dist/Score.mpackage`, and `lua tests/Score_test.lua`
+(from the repo root) tests it.
