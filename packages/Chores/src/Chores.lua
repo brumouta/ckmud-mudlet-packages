@@ -41,6 +41,7 @@ for _, s in ipairs(C.SETTINGS) do DEFAULT[s[1]] = s[2]; NUMERIC[s[1]] = type(s[2
 
 C.set = C.set or {}
 C.debug = C.debug or false
+if C.gumshoe == nil then C.gumshoe = true end   -- step aside for Gumshoe's `gum repeat`
 local function get(name)
   local v = C.set[name]
   if v == nil then return DEFAULT[name] end
@@ -50,7 +51,7 @@ C.get = get
 
 function C.save()
   if type(table.save) ~= "function" then return end
-  local t = { debug = C.debug }
+  local t = { debug = C.debug, gumshoe = C.gumshoe }
   for name in pairs(DEFAULT) do if C.set[name] ~= nil then t[name] = C.set[name] end end
   pcall(table.save, FILE, t)
 end
@@ -62,6 +63,7 @@ local function take(t)
     if v ~= nil and v ~= DEFAULT[name] then C.set[name] = v end
   end
   if type(t.debug) == "boolean" then C.debug = t.debug end
+  if type(t.gumshoe) == "boolean" then C.gumshoe = t.gumshoe end
 end
 
 -- Settings from Chores 2.x lived in Mudlet's "Chores" database (CH constant chores.<name>=...):
@@ -412,6 +414,7 @@ function C.bossDead()
   if C.activity ~= "boss" then return end
   C.boss = nil
   sendPath("boss_after")
+  if C.pausePending then C.activity = "idle"; return C.pauseForGumshoe() end
   -- it hooked at the fishing spot: nowhere to walk
   if wantsFishing() then
     C.activity = "fishing"
@@ -441,6 +444,11 @@ function C.rivalOver()
   C.rival = nil
   local after = get("rival_after")
   if after ~= "" then sendAll((after:gsub("%$target", r.target or ""))) end
+  if C.pausePending then
+    -- an interrupted delivery is done again after the case
+    C.activity = (r.resume == "quest" or r.resume == "grave") and r.resume or "idle"
+    return C.pauseForGumshoe()
+  end
   if r.resume == "quest" then
     -- still on Earth: straight back to the cook, who asks again or reminds us of the knight
     C.activity = "quest"
@@ -475,6 +483,7 @@ function C.died()
   C.rival, C.boss = nil, nil
   if C.activity == "quest" then C.nextQuest = t + get("quest_period") * 60
   elseif C.activity == "grave" then C.nextGrave = t + get("grave_period") * 60 end
+  if C.pausePending then C.activity = "idle"; return C.pauseForGumshoe() end
   C.returnToFishing()
 end
 
@@ -537,9 +546,18 @@ function C.tick()
 end
 
 -- ---------------------------------------------------------------- start / stop
+local function gum() local g = rawget(_G, "gum"); return type(g) == "table" and g or nil end
+
 function C.stop(quiet)
   if C.timer then killTimer(C.timer) end
   C.timer = nil
+  -- chores stop while waiting for, or paused for, a Gumshoe case keeps it off
+  if C.pausePending then
+    C.pausePending = nil
+    local g = gum()
+    if g and g.release then g.release("Chores") end
+  end
+  C.gumPaused = nil
   if C.activity == "fishing" then send("reelin") end
   local was = C.mode
   C.mode, C.activity = "off", "idle"
@@ -565,6 +583,66 @@ function C.start(mode)
   else
     C.activity = "idle"
   end
+end
+
+-- ---------------------------------------------------------------- Gumshoe's `gum repeat`
+-- Just before a repeat case starts, Chores steps aside: a fight is finished first (Gumshoe waits,
+-- at most 3 minutes), you're woken or the line is reeled in, and a delivery that was under way is
+-- done again afterwards. Once Gumshoe is back at Jaco after the case, Chores carries on: back to
+-- the fishing spot by fishing_path (quest mode just waits for the next delivery), instead of
+-- `gum repeat wait`'s commands.
+function C.gumshoeStarting()
+  if C.mode == "off" or not C.gumshoe or C.gumPaused then return end
+  if C.activity == "boss" or C.activity == "rival" then
+    C.pausePending = true
+    local g = gum()
+    if g and g.hold then g.hold("Chores") end
+    return info("cyan", "Gumshoe's case is next: finishing this fight first.")
+  end
+  C.pauseForGumshoe()
+end
+
+function C.pauseForGumshoe()
+  local held = C.pausePending
+  C.pausePending = nil
+  local mode, act = C.mode, C.activity
+  if act == "resting" then send("wake")
+  elseif act == "fishing" then send("reelin") end
+  if act == "quest" then C.nextQuest = now() elseif act == "grave" then C.nextGrave = now() end
+  C.activity = "idle"
+  local paused = { mode = mode, nextQuest = C.nextQuest, nextGrave = C.nextGrave }
+  C.stop(true)
+  C.gumPaused = paused
+  info("cyan", "Paused for Gumshoe's case: chores carries on when it's done.")
+  if mode ~= "quest" and get("fishing_path") == "" then
+    info("yellow", "No fishing_path set, so chores stays off after the case: chores set fishing_path <commands>")
+  end
+  if held then
+    local g = gum()
+    if g and g.release then g.release("Chores") end
+  end
+end
+
+function C.gumshoeDone()
+  local p = C.gumPaused
+  if not p then return end
+  C.gumPaused = nil
+  if C.mode ~= "off" then return end   -- started again by hand meanwhile
+  local g = gum()
+  if g and g.rep and g.rep.on == false then
+    -- repeat was turned off (maybe mid-case): don't walk off from wherever you are
+    return info("white", "Gumshoe's repeat is off: chores start " .. p.mode .. " when you're ready.")
+  end
+  if p.mode ~= "quest" and get("fishing_path") == "" then
+    return info("yellow", "Gumshoe is done, but there's no fishing_path to get back: chores start " .. p.mode .. " from the fishing spot.")
+  end
+  if g and g.rep then g.rep.claimed = "Chores" end
+  info("green", "Gumshoe is done: chores carries on (" .. p.mode .. ").")
+  C.mode = p.mode
+  C.warnedNoPath, C.warnedNoGrave, C.warnedLowPl, C.badSpots = nil, nil, nil, nil
+  C.nextQuest, C.nextGrave = p.nextQuest, p.nextGrave
+  C.timer = tempTimer(2, C.tick, true)
+  if wantsFishing() then C.returnToFishing() else C.activity = "idle" end
 end
 
 -- ---------------------------------------------------------------- game lines (every-line trigger)
@@ -627,6 +705,7 @@ C.HELP = {
   { "chores status",                  "What it's doing and when the next deliveries are" },
   { "chores set",                     "Every setting and its value" },
   { "chores set <name> <value>",      "Change one (saved); <value> default puts it back, off empties it" },
+  { "chores gumshoe on|off",          "Pause for Gumshoe's gum repeat cases (default on)" },
   { "chores debug on|off",            "Trace every step, for when a cycle stalls" },
   { "chores update",                  "Update Chores to the latest release" },
 }
@@ -702,13 +781,16 @@ function C.command(c, arg)
     C.start(m)
   elseif c == "fish" or c == "quest" or c == "both" then C.start(c)
   elseif c == "stop" or c == "off" then
-    if C.mode == "off" then info("white", "Already off.") else C.stop() end
+    if C.gumPaused then C.stop(true); info("white", "Stopped: it won't carry on after Gumshoe's case.")
+    elseif C.mode == "off" then info("white", "Already off.") else C.stop() end
   elseif c == "status" then C.status()
   elseif c == "set" or c == "settings" then
     local name, value = (arg or ""):match("^(%S+)%s*(.-)%s*$")
     if name == "" then name = nil end
     if value == "" then value = nil end
     C.setting(name, value)
+  elseif c == "gumshoe" and (arg == "on" or arg == "off") then
+    C.gumshoe = arg == "on"; C.save(); info("white", "Pause for Gumshoe's repeat cases: " .. arg)
   elseif c == "debug" and (arg == "on" or arg == "off") then
     C.debug = arg == "on"; C.save(); info("white", "Debug " .. arg)
   else C.help() end
@@ -718,6 +800,8 @@ end
 if type(registerNamedEventHandler) == "function" then
   registerNamedEventHandler("Chores", "chores disconnect", "sysDisconnectionEvent", C.disconnected)
   registerNamedEventHandler("Chores", "chores connect", "sysConnectionEvent", C.disconnected)
+  registerNamedEventHandler("Chores", "chores gumshoe starting", "gumshoe.repeat.starting", C.gumshoeStarting)
+  registerNamedEventHandler("Chores", "chores gumshoe done", "gumshoe.repeat.done", C.gumshoeDone)
   registerNamedEventHandler("Chores", "chores uninstall", "sysUninstallPackage", function(_, name)
     if name == "Chores" then C.stop(true) end
   end)

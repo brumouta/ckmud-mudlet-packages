@@ -311,6 +311,62 @@ C.command("fish"); clear(); tick(200)
 ok(#sent == 0, "does nothing before a prompt after reconnecting")
 C.command("stop")
 
+-- ---- Gumshoe's gum repeat
+say("[Pl: 4,320 | Ki: 100%] [HT]")
+C.command("set", "fishing_path recall;w")
+local held, released = {}, {}
+gum = { rep = {}, hold = function(w) held[#held + 1] = w end, release = function(w) released[#released + 1] = w end }
+local function starting() handlers["gumshoe.repeat.starting:chores gumshoe starting"]() end
+local function done() gum.rep.claimed = nil; handlers["gumshoe.repeat.done:chores gumshoe done"]() end
+C.command("fish"); clear(); starting()
+ok(C.mode == "off" and next(timers) == nil and has("reelin") and C.gumPaused, "a case pauses fishing (reels in)")
+clear(); done()
+ok(gum.rep.claimed == "Chores" and C.mode == "fish" and has("recall") and has("w") and has("castout") and next(timers),
+  "after the case: claims it, walks fishing_path and fishes")
+P.Fatigue = 100; tick(); ok(C.activity == "resting", "resting")
+clear(); starting()
+ok(has("wake") and C.mode == "off", "asleep when the case starts: wakes up")
+P.Fatigue = 1000; done()
+C.command("stop")
+
+C.command("both"); clock = clock + 1
+ok(C.activity == "quest", "a delivery under way")
+starting()
+ok(C.gumPaused and C.gumPaused.nextQuest == clock, "an interrupted delivery is done again after the case")
+clear(); done()
+ok(C.mode == "both" and has("castout"), "back to fishing in both")
+clear(); tick()
+ok(C.activity == "quest" and has("recall"), "and the delivery runs again")
+C.command("stop")
+
+C.command("fish"); say("Protei the Tuffle flies out of nowhere and attacks you!")
+clear(); starting()
+ok(held[1] == "Chores" and C.mode == "fish" and C.activity == "rival", "in a fight: Gumshoe waits for it")
+clear(); say("Protei the Tuffle is dead!  R.I.P.")
+ok(released[1] == "Chores" and C.mode == "off" and C.gumPaused and has("get all corpse") and not has("castout"),
+  "the fight ends: rival_after, then paused and Gumshoe let go")
+done()
+C.command("quest"); starting(); clear(); done()
+ok(C.mode == "quest" and not has("recall") and C.activity == "idle", "quest mode: no walk, waits for the next delivery")
+clear(); tick()
+ok(C.activity == "quest", "which runs straight away (it was under way)")
+C.command("stop")
+
+C.command("fish"); starting(); C.command("stop"); done()
+ok(C.mode == "off" and gum.rep.claimed == nil, "chores stop while paused keeps it off")
+C.command("fish"); starting(); gum.rep.on = false; clear(); done()
+ok(C.mode == "off" and #sent == 0, "repeat turned off mid-case: doesn't walk off")
+gum.rep.on = nil
+C.command("set", "fishing_path off"); C.command("fish"); out = ""; starting()
+ok(out:find("No fishing_path set"), "warns that it can't come back without fishing_path")
+done(); ok(C.mode == "off", "and stays off")
+C.command("set", "fishing_path recall;w")
+C.command("gumshoe", "off"); ok(saved.gumshoe == false, "chores gumshoe off saved")
+C.command("fish"); starting(); ok(C.mode == "fish", "with gumshoe off it keeps going")
+C.command("stop"); C.command("gumshoe", "on")
+starting(); ok(not C.gumPaused, "a case while chores is off changes nothing")
+gum = nil
+
 -- a settings file wins over the old database
 local loaded = { fishing_path = "x" }
 table.load = function(_, t) for k, v in pairs(loaded) do t[k] = v end end

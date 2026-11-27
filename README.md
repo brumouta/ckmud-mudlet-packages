@@ -56,7 +56,7 @@ packages/
     Autolearn/src/        the AL namespace split over several scripts (Base.lua, Learning.lua, Lines.lua, ...)
     Casino/src/           Core.lua (shared casino code) + one script per game (bj, vp, slot, hs)
 tests/                    Lua tests for the single-script packages (Autolearn's is a whole simulated session) + run.sh for everything
-docs/design/               how Autolearn, KaiokenTrain and Chores were extracted from CK
+docs/design/               how Autolearn, KaiokenTrain and Chores were first extracted from CK (history)
 tools/
   build.py                builds every package into dist/
   muddle.py               the muddler-layout half of build.py (no muddler or Java needed)

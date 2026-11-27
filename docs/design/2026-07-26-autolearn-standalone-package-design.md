@@ -1,3 +1,7 @@
+> **History.** This is the original extraction design. Since Autolearn 4.0 the package no longer
+> uses muddler, the vendored CK framework or the Node (fengari) simulation: it's built from
+> `package.json` by `tools/build.py` and tested with plain Lua in `tests/`. See the package's README.
+
 # Autolearn Standalone Package — Design
 
 Date: 2026-07-26

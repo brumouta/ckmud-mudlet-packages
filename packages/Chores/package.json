@@ -1,6 +1,6 @@
 {
   "name": "Chores",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "title": "Fishing, cook delivery and gravedigger bot for CKMud",
   "description": "Fishes (rests when fatigued, fights boss fish and rivals) and runs the royal cook delivery and the gravedigger excavation whenever their cooldown is up. Needs the MSDP package. Type `chores help`.",
   "author": "fried",

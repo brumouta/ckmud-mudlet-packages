@@ -7,6 +7,7 @@ They were written while the packages still lived inside the CK repository. Read 
 - `Autolearn/`, `Chores/`, `KaiokenTrain/` at "the repo root" are now `packages/<Package>/` here.
 - `src/scripts/Bots/Learning.lua`, `src/scripts/Bots/Kaioken.lua` and the other `src/...` paths that are being removed refer to the CK package.
 - Where they plan to move a package "to its own repo", they all ended up together in this repository instead.
+- The muddler projects, the vendored CK framework and the Node (fengari) simulations they describe are gone: since Autolearn 4.0, KaiokenTrain 3.0 and Chores 3.0 each is built from `package.json` by `tools/build.py` and tested with plain Lua in `tests/`.
 
 | Note | Package |
 |---|---|

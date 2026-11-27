@@ -33,6 +33,7 @@ Then stand at your fishing spot holding a fishing pole and type one of:
 | `chores status` | What it's doing and when the next deliveries are |
 | `chores set` | Every setting with its value |
 | `chores set <name> <value>` | Change a setting (saved). `default` puts it back, `off` empties it |
+| `chores gumshoe on\|off` | Pause for Gumshoe's `gum repeat` cases (default on, saved) |
 | `chores debug on\|off` | Trace every step, for when a cycle stalls |
 | `chores update` | Update Chores to the latest release |
 
@@ -71,6 +72,17 @@ attacks you!") gets `rival_before` (`$target` is the rival), `rival_attack <riva
 fight ends, then `rival_after`, and whatever was interrupted carries on: an interrupted delivery
 goes straight back to the cook. With `boss_attack` or `rival_attack` empty it only warns and
 leaves the fight to you. If you die, it heads back to fishing.
+
+### Pausing for Gumshoe's repeat
+
+With Gumshoe's `gum repeat` on (`gumshoe.xml`), Chores steps aside for every case. Just before
+Gumshoe heads to Jaco it reels in or wakes you; a boss fish or rival fight is finished first
+(Gumshoe waits for it), and a delivery that was under way is done again afterwards. Once Gumshoe is
+back at Jaco after the case, Chores carries on: `fishing_path` back to the spot and fishing again,
+or in quest mode just the next delivery. That replaces the `gum repeat wait` commands. Without a
+`fishing_path` it stays off after the case and says so. `chores stop` while it's paused keeps it
+off, turning Gumshoe's repeat off doesn't walk you anywhere, and `chores gumshoe off` turns all
+this off.
 
 Every step of a delivery has a time limit, so anything unexpected sends it back to fishing rather
 than leaving it idle somewhere odd.
