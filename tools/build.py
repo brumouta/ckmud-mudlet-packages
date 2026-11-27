@@ -28,6 +28,15 @@ FLAGS = ('isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorize
          'isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no"')
 
 
+
+def lua_str(text):
+    """A Lua long string for text: [[...]], or [=[...]=] and so on when the text has ]] in it."""
+    text = str(text)
+    eq = ""
+    while f"]{eq}]" in text:
+        eq += "="
+    return f"[{eq}[{text}]{eq}]"
+
 def yes_no(value):
     return "yes" if value else "no"
 
@@ -88,8 +97,8 @@ def build(name):
            "\t<AliasPackage>\n" + "".join(alias_xml(a) for a in m["aliases"]) + "\t</AliasPackage>\n"
            "\t<ScriptPackage>\n" + "".join(script_xml(pkg_dir, s) for s in [UPDATE_SCRIPT] + m["scripts"]) + "\t</ScriptPackage>\n"
            "</MudletPackage>\n")
-    config = (f"mpackage = [[{m['name']}]]\nauthor = [[{m['author']}]]\ntitle = [[{m['title']}]]\n"
-              f"description = [[{m['description']}]]\nversion = [[{m['version']}]]\n"
+    config = (f"mpackage = {lua_str(m['name'])}\nauthor = {lua_str(m['author'])}\ntitle = {lua_str(m['title'])}\n"
+              f"description = {lua_str(m['description'])}\nversion = {lua_str(m['version'])}\n"
               f'created = "{datetime.date.today().isoformat()}"\n')
 
     os.makedirs(DIST, exist_ok=True)

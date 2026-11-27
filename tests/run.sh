@@ -29,7 +29,7 @@ for mfile in packages/*/mfile; do
     echo "FAIL  $pkg README.md is not plain ASCII (it ends up in config.lua)"; echo "$bad" | head -5; status=1
   fi
   name=$(basename "$pkg")
-  if out=$(python3 tools/muddle.py "$name" 2>&1); then
+  if out=$(python3 tools/muddle.py "$name" 2>&1) && out=$(unzip -p "dist/$name.mpackage" config.lua | lua -e 'assert(load(io.read("a")))()' 2>&1); then
     echo "PASS  $pkg build"
   else
     echo "FAIL  $pkg build"; echo "$out" | tail -8; status=1

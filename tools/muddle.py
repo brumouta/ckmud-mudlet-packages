@@ -40,6 +40,15 @@ GROUP = {"triggers": "TriggerGroup", "aliases": "AliasGroup", "scripts": "Script
 ITEM = {"triggers": "Trigger", "aliases": "Alias", "scripts": "Script"}
 
 
+
+def lua_str(text):
+    """A Lua long string for text: [[...]], or [=[...]=] and so on when the text has ]] in it."""
+    text = str(text)
+    eq = ""
+    while f"]{eq}]" in text:
+        eq += "="
+    return f"[{eq}[{text}]{eq}]"
+
 def yes(value, default="no"):
     value = value if value is not None else default
     return "yes" if value in (True, "yes", "true") else "no"
@@ -160,11 +169,11 @@ class Package:
         if not description and os.path.isfile(readme):
             with open(readme, encoding="utf-8") as f:
                 description = f.read()
-        config = f"mpackage = [[{self.name}]]\nauthor = [[{m.get('author', '')}]]\n"
+        config = f"mpackage = {lua_str(self.name)}\nauthor = {lua_str(m.get('author', ''))}\n"
         if m.get("icon"):
-            config += f"icon = [[{m['icon']}]]\n"
-        config += (f"title = [[{m.get('title', self.name)}]]\ndescription = [[{description or ''}]]\n"
-                   f"version = [[{self.version}]]\ncreated = \"{datetime.date.today().isoformat()}\"\n")
+            config += f"icon = {lua_str(m['icon'])}\n"
+        config += (f"title = {lua_str(m.get('title', self.name))}\ndescription = {lua_str(description or '')}\n"
+                   f"version = {lua_str(self.version)}\ncreated = \"{datetime.date.today().isoformat()}\"\n")
 
         os.makedirs(DIST, exist_ok=True)
         out = os.path.join(DIST, f"{self.name}.mpackage")
