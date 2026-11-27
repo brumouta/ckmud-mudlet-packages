@@ -29,7 +29,7 @@ Runs the **West Capital questline** that ends in the Metamoran fusion dance, sta
 | gas | `say gas` (mask), the drain under Eastside Avenue, the Tuffle war drone, `collect sample`, back to Bulma |
 | bench | Waits for Bulma's bench (about 3 minutes), walks out and back in until she hands over Capsule 211 |
 | birds | `listen` with Sixteen in the Briefs garden, the Plaza Garden and Dream Land |
-| tower | `throw 211 n` at Tongari Tower, the four ghost valves (Turles, Slug, Cooler, Frieza), Hatchiyack |
+| tower | `throw 211 n` at Tongari Tower, the four ghost valves (Turles, Slug, Cooler, Frieza), Hatchiyack, then `get all` for his loot |
 | report | Tell Bulma |
 | archive | `watch` Goku's recording in the Blueprint Archive |
 | somen | The Otherworld Tournament Arena |

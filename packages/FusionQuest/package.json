@@ -1,6 +1,6 @@
 {
   "name": "FusionQuest",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "title": "West Capital fusion questline",
   "description": "Runs the West Capital questline that ends in the Metamoran fusion dance: Doberman's capsule case, the Red Ribbon factory and Androids 13-15, Bulma's Sixteen, air and gas jobs, Tongari Tower and Hatchiyack, Somen, King Kai and the dance drills. Type `fus help`.",
   "author": "Bruno Mouta",

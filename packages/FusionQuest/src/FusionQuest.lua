@@ -38,7 +38,7 @@ end
 local function cat(...)
   local out = {}
   for _, t in ipairs({ ... }) do
-    if t.go or t.cmd or t.pursue or t.fight or t.wait or t.travel or t.special or t.delay then out[#out + 1] = t
+    if t.go or t.cmd or t.pursue or t.fight or t.wait or t.travel or t.special or t.delay or t.send then out[#out + 1] = t
     else for _, s in ipairs(t) do out[#out + 1] = s end end
   end
   return out
@@ -181,7 +181,7 @@ F.STAGES = {
     fight("frieza", "Ghost Frieza is dead!"), cmd("shut valve", VALVE),
     walk({ "n", "Tank Farm", "w", "Upper Stairs, Fourth Floor", "u", "Machine Floor Landing",
            "e", "Destron Control Gallery", "s", "The Machine Floor" }),
-    fight("hatchiyack", "Full Power Hatchiyack is dead!", 900)) },
+    fight("hatchiyack", "Full Power Hatchiyack is dead!", 900), { send = "get all" }) },
   { "report", "Tell Bulma about the tower", cat(
     pursue("bulma"), walk({ "e", "Capsule Corp Residence Hall", "w", "Bulma's Workshop" }),
     seen("Dad's Blueprint Archive, through the west gallery", 20)) },
@@ -420,6 +420,8 @@ local function runStep(s)
     SPECIAL[s.special](s)
   elseif s.delay then
     setTimer(s.delay, nextStep)
+  elseif s.send then   -- just send it (the loot), nothing to wait for
+    send(s.send); setTimer(1, nextStep)
   end
 end
 

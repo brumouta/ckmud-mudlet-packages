@@ -232,6 +232,7 @@ respond = function(c)
     else say("Dr. Briefs says, 'Read each one and the numbers will come straight here.'") end
     return
   end
+  if c == "get all" then assert(here == "The Machine Floor" and fus.stage == "tower", "get all in " .. here); count.loot = (count.loot or 0) + 1; say("You get a Hatchiyack core from the corpse of Full Power Hatchiyack."); return end
   if c == "collect sample" then count.vial = true end
   if AT[c] then
     local a = AT[c]
@@ -282,7 +283,7 @@ ok(count.bench == 3, "Bulma's bench: back in until Capsule 211 (3 visits)")
 ok(select(2, s:gsub("listen", "")) == 3, "listened with Sixteen three times")
 ok(s:find("throw 211 n|n|u", 1, true), "Capsule 211 at the tower door, then in")
 for _, g in ipairs({ "turles", "slug", "cooler", "frieza" }) do ok(s:find("k " .. g .. "|shut valve", 1, true), g .. " beaten, valve shut") end
-ok(s:find("k hatchiyack", 1, true), "Hatchiyack fought")
+ok(s:find("k hatchiyack|get all", 1, true) and count.loot == 1, "Hatchiyack fought, then all his loot picked up")
 ok(s:find("pursue dr briefs|e|n|watch", 1, true), "Goku's recording watched")
 ok(s:find("recall|fly|fly|survey|survey 5 fly|enter", 1, true), "flies to the Otherworld Tournament Arena")
 ok(s:find("enter|focus 'instant' king kai|laugh|s|n|point|point|step left|swing", 1, true), "King Kai: instant transmission, laugh, out and back in, the dance in order")
