@@ -1073,6 +1073,15 @@ do
   -- switches, features and constants
   al("al gumshoe off"); check(ck:feature("learning.pause_for_gumshoe") == false, "al gumshoe off")
   al("al gumshoe on"); check(ck:feature("learning.pause_for_gumshoe") == true, "al gumshoe on")
+  -- a Gumshoe older than plugin 1.13.0 (no gum.hold) can't say when a case starts: say so
+  gum = { rep = {} }
+  al("al gumshoe on"); check(said():find("Your Gumshoe is too old", 1, true), "al gumshoe on: warns about a Gumshoe too old to pause for")
+  al("al setup"); check(said():find("Gumshoe is too old to pause for", 1, true), "al setup: flags the old Gumshoe")
+  al("al start"); check(Mode:is(Mode.Learning) and said():find("Your Gumshoe is too old", 1, true), "al start: starts, and warns about the old Gumshoe")
+  al("al stop")
+  gum.hold = function() end
+  al("al gumshoe on"); check(not said():find("too old", 1, true), "a current Gumshoe: no warning")
+  gum = nil
   al("al features"); check(said():find("learning.pause_for_gumshoe", 1, true), "al features lists them")
   al("AL feature learning.pause_for_gumshoe off"); check(ck:feature("learning.pause_for_gumshoe") == false, "AL feature <name> off")
   al("al feature learning.pause_for_gumshoe on"); check(ck:feature("learning.pause_for_gumshoe") == true, "al feature <name> on")

@@ -22,6 +22,18 @@ local function onoff(v) return v and "<green>on<white>" or "<red>off<white>" end
 
 local function running() return Mode:is(Mode.Learning) end
 
+-- Gumshoe plugin 1.13.0+ tells other packages when a repeat case starts (gum.hold); older ones
+-- don't, and learning would carry on through the case.
+local function old_gumshoe()
+    local g = rawget(_G, "gum")
+    return type(g) == "table" and type(g.hold) ~= "function"
+end
+local OLD_GUMSHOE = "Your Gumshoe is too old to say when a case starts, so learning won't pause for it: " ..
+    "install gumshoe.xml again (Gumshoe plugin 1.13.0 or later)"
+local function warn_old_gumshoe()
+    if ck:feature("learning.pause_for_gumshoe") and old_gumshoe() then say("yellow", OLD_GUMSHOE) end
+end
+
 -- ---------------------------------------------------------------- start / stop
 function API:start(target, path)
     target, path = trim(target), trim(path)
@@ -34,6 +46,7 @@ function API:start(target, path)
     end
     learn.gumshoe_paused = nil
     learn:toggle(target, path)
+    if running() then warn_old_gumshoe() end
 end
 
 function API:stop()
@@ -63,7 +76,9 @@ function API:setup()
     line(recall, "recall", recall or "not set",
         "al recall <commands>: rest from any room (needed to come back after a Gumshoe case), e.g. al recall crecall;w")
     line(true, "priority", get("learning.priority") or "usual order", nil)
-    line(true, "gumshoe", onoff(ck:feature("learning.pause_for_gumshoe")) .. " pause for gum repeat cases (al gumshoe on|off)")
+    local old = ck:feature("learning.pause_for_gumshoe") and old_gumshoe()
+    line(not old, "gumshoe", onoff(ck:feature("learning.pause_for_gumshoe")) .. " pause for gum repeat cases (al gumshoe on|off)",
+        "Gumshoe is too old to pause for: install gumshoe.xml again (plugin 1.13.0 or later)")
     local race = API.getRace and API:getRace() or ck:constant("race")
     line(race and race ~= "???", "race", tostring(race or "???"), "type score once")
     if target and (path or android or recall) then
@@ -213,7 +228,8 @@ local function switch(feature, label)
         say("white", label .. ": " .. onoff(ck:feature(feature)))
     end
 end
-COMMANDS.gumshoe = switch("learning.pause_for_gumshoe", "Pause for Gumshoe's repeat cases")
+local gumshoe_switch = switch("learning.pause_for_gumshoe", "Pause for Gumshoe's repeat cases")
+COMMANDS.gumshoe = function(arg) gumshoe_switch(arg); warn_old_gumshoe() end
 COMMANDS.features = function() list_features() end
 COMMANDS.feature = function(arg)
     local name, sw = (arg or ""):match("^(%S+)%s+(on)$")
