@@ -3,7 +3,7 @@
   "version": "2.4.1",
   "title": "Kami's timeline portal on a loop",
   "description": "Gives Kami an Essence and a Diamond, kills SSJ4 Goku, SSJ4 Vegeta and Gogeta, fights off rivals, and repeats. Type `gog help` for commands.",
-  "author": "Bruno Mouta",
+  "author": "Vorrac",
   "scripts": [
     {
       "name": "Gogeta",

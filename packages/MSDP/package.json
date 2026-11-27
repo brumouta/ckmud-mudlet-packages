@@ -3,7 +3,7 @@
   "version": "1.1.1",
   "title": "MSDP data for CKMud packages",
   "description": "Subscribes to every MSDP variable CKMud offers and shares the values with the other packages, plus name, race and base PL from your score sheet. Type `msdp` for commands.",
-  "author": "Bruno Mouta",
+  "author": "Vorrac",
   "scripts": [
     {
       "name": "MSDP core",

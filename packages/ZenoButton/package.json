@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "title": "Zeno Button shortcuts",
   "description": "Shortcuts for the Zeno Button: `pb` presses it, and `pbe`, `pbv`, `pbn`, `pbk` and `pbi` take you to the Earth, Vegeta, Namek, Konats or Iceria vortex from anywhere (recall, press button, walk, enter vortex). Replaces the old Zeno Button module. Type `zb help`.",
-  "author": "Bruno Mouta",
+  "author": "Vorrac",
   "scripts": [
     {
       "name": "ZenoButton",

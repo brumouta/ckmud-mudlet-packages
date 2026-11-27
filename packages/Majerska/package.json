@@ -3,7 +3,7 @@
   "version": "1.1.1",
   "title": "Majerska's Cursed Canopy boss clearer",
   "description": "Travels to Majerska's Cursed Canopy on Earth (recall, Zeno Button, vortex, survey), reads `where` and kills every boss, weakest first, fighting off rivals. Type `maj help`.",
-  "author": "Bruno Mouta",
+  "author": "Vorrac",
   "scripts": [
     {
       "name": "Majerska",

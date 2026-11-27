@@ -3,7 +3,7 @@
   "version": "2.0.1",
   "title": "Boss helpers: respawn timer and boss finder",
   "description": "Counts down to CKMud's boss respawn (from `uptime`), warns before it, and re-checks after each respawn. `boss find` walks to the nearest boss on the world map, sweeping the map when none is in sight. Type `boss help` for commands.",
-  "author": "Bruno Mouta",
+  "author": "Vorrac",
   "scripts": [
     {
       "name": "BossHelpers core",
