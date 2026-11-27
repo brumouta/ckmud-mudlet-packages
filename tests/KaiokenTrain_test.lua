@@ -46,17 +46,14 @@ ok(#sent == 0 and kt.on, "waits while mastery is unknown")
 kt.line("Syntax: Kaioken 1-120")
 ok(kt.max == 120 and gagged == 1, "reads and hides the getmax reply")
 
--- ---- raise / drink / rest / wake
+-- ---- raise / no drinking / rest / wake
 prompt(5, 10)
 tick()
 ok(has("kaioken 21"), "raises kaioken to mastery + 11 by default")
 prompt(21, 10); P.Thirst = 30
 tick()
-ok(has("drink tears"), "drinks when thirsty")
-kt.command("drink", "drink flask")
-ok(saved and saved.drink == "drink flask", "drink command saved")
-tick()
-ok(has("drink flask"), "drinks the configured command")
+for _, c in ipairs(sent) do assert(not c:find("^drink"), "drank: " .. c) end
+ok(true, "never drinks, even when thirsty")
 P.Thirst = 80; P.Fatigue = 100
 tick()
 ok(has("kaioken") and sent[#sent] == "sleep" and sent[#sent - 1] == "land" and kt.resting, "drops kaioken, lands and sleeps when fatigued")

@@ -1,12 +1,11 @@
--- kt: trains kaioken mastery to the top. Raises kaioken just above your mastery, drinks when
--- thirsty, sleeps when fatigued, wakes when rested and stops once kaioken is mastered.
--- Stats (fatigue, thirst, ki, ...) come from the MSDP package; kaioken and mastery from the prompt.
+-- kt: trains kaioken mastery to the top. Raises kaioken just above your mastery, sleeps when
+-- fatigued, wakes when rested and stops once kaioken is mastered. It never drinks.
+-- Stats (fatigue, ki, ...) come from the MSDP package; kaioken and mastery from the prompt.
 kt = kt or {}
 local K = kt
 
 -- ---------------------------------------------------------------- settings (saved)
 local FILE = (type(getMudletHomeDir) == "function" and getMudletHomeDir() or ".") .. "/kaiokentrain.lua"
-K.drink = K.drink or "drink tears"
 -- Mastery only climbs to 8 below the kaioken in use, so mastery + 9 leaves room for one point per
 -- gain. Accelerated Mastery (pshop mastery) can land 2 or 3 in one gain: `room` extra levels keep
 -- space for them. 0 = the plain mastery + 9.
@@ -15,13 +14,12 @@ K.back = K.back or nil          -- commands from Jaco back to the training spot,
 if K.gumshoe == nil then K.gumshoe = true end   -- step aside for Gumshoe's `gum repeat`
 
 function K.save()
-  if type(table.save) == "function" then pcall(table.save, FILE, { drink = K.drink, room = K.room, back = K.back or "", gumshoe = K.gumshoe }) end
+  if type(table.save) == "function" then pcall(table.save, FILE, { room = K.room, back = K.back or "", gumshoe = K.gumshoe }) end
 end
 
 local function load()
   local t = {}
   if type(table.load) == "function" and io.open(FILE) then pcall(table.load, FILE, t) end
-  if type(t.drink) == "string" and t.drink ~= "" then K.drink = t.drink end
   if tonumber(t.room) then K.room = math.max(0, math.floor(tonumber(t.room))) end
   if type(t.back) == "string" and t.back ~= "" then K.back = t.back end
   if type(t.gumshoe) == "boolean" then K.gumshoe = t.gumshoe end
@@ -126,8 +124,6 @@ function K.tick()
       K.asked, K.misses = target, 0
     end
     send("kaioken " .. target)
-  elseif (P.Thirst or 100) < 40 then
-    send(K.drink)
   end
 end
 
@@ -145,7 +141,7 @@ function K.start()
   quiet("status")
   if K.timer then killTimer(K.timer) end
   K.timer = tempTimer(4, K.tick, true)
-  info("green", "Training kaioken. Best done in an isolation chamber, with something to drink (" .. K.drink .. ").")
+  info("green", "Training kaioken. Best done in an isolation chamber.")
 end
 
 function K.stop(done)
@@ -244,7 +240,6 @@ K.HELP = {
   { "kt start",          "Train kaioken mastery to the top (kaioken train also toggles it)" },
   { "kt stop",           "Stop" },
   { "kt status",         "Training or not, kaioken, mastery and the ceiling" },
-  { "kt drink <cmd>",    "What to drink when thirsty (saved)" },
   { "kt room <0-10>",    "Extra levels above mastery + 9, for Accelerated Mastery (saved)" },
   { "kt back <cmds>|off", "After a Gumshoe repeat case: from Jaco back to the training spot (saved)" },
   { "kt gumshoe on|off", "Pause for Gumshoe's gum repeat cases (default on)" },
@@ -254,8 +249,8 @@ K.HELP = {
 function K.help()
   cecho("\n<cyan>KaiokenTrain (kt):\n")
   for _, h in ipairs(K.HELP) do cecho(string.format("  <yellow>%-20s<white>%s\n", h[1], h[2])) end
-  cecho(string.format("  <grey>drink: %s   room: %d (trains at mastery + %d)   back: %s   gumshoe: %s\n",
-    K.drink, K.room, 9 + K.room, K.back or "not set", K.gumshoe and "on" or "off"))
+  cecho(string.format("  <grey>room: %d (trains at mastery + %d)   back: %s   gumshoe: %s\n",
+    K.room, 9 + K.room, K.back or "not set", K.gumshoe and "on" or "off"))
 end
 
 function K.status()
@@ -270,8 +265,6 @@ function K.command(c, arg)
   if c == "start" or c == "on" or c == "train" then K.start()
   elseif c == "stop" or c == "off" then K.stop()
   elseif c == "status" then K.status()
-  elseif c == "drink" and arg then
-    K.drink = arg; K.save(); info("white", "Drink: " .. arg)
   elseif c == "room" and tonumber(arg) then
     K.room = math.max(0, math.min(10, math.floor(tonumber(arg)))); K.roomCap = nil; K.save()
     info("white", "Room: " .. K.room .. " (trains at mastery + " .. (9 + K.room) .. ")")

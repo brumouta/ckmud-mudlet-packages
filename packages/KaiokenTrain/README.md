@@ -2,8 +2,8 @@
 
 Command: `kt`
 
-Trains your kaioken mastery to the top. It raises kaioken just above your mastery, drinks when
-you're thirsty, sleeps when you're fatigued, wakes when you're rested, and stops once kaioken is
+Trains your kaioken mastery to the top. It raises kaioken just above your mastery, sleeps when
+you're fatigued, wakes when you're rested, and stops once kaioken is
 mastered. Originally extracted from the [CK](https://github.com/CKMud-Mudlet-Scripts/CK) package by
 fried; it doesn't need CK.
 
@@ -12,20 +12,19 @@ fried; it doesn't need CK.
 `lua installPackage("https://github.com/brumouta/ckmud-mudlet-packages/releases/latest/download/KaiokenTrain.mpackage")`
 
 **Requires the [MSDP](../MSDP) package** (with MSDP turned on in Mudlet's settings), which supplies
-your fatigue, thirst and the rest. Install it first. `kt update` updates KaiokenTrain.
+your fatigue and the rest. Install it first. `kt update` updates KaiokenTrain.
 
 ## Usage
 
-Go to an isolation chamber with something to drink and type `kt start` (or `kaioken train`, which
+Go to an isolation chamber and type `kt start` (or `kaioken train`, which
 turns it on and off). `kt stop` stops it.
 
 | Command | What it does |
 |---|---|
-| `kt` / `kt help` | The commands, and the current drink and room |
+| `kt` / `kt help` | The commands, and the current settings |
 | `kt start` | Start training |
 | `kt stop` | Stop |
 | `kt status` | Training or not, your kaioken, mastery and the ceiling |
-| `kt drink <command>` | What to drink when thirsty, default `drink tears` (saved) |
 | `kt room <0-10>` | Extra levels above mastery + 9, default 2 (saved) |
 | `kt back <commands>\|off` | After a Gumshoe repeat case: from Jaco back to your training spot (saved) |
 | `kt gumshoe on\|off` | Pause for Gumshoe's `gum repeat` cases (default on) |
@@ -61,6 +60,10 @@ Gumshoe is back at Jaco after the case, it sends your `kt back` commands (your a
 `gum repeat wait` commands. Without `kt back` set, training stays off after the case and it says
 so. `kt stop` while it's paused keeps it off, turning Gumshoe's repeat off doesn't walk you
 anywhere, and `kt gumshoe off` turns all this off.
+
+## Changes in 3.2
+
+It no longer drinks when you're thirsty, and `kt drink` is gone. Drink yourself if you need to.
 
 ## Changes in 3.0
 
