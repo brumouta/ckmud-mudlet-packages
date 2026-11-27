@@ -30,7 +30,7 @@ It is built from:
     `gum.release(name)` to make it wait (for at most 3 minutes). Once it's back at Jaco after the
     case, or repeat is turned off, it raises `gumshoe.repeat.done`; a package that sets
     `gum.rep.claimed = name` carries on from there instead of the `gum repeat wait` commands.
-    Autolearn uses this to pause its learning.
+    Autolearn and KaiokenTrain use this to pause their training.
   - **Client only:** the dashboard card (settings, buttons, help, status) and plugin control.
     Gumshoe claims movement before it walks and gives it back when it stops.
 

@@ -27,6 +27,8 @@ turns it on and off). `kt stop` stops it.
 | `kt status` | Training or not, your kaioken, mastery and the ceiling |
 | `kt drink <command>` | What to drink when thirsty, default `drink tears` (saved) |
 | `kt room <0-10>` | Extra levels above mastery + 9, default 2 (saved) |
+| `kt back <commands>\|off` | After a Gumshoe repeat case: from Jaco back to your training spot (saved) |
+| `kt gumshoe on\|off` | Pause for Gumshoe's `gum repeat` cases (default on) |
 | `kt update` | Update KaiokenTrain to the latest release |
 | `kaioken train` | Turn training on or off |
 
@@ -49,6 +51,16 @@ training goes on.
 
 Each start reads your mastery fresh (from the prompt or `status`), so a value left over from
 another character or a rebirth can't make it think kaioken is already mastered.
+
+### Pausing for Gumshoe's repeat
+
+With Gumshoe's `gum repeat` on (`gumshoe.xml`), training steps aside for every case. Just before
+Gumshoe heads to Jaco it stops training, drops your kaioken and wakes you if you're asleep. Once
+Gumshoe is back at Jaco after the case, it sends your `kt back` commands (your aliases work too,
+`;` between them), for example `kt back crecall;w`, and starts training again. That replaces the
+`gum repeat wait` commands. Without `kt back` set, training stays off after the case and it says
+so. `kt stop` while it's paused keeps it off, turning Gumshoe's repeat off doesn't walk you
+anywhere, and `kt gumshoe off` turns all this off.
 
 ## Changes in 3.0
 

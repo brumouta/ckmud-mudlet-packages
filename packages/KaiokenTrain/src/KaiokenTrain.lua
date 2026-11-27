@@ -11,9 +11,11 @@ K.drink = K.drink or "drink tears"
 -- gain. Accelerated Mastery (pshop mastery) can land 2 or 3 in one gain: `room` extra levels keep
 -- space for them. 0 = the plain mastery + 9.
 K.room = K.room or 2
+K.back = K.back or nil          -- commands from Jaco back to the training spot, after a Gumshoe case
+if K.gumshoe == nil then K.gumshoe = true end   -- step aside for Gumshoe's `gum repeat`
 
 function K.save()
-  if type(table.save) == "function" then pcall(table.save, FILE, { drink = K.drink, room = K.room }) end
+  if type(table.save) == "function" then pcall(table.save, FILE, { drink = K.drink, room = K.room, back = K.back or "", gumshoe = K.gumshoe }) end
 end
 
 local function load()
@@ -21,6 +23,8 @@ local function load()
   if type(table.load) == "function" and io.open(FILE) then pcall(table.load, FILE, t) end
   if type(t.drink) == "string" and t.drink ~= "" then K.drink = t.drink end
   if tonumber(t.room) then K.room = math.max(0, math.floor(tonumber(t.room))) end
+  if type(t.back) == "string" and t.back ~= "" then K.back = t.back end
+  if type(t.gumshoe) == "boolean" then K.gumshoe = t.gumshoe end
 end
 load()
 
@@ -147,6 +151,7 @@ end
 function K.stop(done)
   if K.timer then killTimer(K.timer) end
   K.timer = nil
+  if not done then K.gumPaused = nil end   -- kt stop while paused for Gumshoe keeps it off
   local was = K.on
   K.on, K.resting = false, false
   if was and not done then info("white", "Stopped training kaioken.") end
@@ -188,6 +193,48 @@ function K.line(l)
   end
 end
 
+-- ---------------------------------------------------------------- Gumshoe's `gum repeat`
+-- Just before a repeat case starts, training pauses: kaioken is dropped and, if asleep, you're woken. Once Gumshoe is back at Jaco after the case, the `kt back` commands take
+-- you to the training spot and training starts again, instead of `gum repeat wait`'s commands.
+local function gum() return type(rawget(_G, "gum")) == "table" and rawget(_G, "gum") or nil end
+
+function K.gumshoeStarting()
+  if not K.on or not K.gumshoe then return end
+  local wasResting = K.resting
+  K.stop(true)
+  K.gumPaused = true
+  send("kaioken")   -- don't drain fatigue through the case
+  info("cyan", "Paused for Gumshoe's case: training carries on when it's done.")
+  if not K.back then
+    info("yellow", "No way back from Jaco set, so training stays off after the case. Set one with kt back <commands>, e.g. kt back crecall;w")
+  end
+  -- sent from inside the event, so it goes out before Gumshoe's first step
+  if wasResting then send("wake") end
+end
+
+function K.gumshoeDone()
+  if not K.gumPaused then return end
+  K.gumPaused = nil
+  if K.on then return end   -- started again by hand meanwhile
+  if not K.back then
+    return info("yellow", "Gumshoe is done, but there's no way back from Jaco (kt back): go to your training spot and kt start.")
+  end
+  local g = gum()
+  if g and g.rep and g.rep.on == false then
+    -- repeat was turned off (maybe mid-case): don't walk off from wherever you are
+    return info("white", "Gumshoe's repeat is off: kt start once you're back at your training spot.")
+  end
+  if g and g.rep then g.rep.claimed = "KaiokenTrain" end
+  info("green", "Gumshoe is done: back to training (" .. K.back .. ").")
+  for part in K.back:gmatch("[^;]+") do
+    local cmd = part:match("^%s*(.-)%s*$")
+    if cmd ~= "" then
+      if type(expandAlias) == "function" then expandAlias(cmd, false) else send(cmd) end
+    end
+  end
+  K.start()
+end
+
 function K.disconnected()
   K.prompted, seenKaioken = false, false
 end
@@ -199,13 +246,16 @@ K.HELP = {
   { "kt status",         "Training or not, kaioken, mastery and the ceiling" },
   { "kt drink <cmd>",    "What to drink when thirsty (saved)" },
   { "kt room <0-10>",    "Extra levels above mastery + 9, for Accelerated Mastery (saved)" },
+  { "kt back <cmds>|off", "After a Gumshoe repeat case: from Jaco back to the training spot (saved)" },
+  { "kt gumshoe on|off", "Pause for Gumshoe's gum repeat cases (default on)" },
   { "kt update",         "Update KaiokenTrain to the latest release" },
 }
 
 function K.help()
   cecho("\n<cyan>KaiokenTrain (kt):\n")
-  for _, h in ipairs(K.HELP) do cecho(string.format("  <yellow>%-18s<white>%s\n", h[1], h[2])) end
-  cecho(string.format("  <grey>drink: %s   room: %d (trains at mastery + %d)\n", K.drink, K.room, 9 + K.room))
+  for _, h in ipairs(K.HELP) do cecho(string.format("  <yellow>%-20s<white>%s\n", h[1], h[2])) end
+  cecho(string.format("  <grey>drink: %s   room: %d (trains at mastery + %d)   back: %s   gumshoe: %s\n",
+    K.drink, K.room, 9 + K.room, K.back or "not set", K.gumshoe and "on" or "off"))
 end
 
 function K.status()
@@ -225,6 +275,12 @@ function K.command(c, arg)
   elseif c == "room" and tonumber(arg) then
     K.room = math.max(0, math.min(10, math.floor(tonumber(arg)))); K.roomCap = nil; K.save()
     info("white", "Room: " .. K.room .. " (trains at mastery + " .. (9 + K.room) .. ")")
+  elseif c == "back" and arg then
+    if arg:lower() == "off" or arg:lower() == "clear" then K.back = nil else K.back = arg end
+    K.save(); info("white", "Back from Jaco after a Gumshoe case: " .. (K.back or "not set (training stays off)"))
+  elseif c == "gumshoe" and (arg == "on" or arg == "off") then
+    K.gumshoe = arg == "on"; K.save()
+    info("white", "Pause for Gumshoe's repeat cases: " .. arg)
   else K.help() end
 end
 
@@ -232,6 +288,8 @@ end
 if type(registerNamedEventHandler) == "function" then
   registerNamedEventHandler("KaiokenTrain", "kt disconnect", "sysDisconnectionEvent", K.disconnected)
   registerNamedEventHandler("KaiokenTrain", "kt connect", "sysConnectionEvent", K.disconnected)
+  registerNamedEventHandler("KaiokenTrain", "kt gumshoe starting", "gumshoe.repeat.starting", K.gumshoeStarting)
+  registerNamedEventHandler("KaiokenTrain", "kt gumshoe done", "gumshoe.repeat.done", K.gumshoeDone)
   registerNamedEventHandler("KaiokenTrain", "kt uninstall", "sysUninstallPackage", function(_, name)
     if name == "KaiokenTrain" then K.stop(true) end
   end)

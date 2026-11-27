@@ -1,6 +1,6 @@
 {
   "name": "KaiokenTrain",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "title": "Kaioken mastery trainer for CKMud",
   "description": "Trains kaioken mastery to the top: raises kaioken just above your mastery, drinks when thirsty, sleeps when fatigued, wakes when rested and stops once kaioken is mastered. Needs the MSDP package. Type `kt help`.",
   "author": "fried",

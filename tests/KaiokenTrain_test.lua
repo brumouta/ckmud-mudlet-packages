@@ -143,6 +143,40 @@ out = ""; kt.command("status")
 ok(out:find("training") and out:find("mastery x5") and out:find("ceiling x128"), "status")
 out = ""; kt.command()
 ok(out:find("kt start") and out:find("kt room"), "help lists the commands")
+-- ---- Gumshoe's gum repeat
+gum = { rep = {} }
+local function starting() handlers["gumshoe.repeat.starting:kt gumshoe starting"]() end
+local function done() gum.rep.claimed = nil; handlers["gumshoe.repeat.done:kt gumshoe done"]() end
+sent = {}; out = ""; kt.command("start"); P.Fatigue = 1000
+starting()
+ok(not kt.on and next(timers) == nil and has("kaioken") and not has("wake"), "a case pauses training and drops kaioken")
+ok(out:find("No way back from Jaco"), "says training stays off without kt back")
+sent = {}; done()
+ok(not kt.on and gum.rep.claimed == nil and #sent == 0, "without kt back it stays off after the case")
+
+kt.command("back", "crecall; w")
+ok(saved.back == "crecall; w", "kt back saved")
+kt.command("start"); kt.resting = true
+sent = {}; starting()
+ok(has("wake") and not kt.on, "asleep when the case starts: wakes up")
+sent = {}; done()
+ok(gum.rep.claimed == "KaiokenTrain" and sent[1] == "crecall" and sent[2] == "w" and kt.on,
+  "after the case: claims it, walks back and trains again")
+
+kt.command("start"); starting(); gum.rep.on = false; sent = {}; done()
+ok(not kt.on and #sent == 0, "repeat turned off mid-case: doesn't walk off")
+gum.rep.on = nil
+kt.command("start"); starting(); kt.command("stop"); done()
+ok(not kt.on and gum.rep.claimed == nil, "kt stop while paused keeps it off")
+starting(); ok(not kt.gumPaused, "a case while not training changes nothing")
+kt.command("start"); kt.command("gumshoe", "off")
+ok(saved.gumshoe == false, "kt gumshoe off saved")
+starting()
+ok(kt.on, "with kt gumshoe off it keeps training")
+kt.command("gumshoe", "on"); kt.command("back", "off")
+ok(kt.back == nil and saved.back == "", "kt back off clears it")
+gum = nil
+
 kt.toggle()
 ok(not kt.on, "kaioken train toggles it off")
 kt.toggle()
