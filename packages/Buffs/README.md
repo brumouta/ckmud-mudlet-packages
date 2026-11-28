@@ -12,6 +12,7 @@ off, and shows how long each has left in a small window. Type `autobuff help`.
 | `autobuff newbuff <skill> :: <expire message>` / `autobuff delbuff <skill>` | Add or remove a buff it doesn't know yet |
 | `autobuff setcast`, `setaffects`, `setcmd`, `setitem`, `settag`, `combat` | Fine-tune a buff (see `autobuff help`) |
 | `buffwnd [show\|hide\|float]` | The buff timer window |
+| `buffwnd font <size>` | The window's font size (6 to 30, default 9), kept across restarts |
 
 Knows Energy Shield, Zanzoken, Regenerate, Swiftness, Gigantification, Hasshuken, Herculean
 Force, Resonance, Hakai Barrier, Forcefield, Barrier, Infravision, Invigorate, Kino Tsurugi,

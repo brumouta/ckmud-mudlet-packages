@@ -18,6 +18,7 @@ local cmds = {
   {"buffwnd",                            "toggle the buff status window"},
   {"buffwnd show / hide",                "open or close the buff status window"},
   {"buffwnd float",                      "toggle docked / floating window"},
+  {"buffwnd font <size>",                "set the window's font size (6-30, default 9)"},
 }
 local sep = "<medium_purple>" .. string.rep("─", 56) .. "<reset>\n"
 local out = "\n" .. sep

@@ -1,8 +1,8 @@
 {
   "name": "Buffs",
-  "version": "26.11.26",
+  "version": "26.11.28",
   "title": "Buffs",
-  "description": "# Buffs\n\nBy **Penguin**. Keeps your buffs up: casts the ones you choose, recasts each one when it wears\noff, and shows how long each has left in a small window. Type `autobuff help`.\n\n| Command | What it does |\n|---|---|\n| `autobuff on\\|off` | Turn auto-buffing on or off |\n| `autobuff add <skill>` / `autobuff remove <skill>` | Choose which buffs to keep up |\n| `autobuff` (or `autobuff list`) / `autobuff buffs` | Show your list / every buff it knows |\n| `autobuff cast` | Cast everything on your list now |\n| `autobuff newbuff <skill> :: <expire message>` / `autobuff delbuff <skill>` | Add or remove a buff it doesn't know yet |\n| `autobuff setcast`, `setaffects`, `setcmd`, `setitem`, `settag`, `combat` | Fine-tune a buff (see `autobuff help`) |\n| `buffwnd [show\\|hide\\|float]` | The buff timer window |\n\nKnows Energy Shield, Zanzoken, Regenerate, Swiftness, Gigantification, Hasshuken, Herculean\nForce, Resonance, Hakai Barrier, Forcefield, Barrier, Infravision, Invigorate, Kino Tsurugi,\nWrathful Fury, Demonic Will, Celestial Shield, Divine Judgement, Celestial Drain, Tremor Pulse,\nKenjutsu and Protection Ballad. Recasts after a copyover too.\n",
+  "description": "# Buffs\n\nBy **Penguin**. Keeps your buffs up: casts the ones you choose, recasts each one when it wears\noff, and shows how long each has left in a small window. Type `autobuff help`.\n\n| Command | What it does |\n|---|---|\n| `autobuff on\\|off` | Turn auto-buffing on or off |\n| `autobuff add <skill>` / `autobuff remove <skill>` | Choose which buffs to keep up |\n| `autobuff` (or `autobuff list`) / `autobuff buffs` | Show your list / every buff it knows |\n| `autobuff cast` | Cast everything on your list now |\n| `autobuff newbuff <skill> :: <expire message>` / `autobuff delbuff <skill>` | Add or remove a buff it doesn't know yet |\n| `autobuff setcast`, `setaffects`, `setcmd`, `setitem`, `settag`, `combat` | Fine-tune a buff (see `autobuff help`) |\n| `buffwnd [show\\|hide\\|float]` | The buff timer window |\n| `buffwnd font <size>` | The window's font size (6 to 30, default 9), kept across restarts |\n\nKnows Energy Shield, Zanzoken, Regenerate, Swiftness, Gigantification, Hasshuken, Herculean\nForce, Resonance, Hakai Barrier, Forcefield, Barrier, Infravision, Invigorate, Kino Tsurugi,\nWrathful Fury, Demonic Will, Celestial Shield, Divine Judgement, Celestial Drain, Tremor Pulse,\nKenjutsu and Protection Ballad. Recasts after a copyover too.\n",
   "author": "Penguin",
   "scripts": [
     {
@@ -97,7 +97,7 @@
     },
     {
       "name": "buffwnd",
-      "regex": "^buffwnd(?:\\s+(show|hide|float))?$",
+      "regex": "^buffwnd(?:\\s+(show|hide|float|font)(?:\\s+(\\d+))?)?$",
       "file": "src/aliases/buffwnd.lua"
     }
   ],

@@ -4,6 +4,33 @@ BuffWindow.floating = BuffWindow.floating or false
 
 local CONSOLE = "BuffStatusConsole"
 
+-- The window's font size (`buffwnd font <size>`), saved in the profile folder
+local FONT_FILE = getMudletHomeDir() .. "/BuffWindow_data.lua"
+BuffWindow.DEFAULT_FONT = 9
+if not BuffWindow.fontSize then
+    local data = {}
+    if io.exists(FONT_FILE) then pcall(table.load, FONT_FILE, data) end
+    BuffWindow.fontSize = tonumber(data.fontSize) or BuffWindow.DEFAULT_FONT
+end
+
+function BuffWindow:setFont(size)
+    size = tonumber(size)
+    if not size then
+        cecho(string.format("\n<white>Buff window font size: %d (default %d). Use <sky_blue>buffwnd font <size><white>, 6 to 30.\n",
+            self.fontSize, self.DEFAULT_FONT))
+        return
+    end
+    size = math.floor(size)
+    if size < 6 or size > 30 then
+        cecho("\n<red>Font size must be between 6 and 30.\n")
+        return
+    end
+    self.fontSize = size
+    pcall(table.save, FONT_FILE, { fontSize = size })
+    if self.console then self.console:setFontSize(size) end
+    cecho(string.format("\n<white>Buff window font size set to %d.\n", size))
+end
+
 local function fmt(secs)
     secs = math.max(0, math.floor(secs))
     if secs < 60 then
@@ -42,7 +69,7 @@ function BuffWindow:init()
         name     = CONSOLE,
         x = 2, y = 2,
         width    = "100%-4px", height = "100%-4px",
-        fontSize = 9,
+        fontSize = self.fontSize,
         color    = "black",
         wrapAt   = 9999,
     }, self.container.Inside)
